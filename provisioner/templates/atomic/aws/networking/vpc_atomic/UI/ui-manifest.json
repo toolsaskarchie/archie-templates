@@ -1,0 +1,214 @@
+{
+  "metadata": {
+    "pillars": {
+      "principles": [
+        {
+          "title": "Logical Isolation",
+          "icon": "shield-lock",
+          "description": "The VPC provides a logically isolated section of the AWS Cloud where you can launch AWS resources in a virtual network that you define."
+        },
+        {
+          "title": "Custom Address Space",
+          "icon": "network-wired",
+          "description": "Complete control over your IP address range, subnets, and configuration of route tables and network gateways."
+        },
+        {
+          "title": "Security by Design",
+          "icon": "check-circle",
+          "description": "Foundation for multiple layers of security, including security groups and network access control lists."
+        }
+      ]
+    },
+    "free_trial": false,
+    "action_name": "aws-vpc-atomic",
+    "deployment_scope": "single-region",
+    "certifications": [
+      "aws-well-architected"
+    ],
+    "cloudProvider": "AWS",
+    "pricing_model": "basic",
+    "pillars_text": [
+      "Single VPC resource",
+      "Configurable CIDR block",
+      "DNS hostname support",
+      "DNS resolution support",
+      "Instance tenancy options"
+    ],
+    "cloud": "aws",
+    "features": [
+      "Single VPC resource",
+      "Configurable CIDR block",
+      "DNS hostname support",
+      "DNS resolution support",
+      "Instance tenancy options"
+    ],
+    "marketplaceGroup": "aws-vpc-group",
+    "resources": [],
+    "running_cost_monthly": 0,
+    "time_to_provision": 180,
+    "owner": "Archielabs",
+    "costPerMonth": "$0/month",
+    "tags": [
+      "aws-vpc-atomic",
+      "vpc",
+      "atomic",
+      "aws",
+      "foundation",
+      "networking"
+    ],
+    "infra": {
+      "resources": [],
+      "pillars": [
+        "Single VPC resource",
+        "Configurable CIDR block",
+        "DNS hostname support",
+        "DNS resolution support",
+        "Instance tenancy options"
+      ],
+      "configuration": {
+        "smart_defaults": {
+          "cidr_block": "10.0.0.0/16 (randomized second octet to avoid conflicts)"
+        }
+      },
+      "version": "latest",
+      "action_name": "aws-vpc-atomic"
+    },
+    "environment": "general",
+    "use_cases": [
+      "Foundation for custom network architecture",
+      "Expert users building networks manually",
+      "Testing and learning VPC concepts"
+    ],
+    "version": "latest",
+    "deploy_count": 0,
+    "created_at": "2026-01-01T00:00:00Z",
+    "star_rating": "4.5",
+    "tier": "atomic",
+    "subtitle": "",
+    "deployedCount": 0,
+    "service": "Networking",
+    "updated_at": "2026-01-01T00:00:00Z",
+    "is_essential": false,
+    "category": "Networking",
+    "cloudProviderLogo": "aws",
+    "isListedInMarketplace": false,
+    "description": "Create a standalone VPC with configurable CIDR, DNS settings, and instance tenancy. This is an atomic resource containing only the VPC itself - no subnets, gateways, or route tables.",
+    "title": "VPC"
+  },
+  "configuration": {
+    "action_name": "aws-vpc-atomic",
+    "version": "latest",
+    "description": "Create a standalone VPC with configurable CIDR, DNS settings, and instance tenancy. This is an atomic resource containing only the VPC itself - no subnets, gateways, or route tables.",
+    "pillars": [],
+    "configuration": {
+      "type": "object",
+      "properties": {
+        "region": {
+          "type": "string",
+          "title": "AWS Region",
+          "description": "AWS region for deployment",
+          "enum": [
+            "us-east-1",
+            "us-west-2",
+            "eu-west-1",
+            "ap-southeast-1"
+          ],
+          "default": "us-east-1"
+        },
+        "cidrBlock": {
+          "type": "string",
+          "title": "VPC CIDR Block",
+          "description": "IPv4 CIDR block for the VPC",
+          "default": "10.0.0.0/16",
+          "pattern": "^([0-9]{1,3}\\.){3}[0-9]{1,3}/[0-9]{1,2}$"
+        },
+        "enableDnsSupport": {
+          "type": "boolean",
+          "title": "Enable DNS Support",
+          "description": "Enable DNS resolution in the VPC",
+          "default": true
+        },
+        "enableDnsHostnames": {
+          "type": "boolean",
+          "title": "Enable DNS Hostnames",
+          "description": "Enable DNS hostnames in the VPC",
+          "default": true
+        },
+        "instanceTenancy": {
+          "type": "string",
+          "title": "Instance Tenancy",
+          "description": "Tenancy option for instances launched into the VPC",
+          "enum": [
+            "default",
+            "dedicated",
+            "host"
+          ],
+          "default": "default"
+        },
+        "projectName": {
+          "type": "string",
+          "title": "Project Name",
+          "description": "The name of the project",
+          "pattern": "^[a-z0-9-]{1,63}$"
+        }
+      },
+      "required": [
+        "projectName",
+        "region"
+      ]
+    },
+    "resources": [
+      {
+        "id": "vpc_atomic:unknown",
+        "type": "aws:ec2:Vpc",
+        "name": "unknown",
+        "description": "Virtual Private Cloud with DNS support",
+        "category": "Networking"
+      }
+    ]
+  },
+  "infra": {
+    "resources": [
+      {
+        "id": "vpc_atomic:unknown",
+        "type": "aws:ec2:Vpc",
+        "name": "unknown",
+        "description": "Virtual Private Cloud with DNS support",
+        "category": "Networking"
+      }
+    ],
+    "configuration": {
+      "smart_defaults": {
+        "cidr_block": "10.0.0.0/16 (randomized second octet to avoid conflicts)"
+      }
+    },
+    "pillars": [
+      "Single VPC resource",
+      "Configurable CIDR block",
+      "DNS hostname support",
+      "DNS resolution support",
+      "Instance tenancy options"
+    ],
+    "action_name": "vpc_atomic",
+    "version": "latest"
+  },
+  "pillars": {
+    "principles": [
+      {
+        "title": "Logical Isolation",
+        "description": "The VPC provides a logically isolated section of the AWS Cloud where you can launch AWS resources in a virtual network that you define.",
+        "icon": "shield-lock"
+      },
+      {
+        "title": "Custom Address Space",
+        "description": "Complete control over your IP address range, subnets, and configuration of route tables and network gateways.",
+        "icon": "network-wired"
+      },
+      {
+        "title": "Security by Design",
+        "description": "Foundation for multiple layers of security, including security groups and network access control lists.",
+        "icon": "check-circle"
+      }
+    ]
+  }
+}

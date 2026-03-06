@@ -1,0 +1,24 @@
+{
+  "_meta": {
+    "template_type": "base",
+    "template_id": "aws-rta-atomic",
+    "description": "Base aws-rta-atomic template extracted from Pulumi code",
+    "version": "1.0",
+    "generated_from": "pulumi.py",
+    "source_of_truth": "pulumi.py - This file is GENERATED. Edit pulumi.py instead."
+  },
+  "base_resources": [
+    {
+      "id": "aws-rta-atomic:generated-resource",
+      "type": "aws:ec2:RouteTableAssociation",
+      "name": "generated-resource",
+      "description": "RouteTableAssociation resource - generated-resource",
+      "category": "Networking",
+      "from_sub_template": "aws-rta-atomic",
+      "full_defaults": {},
+      "dependencies": [],
+      "dependents": [],
+      "optional": false
+    }
+  ]
+}

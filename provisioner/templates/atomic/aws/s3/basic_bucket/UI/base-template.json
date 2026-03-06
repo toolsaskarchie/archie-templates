@@ -1,0 +1,36 @@
+{
+  "_meta": {
+    "template_type": "base",
+    "template_id": "aws-basic-bucket",
+    "description": "Base aws-basic-bucket template extracted from Pulumi code",
+    "version": "1.0",
+    "generated_from": "pulumi.py",
+    "source_of_truth": "pulumi.py - This file is GENERATED. Edit pulumi.py instead."
+  },
+  "base_resources": [
+    {
+      "id": "aws-basic-bucket:{project_name}-bucket",
+      "type": "aws:s3:Bucket",
+      "name": "{project_name}-bucket",
+      "description": "Bucket resource - {project_name}-bucket",
+      "category": "Storage",
+      "from_sub_template": "aws-basic-bucket",
+      "full_defaults": {},
+      "dependencies": [],
+      "dependents": [],
+      "optional": false
+    },
+    {
+      "id": "aws-basic-bucket:{project_name}-lifecycle",
+      "type": "aws:s3:BucketLifecycleConfigurationV2",
+      "name": "{project_name}-lifecycle",
+      "description": "BucketLifecycleConfigurationV2 resource - {project_name}-lifecycle",
+      "category": "Storage",
+      "from_sub_template": "aws-basic-bucket",
+      "full_defaults": {},
+      "dependencies": [],
+      "dependents": [],
+      "optional": false
+    }
+  ]
+}

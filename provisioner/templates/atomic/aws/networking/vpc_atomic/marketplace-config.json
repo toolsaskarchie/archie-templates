@@ -1,0 +1,102 @@
+{
+  "action_name": "vpc-atomic",
+  "version": "latest",
+  "description": "Create a standalone IPv4 VPC with configurable CIDR, DNS settings, and instance tenancy. This template is an atomic resource, it only creates the VPC, no subnets or gateways. Perfect for expert users building custom network architectures from scratch.",
+  "resources": [
+    {
+      "type": "aws:ec2:Vpc",
+      "name": "vpc",
+      "description": "IPv4 Virtual Private Cloud with DNS support",
+      "config": {
+        "cidrBlock": "{cidr_block}",
+        "enableDnsHostnames": "{enable_dns_hostnames}",
+        "enableDnsSupport": "{enable_dns_support}",
+        "instanceTenancy": "{instance_tenancy}",
+        "tags": {
+          "Name": "{vpc_name}",
+          "Environment": "{environment}",
+          "ManagedBy": "Archie",
+          "Project": "{project_name}"
+        }
+      }
+    }
+  ],
+  "configuration": {
+    "smart_defaults": {
+      "cidr_block": "auto-generated",
+      "enable_dns_hostnames": true,
+      "enable_dns_support": true,
+      "instance_tenancy": "default",
+      "vpc_name": "{project_name}-vpc",
+      "environment": "dev",
+      "project_name": "my-project"
+    }
+  },
+  "parameters": {
+    "cidrBlock": {
+      "type": "string",
+      "default": "auto-generated",
+      "description": "The IPv4 CIDR block for the VPC (auto-generated or custom)",
+      "required": true,
+      "placeholder": "auto-generated (or 10.0.0.0/16)",
+      "help_text": "Leave as 'auto-generated' to automatically create a unique CIDR in the 10.X.0.0/16 range, or specify a custom RFC 1918 private CIDR block (10.0.0.0/8, 172.16.0.0/12, 192.168.0.0/16).",
+      "validation": "^(auto-generated|10\\.([0-9]{1,3}\\.){2}[0-9]{1,3}/(1[6-9]|2[0-8]))|(172\\.(1[6-9]|2[0-9]|3[01])\\.([0-9]{1,3}\\.)[0-9]{1,3}/(1[6-9]|2[0-8]))|(192\\.168\\.([0-9]{1,3}\\.)[0-9]{1,3}/(1[6-9]|2[0-8]))$"
+    },
+    "vpcName": {
+      "type": "string",
+      "default": "auto-generated",
+      "description": "VPC name (auto-generated with naming convention: vpc-[project]-[env]-[network]-[region])",
+      "required": false,
+      "placeholder": "auto-generated",
+      "help_text": "VPC name is auto-generated using the convention: vpc-[project]-[env]-[network]-[region]. For example: vpc-myproject-dev-10123-use1"
+    },
+    "enableDnsHostnames": {
+      "type": "boolean",
+      "default": true,
+      "description": "Enable DNS hostnames in the VPC",
+      "required": false,
+      "help_text": "Instances launched in the VPC will receive public DNS hostnames if they have public IP addresses."
+    },
+    "enableDnsSupport": {
+      "type": "boolean",
+      "default": true,
+      "description": "Enable DNS resolution in the VPC",
+      "required": false,
+      "help_text": "The Amazon DNS server at 169.254.169.253 will resolve DNS hostnames for your instances."
+    },
+    "instanceTenancy": {
+      "type": "string",
+      "default": "default",
+      "description": "Instance tenancy option for the VPC",
+      "required": false,
+      "allowed_values": [
+        "default",
+        "dedicated",
+        "host"
+      ],
+      "help_text": "Default: instances use shared hardware. Dedicated: instances run on dedicated hardware (additional cost). Host: instances run on a Dedicated Host."
+    },
+    "environment": {
+      "type": "string",
+      "default": "dev",
+      "description": "Environment name (e.g., dev, staging, prod)",
+      "required": false,
+      "placeholder": "dev",
+      "help_text": "Used for tagging and organizing resources."
+    },
+    "projectName": {
+      "type": "string",
+      "default": "my-project",
+      "description": "Project name for resource naming and tagging",
+      "required": true,
+      "placeholder": "my-project",
+      "help_text": "Used as a prefix for resource names and in tags."
+    }    "region": {
+      "type": "string",
+      "default": "us-east-1",
+      "description": "AWS region for VPC deployment",
+      "required": true,
+      "placeholder": "us-east-1",
+      "help_text": "AWS region where the VPC will be created. Used in resource naming convention."
+    },  }
+}

@@ -1,0 +1,84 @@
+{
+  "metadata": {
+    "cloudProvider": "AWS",
+    "cloudProviderLogo": "aws",
+    "title": "EKS Kubernetes",
+    "subtitle": "Kubernetes Stacks & Atomics",
+    "category": "Kubernetes",
+    "prompt": "Launch a Kubernetes cluster",
+    "description": "Comprehensive collection of AWS Elastic Kubernetes Service (EKS) templates and container orchestration components. This group offers two distinct sections: 'Select a Configuration' with complete ready-to-deploy Kubernetes clusters for non-production and production environments, and 'Building Blocks' with container-related components for users building custom microservices architectures.",
+    "star_rating": "4.9",
+    "deployedCount": 210,
+    "deploy_count": 210,
+    "isListedInMarketplace": true,
+    "isGroup": true,
+    "action_name": "aws-kubernetes-group",
+    "version": "latest",
+    "groupSections": [
+      {
+        "title": "Select a Configuration",
+        "layout": "grid",
+        "templates": [
+          "aws-eks-nonprod"
+        ]
+      },
+      {
+        "title": "Building Blocks",
+        "layout": "grid",
+        "templates": []
+      }
+    ],
+    "groupTemplates": [
+      "aws-eks-nonprod"
+    ],
+    "pillars": [
+      "Managed Orchestration: Highly available Kubernetes control plane managed by AWS",
+      "Security First: Secure node groups in private subnets with RBAC integration",
+      "Scalable Foundation: Ready for auto-scaling microservices and containerized apps",
+      "Operational Excellence: Integrated CloudWatch monitoring and logging",
+      "Developer Friendly: Standardized cluster configurations with sample deployments"
+    ],
+    "features": [
+      "Managed EKS Control Plane",
+      "Fargate & Managed Nodes",
+      "VPC CNI Networking",
+      "IAM RBAC Integration",
+      "Cluster Auto-scaling",
+      "Add-on Management"
+    ],
+    "use_cases": [
+      "Microservices Hosting",
+      "Containerized Applications",
+      "SaaS Backend",
+      "Kubernetes Learning"
+    ],
+    "time_to_provision": 900,
+    "complexity_level": "advanced",
+    "resource_type": "EKS",
+    "cloud": "aws",
+    "tier": "group",
+    "environment": "PROD & NONPROD"
+  },
+  "configuration": {
+    "action_name": "aws-kubernetes-group",
+    "category": "Kubernetes",
+    "version": "latest",
+    "isGroup": true,
+    "title": "Kubernetes Clusters & Components",
+    "description": "Comprehensive collection of AWS Elastic Kubernetes Service (EKS) templates and container orchestration components. This group offers two distinct sections: 'Select a Configuration' with complete ready-to-deploy Kubernetes clusters for non-production and production environments, and 'Building Blocks' with container-related components for users building custom microservices architectures.",
+    "groupSections": [
+      {
+        "title": "Select a Configuration",
+        "layout": "grid",
+        "templates": [
+          "aws-eks-nonprod"
+        ]
+      },
+      {
+        "title": "Building Blocks",
+        "layout": "grid",
+        "templates": []
+      }
+    ]
+  }
+}

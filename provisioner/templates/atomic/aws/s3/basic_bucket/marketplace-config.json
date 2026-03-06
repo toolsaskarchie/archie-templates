@@ -1,0 +1,73 @@
+{
+  "action_name": "s3-demo-bucket",
+  "version": "latest",
+  "description": "Deploy a simple S3 bucket to test Archie's deployment flow with real AWS infrastructure. The bucket name combines your project name, environment, and a random suffix to ensure global uniqueness. This template creates an actual S3 bucket in your AWS account using Pulumi for infrastructure-as-code deployment. Perfect for testing the complete deployment pipeline, understanding how Archie works, and verifying your AWS credentials. The bucket is tagged for easy identification and management. Use this template to get comfortable with the deployment process before moving on to more complex infrastructure.",
+  "pillars": [
+    "🧪 Simple Testing: Minimal infrastructure for testing deployments",
+    "🏗️ Real Infrastructure: Creates actual AWS resources using Pulumi",
+    "🧹 Easy Cleanup: Simple to delete when testing is complete",
+    "💵 Cost Effective: Minimal cost - essentially free for testing",
+    "✅ Best Practices: Includes proper tagging and naming conventions"
+  ],
+  "resources": [
+    {
+      "type": "aws:s3:Bucket",
+      "name": "demo-bucket",
+      "description": "S3 bucket with globally unique name",
+      "config": {
+        "bucket_name": "{project_name}-{environment}-demo-{random-6}",
+        "force_destroy": true,
+        "tags": {
+          "Project": "{project_name}",
+          "Environment": "{environment}",
+          "ManagedBy": "Archie"
+        }
+      }
+    }
+  ],
+  "configuration": {
+    "smart_defaults": {
+      "bucket_name_pattern": "{project_name}-{environment}-demo-{random-6} (globally unique)",
+      "environment": "dev",
+      "tags": {
+        "ManagedBy": "Archie-Pulumi",
+        "Purpose": "Demo/Testing"
+      }
+    }
+  },
+  "deploy": {
+    "required_fields": {
+      "project_name": {
+        "type": "string",
+        "description": "Project identifier for resource naming",
+        "example": "demo"
+      },
+      "region": {
+        "type": "string",
+        "description": "AWS region for S3 bucket",
+        "example": "us-east-1"
+      }
+    },
+    "custom_config": {
+      "environment": {
+        "type": "select",
+        "description": "Environment name for the bucket",
+        "default": "dev",
+        "options": [
+          {
+            "value": "dev",
+            "label": "Development"
+          },
+          {
+            "value": "staging",
+            "label": "Staging"
+          },
+          {
+            "value": "prod",
+            "label": "Production"
+          }
+        ]
+      }
+    }
+  }
+}

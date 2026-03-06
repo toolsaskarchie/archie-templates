@@ -1,0 +1,162 @@
+{
+  "action_name": "gcp-static-website",
+  "version": "latest",
+  "executionMode": "lambda",
+  "estimatedDuration": "2-3 minutes",
+  "description": "Deploy an Archie-branded congratulations page on Google Cloud Storage - perfect for your first GCP deployment! This template creates a Cloud Storage bucket with static website hosting enabled, complete with a beautiful welcome page showcasing your successful deployment. The page includes deployment metadata, a professional dark/light theme toggle, and verification details. Great for learning GCP basics with zero infrastructure management.",
+  "pillars": [
+    "💰 Cost Effective: Free tier eligible with GCS (5GB storage per month)",
+    "⚡ Simple Deploy: Single bucket with automatic configuration",
+    "🌍 Public Access: IAM configured for static website hosting",
+    "🎨 Branded Content: Archie-styled congratulations page with your deployment info",
+    "☁️ Multi-Cloud: Learn GCP alongside AWS with familiar Archie interface"
+  ],
+  "resources": [
+    {
+      "type": "gcp:storage:Bucket",
+      "name": "static-website-bucket",
+      "description": "Cloud Storage bucket configured for static website hosting",
+      "config": {
+        "name": "auto-generated-unique-name",
+        "location": "{location}",
+        "website": {
+          "main_page_suffix": "index.html",
+          "not_found_page": "index.html"
+        },
+        "uniform_bucket_level_access": true,
+        "labels": {
+          "created_by": "archie",
+          "template": "gcp-static-website",
+          "purpose": "static-website"
+        }
+      }
+    },
+    {
+      "type": "gcp:storage:BucketIAMBinding",
+      "name": "public-access",
+      "description": "IAM binding for public read access",
+      "config": {
+        "role": "roles/storage.objectViewer",
+        "members": [
+          "allUsers"
+        ]
+      }
+    },
+    {
+      "type": "gcp:storage:BucketObject",
+      "name": "index.html",
+      "description": "Archie-branded congratulations page",
+      "config": {
+        "content_type": "text/html",
+        "source": "Downloaded from Archie GCS bucket or embedded with deployment metadata"
+      }
+    },
+    {
+      "type": "gcp:storage:BucketObject",
+      "name": "styles.css",
+      "description": "Professional styling with dark/light theme",
+      "config": {
+        "content_type": "text/css"
+      }
+    },
+    {
+      "type": "gcp:storage:BucketObject",
+      "name": "archie-logo.png",
+      "description": "Archie brand logo",
+      "config": {
+        "content_type": "image/png"
+      }
+    }
+  ],
+  "configuration": {
+    "smart_defaults": {
+      "location": "US (multi-region for best availability)",
+      "bucket_name": "Auto-generated with random suffix (archie-gcp-{projectName}-{random8})",
+      "public_access": "Enabled via IAM binding for website hosting",
+      "content": "Archie-branded congratulations page included"
+    }
+  },
+  "deploy": {
+    "required_fields": {
+      "projectName": {
+        "type": "string",
+        "description": "Project identifier for resource naming",
+        "example": "my-website"
+      },
+      "region": {
+        "type": "string",
+        "description": "GCP region/location for the bucket",
+        "example": "us-central1",
+        "default": "us-central1"
+      }
+    },
+    "custom_config": {
+      "project": {
+        "type": "string",
+        "description": "GCP project ID (optional, uses archie-demo-480815 if not provided)",
+        "example": "my-gcp-project-123456",
+        "default": "archie-demo-480815",
+        "help": "For demo purposes, defaults to Archie's demo project. Replace with your own project ID."
+      },
+      "environment": {
+        "type": "select",
+        "description": "Environment name for labeling",
+        "default": "nonprod",
+        "options": [
+          {
+            "value": "nonprod",
+            "label": "Non-Production"
+          },
+          {
+            "value": "prod",
+            "label": "Production"
+          }
+        ]
+      },
+      "location": {
+        "type": "select",
+        "description": "GCS bucket location/region",
+        "default": "US",
+        "options": [
+          {
+            "value": "US",
+            "label": "US (Multi-region)",
+            "description": "Automatically replicate across US regions"
+          },
+          {
+            "value": "EU",
+            "label": "EU (Multi-region)",
+            "description": "Automatically replicate across EU regions"
+          },
+          {
+            "value": "ASIA",
+            "label": "ASIA (Multi-region)",
+            "description": "Automatically replicate across Asia regions"
+          },
+          {
+            "value": "us-east1",
+            "label": "us-east1 (South Carolina)",
+            "description": "Single region deployment"
+          },
+          {
+            "value": "us-west1",
+            "label": "us-west1 (Oregon)",
+            "description": "Single region deployment"
+          },
+          {
+            "value": "us-central1",
+            "label": "us-central1 (Iowa)",
+            "description": "Single region deployment"
+          }
+        ]
+      },
+      "bucket_name": {
+        "type": "string",
+        "description": "Custom bucket name (optional)",
+        "default": "",
+        "help": "Leave empty for auto-generated unique name",
+        "validation": "Lowercase letters, numbers, hyphens only"
+      }
+    }
+  }
+}

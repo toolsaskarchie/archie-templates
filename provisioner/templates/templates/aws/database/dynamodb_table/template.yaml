@@ -1,0 +1,93 @@
+metadata:
+  name: aws-dynamodb-table
+  title: DynamoDB NoSQL Table
+  description: Fully managed, high-performance NoSQL database table. Features on-demand or provisioned capacity, Global Secondary Indexes (GSIs) for flexible querying, and automated encryption at rest using AWS KMS.
+  category: database
+  version: latest
+  author: InnovativeApps
+  tags:
+  - dynamodb
+  - nosql
+  - database
+  - serverless
+  - aws
+  features:
+  - Serverless NoSQL with On-Demand Capacity Scaling
+  - Global Secondary Indexes (GSIs) for Optimized Queries
+  - Native Encryption at Rest via AWS KMS
+  - Automated TTL (Time-to-Live) Management
+  - Point-in-Time Recovery (PITR) Support
+  - Intelligent Resource Tagging & Compliance
+  estimated_cost: $1.00 - $25.00/month (scales with data & throughput)
+  complexity: intermediate
+  deployment_time: 2-4 minutes
+  marketplace_group: aws-database-group
+  action_name: aws-dynamodb-table
+  environment: prod
+  cloud: aws
+  tier: template
+  use_cases:
+  - Production workloads
+  - Mission-critical applications
+  - Enterprise-grade infrastructure
+resources:
+  '{project}':
+    type: aws:dynamodb:Table
+    name: '{project}'
+    always_created: true
+    description: DynamoDB table - {project}
+    smart_defaults:
+      name: archie-{project}
+      tags:
+        Name: archie-{project}-{environment}
+        ManagedBy: Archie
+configuration:
+  properties:
+    project_name:
+      type: string
+      title: Project Name
+      description: Project Name
+      help_text: Name of your project for resource tagging and tracking
+      placeholder: my-project
+      group: Essentials
+      isEssential: true
+      order: 0
+    region:
+      type: string
+      title: AWS Region
+      description: AWS Region
+      default: us-east-1
+      enum:
+      - us-east-1
+      - us-east-2
+      - us-west-1
+      - us-west-2
+      - eu-west-1
+      - eu-central-1
+      group: Essentials
+      isEssential: true
+      order: 1
+    table_name:
+      type: string
+      title: Table Name
+      description: Name for the DynamoDB table
+      default: dynamodb-table
+      group: Table Settings
+    billing_mode:
+      type: string
+      title: Billing Mode
+      description: Billing mode for the table
+      enum:
+      - PAY_PER_REQUEST
+      - PROVISIONED
+      default: PAY_PER_REQUEST
+      group: Table Settings
+    hash_key:
+      type: string
+      title: Partition Key (Hash Key)
+      description: Name of the partition key
+      default: id
+      group: Table Settings
+  required:
+  - project_name
+  - table_name

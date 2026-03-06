@@ -1,0 +1,30 @@
+{
+  "_meta": {
+    "template_type": "base",
+    "template_id": "aws-eks-atomic",
+    "description": "Base aws-eks-atomic template extracted from Pulumi code",
+    "version": "1.0",
+    "generated_from": "pulumi.py",
+    "source_of_truth": "pulumi.py - This file is GENERATED. Edit pulumi.py instead."
+  },
+  "base_resources": [
+    {
+      "id": "aws-eks-atomic:{project_name}-cluster",
+      "type": "aws:eks:Cluster",
+      "name": "{project_name}-cluster",
+      "description": "EKS Kubernetes cluster - {project_name}-cluster",
+      "category": "Compute",
+      "from_sub_template": "aws-eks-atomic",
+      "full_defaults": {
+        "name": "archie-{project_name}-cluster",
+        "tags": {
+          "Name": "archie-{project_name}-cluster-{environment}",
+          "ManagedBy": "Archie"
+        }
+      },
+      "dependencies": [],
+      "dependents": [],
+      "optional": false
+    }
+  ]
+}

@@ -1,0 +1,140 @@
+{
+  "action_name": "azure-vnet-atomic",
+  "version": "latest",
+  "description": "Create a standalone Azure Virtual Network with configurable address space. This template is an atomic resource, it only creates the VNet and resource group, no subnets, NSGs, or route tables. Perfect for expert users building custom network architectures from scratch on Azure.",
+  "resources": [
+    {
+      "type": "azure-native:resources:ResourceGroup",
+      "name": "resource_group",
+      "description": "Azure Resource Group to contain the VNet",
+      "config": {
+        "resourceGroupName": "{resource_group_name}",
+        "location": "{location}",
+        "tags": {
+          "Environment": "{environment}",
+          "ManagedBy": "Archie",
+          "Project": "{project_name}"
+        }
+      }
+    },
+    {
+      "type": "azure-native:network:VirtualNetwork",
+      "name": "vnet",
+      "description": "Azure Virtual Network with configurable address space",
+      "config": {
+        "virtualNetworkName": "{vnet_name}",
+        "resourceGroupName": "{resource_group_name}",
+        "location": "{location}",
+        "addressSpace": {
+          "addressPrefixes": "{address_prefixes}"
+        },
+        "tags": {
+          "Name": "{vnet_name}",
+          "Environment": "{environment}",
+          "ManagedBy": "Archie",
+          "Project": "{project_name}"
+        }
+      }
+    }
+  ],
+  "configuration": {
+    "smart_defaults": {
+      "address_prefixes": ["10.0.0.0/16"],
+      "location": "eastus",
+      "vnet_name": "{project_name}-vnet",
+      "resource_group_name": "{project_name}-rg",
+      "environment": "dev",
+      "project_name": "my-project"
+    }
+  },
+  "parameters": {
+    "vnetName": {
+      "type": "string",
+      "default": "{project_name}-vnet",
+      "description": "Name for the Virtual Network",
+      "required": true,
+      "placeholder": "my-vnet",
+      "help_text": "This name will appear in the Azure Portal. Must be unique within the resource group."
+    },
+    "resourceGroupName": {
+      "type": "string",
+      "default": "{project_name}-rg",
+      "description": "Name for the resource group",
+      "required": false,
+      "placeholder": "my-project-rg",
+      "help_text": "Resource group will be created if it doesn't exist. Leave empty to auto-generate based on project name."
+    },
+    "location": {
+      "type": "string",
+      "default": "eastus",
+      "description": "Azure region for the VNet",
+      "required": true,
+      "allowed_values": [
+        "eastus",
+        "eastus2",
+        "westus",
+        "westus2",
+        "westus3",
+        "centralus",
+        "northcentralus",
+        "southcentralus",
+        "westcentralus",
+        "canadacentral",
+        "canadaeast",
+        "brazilsouth",
+        "northeurope",
+        "westeurope",
+        "uksouth",
+        "ukwest",
+        "francecentral",
+        "germanywestcentral",
+        "norwayeast",
+        "switzerlandnorth",
+        "swedencentral",
+        "australiaeast",
+        "australiasoutheast",
+        "southeastasia",
+        "eastasia",
+        "japaneast",
+        "japanwest",
+        "koreacentral",
+        "koreasouth",
+        "southindia",
+        "centralindia",
+        "westindia",
+        "uaenorth"
+      ],
+      "help_text": "Choose an Azure region close to your users for best performance."
+    },
+    "addressPrefixes": {
+      "type": "string",
+      "default": "10.0.0.0/16",
+      "description": "CIDR block(s) for the VNet address space",
+      "required": true,
+      "placeholder": "10.0.0.0/16",
+      "help_text": "Specify one or more RFC 1918 private CIDR blocks (e.g., 10.0.0.0/16, 172.16.0.0/12, 192.168.0.0/16). For multiple blocks, separate with commas.",
+      "validation": "^([0-9]{1,3}\\.){3}[0-9]{1,3}/[0-9]{1,2}(,\\s*([0-9]{1,3}\\.){3}[0-9]{1,3}/[0-9]{1,2})*$"
+    },
+    "projectName": {
+      "type": "string",
+      "default": "my-project",
+      "description": "Project name for resource naming and tagging",
+      "required": true,
+      "placeholder": "my-project",
+      "help_text": "Used as a prefix for resource names and in tags."
+    },
+    "environment": {
+      "type": "string",
+      "default": "dev",
+      "description": "Environment name (e.g., dev, test, staging, prod)",
+      "required": false,
+      "allowed_values": [
+        "dev",
+        "test",
+        "staging",
+        "prod"
+      ],
+      "help_text": "Used for tagging and organizing resources."
+    }
+  }
+}

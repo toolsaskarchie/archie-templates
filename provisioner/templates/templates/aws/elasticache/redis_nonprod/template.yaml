@@ -1,0 +1,145 @@
+metadata:
+  name: aws-redis-nonprod
+  title: Distributed Cache (Redis)
+  description: Rapidly deploy a managed Redis cluster for development and testing using AWS ElastiCache. Features cost-optimized t3-family nodes, automated snapshot integration, and pre-configured security group isolation. Perfect for application caching and session management.
+  category: database
+  version: latest
+  author: InnovativeApps
+  supported_regions:
+  - us-east-1
+  - us-east-2
+  - us-west-2
+  is_listed_in_marketplace: true
+  marketplace_group: aws-caching-group
+  base_template: aws-vpc-nonprod
+  base_cost: $12-35/month
+  tags:
+  - redis
+  - elasticache
+  - database
+  - cache
+  - nonprod
+  features:
+  - High-Performance Managed Redis Engine
+  - Cost-Optimized Burstable Node Types (t3 family)
+  - Integrated Security Group with Redis Port isolation
+  - Automated Backups & Maintenance Windows
+  - Multi-AZ Support for testing HA failover
+  - Intelligent Subnet Group placement for VPCs
+  estimated_cost: $12-35/month (depends on node type)
+  complexity: medium
+  deployment_time: 5-10 minutes
+  action_name: aws-redis-nonprod
+  environment: nonprod
+  cloud: aws
+  tier: template
+  use_cases:
+  - Development and testing environments
+  - Staging infrastructure
+  - Non-production workloads
+resources:
+  sg-{project}-{environment}:
+    type: aws:ec2:SecurityGroup
+    name: sg-{project}-{environment}
+    always_created: true
+    description: SecurityGroup resource - sg-{project}-{environment}
+    resource_category: SecurityGroup
+    smart_defaults:
+      vpc_id: '{config_id}'
+      description: Security group for Redis {project}-{environment}
+      tags:
+        Name: 'sg-redis-{project}-{environment}'
+        Environment: '{environment}'
+        ManagedBy: Archie
+  subnet-group-{project}-{environment}:
+    type: aws:elasticache:SubnetGroup
+    name: subnet-group-{project}-{environment}
+    always_created: true
+    description: ElastiCache subnet group
+    resource_category: Subnet
+    smart_defaults:
+      description: Subnet group for Redis {project}-{environment}
+      subnet_ids: '{config_subnet_ids}'
+      tags:
+        Name: 'sng-redis-{project}-{environment}'
+        ManagedBy: Archie
+  cluster-{project}-{environment}:
+    type: aws:elasticache:Cluster
+    name: cluster-{project}-{environment}
+    always_created: true
+    description: ElastiCache Redis cluster
+    resource_category: Database
+    smart_defaults:
+      cluster_id: 'redis-{project}-{environment}'
+      engine: redis
+      engine_version: '{engine_version}'
+      node_type: '{node_type}'
+      num_cache_nodes: '{num_cache_nodes}'
+      parameter_group_name: default.redis7
+      port: '{port}'
+      subnet_group_name: '{subnet-group-{project}-{environment}.name}'
+      security_group_ids: ['{sg-{project}-{environment}.id}']
+      tags:
+        Name: 'redis-{project}-{environment}'
+        ManagedBy: Archie
+configuration:
+  properties:
+    project_name:
+      type: string
+      title: Project Name
+      description: Project Name
+      help_text: Name of your project for resource tagging and tracking
+      placeholder: my-project
+      group: Essentials
+      isEssential: true
+      order: 0
+    region:
+      type: string
+      title: AWS Region
+      description: AWS Region
+      default: us-east-1
+      enum:
+      - us-east-1
+      - us-east-2
+      - us-west-1
+      - us-west-2
+      - eu-west-1
+      - eu-central-1
+      group: Essentials
+      isEssential: true
+      order: 1
+    cluster_name:
+      type: string
+      title: Cluster Name
+      description: Name for the Redis cluster
+      default: redis-nonprod
+      pattern: ^[a-zA-Z][a-zA-Z0-9-]{0,39}$
+      group: Redis Settings
+    engine_version:
+      type: string
+      title: Engine Version
+      description: Redis version
+      default: '7.0'
+      group: Redis Settings
+    node_type:
+      type: string
+      title: Node Type
+      description: Cache node instance type
+      default: cache.t3.micro
+      group: Redis Settings
+    num_cache_nodes:
+      type: number
+      title: Number of Nodes
+      description: Number of cache nodes in the cluster
+      default: 1
+      minimum: 1
+      group: Redis Settings
+    port:
+      type: number
+      title: Port
+      description: Redis connection port
+      default: 6379
+      group: Network Settings
+  required:
+  - project_name
+  - cluster_name

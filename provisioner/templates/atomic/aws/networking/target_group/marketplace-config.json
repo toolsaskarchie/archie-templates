@@ -1,0 +1,159 @@
+{
+  "action_name": "target-group-atomic",
+  "version": "latest",
+  "description": "Create a standalone AWS Load Balancer Target Group for advanced load balancing configurations. This atomic template deploys only the target group component, perfect for expert users building custom load balancer architectures or managing target groups independently. Requires an existing VPC.",
+  "resources": [
+    {
+      "type": "aws:lb:TargetGroup",
+      "name": "target-group",
+      "description": "Load Balancer Target Group for routing traffic to backend targets",
+      "config": {
+        "name": "{target_group_name}",
+        "port": "{port}",
+        "protocol": "{protocol}",
+        "vpcId": "{vpc_id}",
+        "targetType": "{target_type}",
+        "healthCheck": {
+          "enabled": "{health_check_enabled}",
+          "healthyThreshold": "{healthy_threshold}",
+          "unhealthyThreshold": "{unhealthy_threshold}",
+          "timeout": "{health_check_timeout}",
+          "interval": "{health_check_interval}",
+          "matcher": "{health_check_matcher}",
+          "path": "{health_check_path}",
+          "port": "{health_check_port}",
+          "protocol": "{health_check_protocol}"
+        },
+        "tags": {
+          "Name": "{target_group_name}",
+          "Project": "{project_name}",
+          "Environment": "{environment}",
+          "ManagedBy": "Archie"
+        }
+      }
+    }
+  ],
+  "configuration": {
+    "smart_defaults": {
+      "target_group_name": "{project_name}-tg",
+      "port": 80,
+      "protocol": "HTTP",
+      "target_type": "instance",
+      "vpc_id": "",
+      "health_check_enabled": true,
+      "healthy_threshold": 2,
+      "unhealthy_threshold": 2,
+      "health_check_timeout": 5,
+      "health_check_interval": 30,
+      "health_check_matcher": "200",
+      "health_check_path": "/",
+      "health_check_port": "traffic-port",
+      "health_check_protocol": "HTTP",
+      "project_name": "my-project",
+      "environment": "dev"
+    }
+  },
+  "parameters": {
+    "targetGroupName": {
+      "type": "string",
+      "default": "{project_name}-tg",
+      "description": "Name for the target group",
+      "required": true,
+      "placeholder": "my-app-tg",
+      "help_text": "1-32 characters, alphanumeric and hyphens only"
+    },
+    "port": {
+      "type": "number",
+      "default": 80,
+      "description": "Port on which targets receive traffic",
+      "required": true,
+      "placeholder": "80",
+      "help_text": "Port number (1-65535)"
+    },
+    "protocol": {
+      "type": "string",
+      "default": "HTTP",
+      "description": "Protocol for routing traffic",
+      "required": true,
+      "allowed_values": ["HTTP", "HTTPS", "TCP", "UDP", "TCP_UDP", "TLS"],
+      "help_text": "Choose the protocol for your application"
+    },
+    "vpcId": {
+      "type": "string",
+      "default": "",
+      "description": "VPC ID where the target group will be created",
+      "required": true,
+      "placeholder": "vpc-12345678",
+      "help_text": "Must be an existing VPC in your account"
+    },
+    "targetType": {
+      "type": "string",
+      "default": "instance",
+      "description": "Type of target for the target group",
+      "required": false,
+      "allowed_values": ["instance", "ip", "lambda", "alb"],
+      "help_text": "Type of target that will receive traffic"
+    },
+    "healthCheckEnabled": {
+      "type": "boolean",
+      "default": true,
+      "description": "Enable health checks for targets",
+      "required": false,
+      "help_text": "Whether to perform health checks on targets"
+    },
+    "healthyThreshold": {
+      "type": "number",
+      "default": 2,
+      "description": "Number of consecutive successful health checks required",
+      "required": false,
+      "placeholder": "2",
+      "help_text": "Consecutive successes before considering target healthy"
+    },
+    "unhealthyThreshold": {
+      "type": "number",
+      "default": 2,
+      "description": "Number of consecutive failed health checks required",
+      "required": false,
+      "placeholder": "2",
+      "help_text": "Consecutive failures before considering target unhealthy"
+    },
+    "healthCheckTimeout": {
+      "type": "number",
+      "default": 5,
+      "description": "Timeout for health check requests (seconds)",
+      "required": false,
+      "placeholder": "5",
+      "help_text": "How long to wait for health check response"
+    },
+    "healthCheckInterval": {
+      "type": "number",
+      "default": 30,
+      "description": "Interval between health checks (seconds)",
+      "required": false,
+      "placeholder": "30",
+      "help_text": "Time between health check attempts"
+    },
+    "healthCheckPath": {
+      "type": "string",
+      "default": "/",
+      "description": "Health check path for HTTP/HTTPS protocols",
+      "required": false,
+      "placeholder": "/",
+      "help_text": "URL path for health check requests"
+    },
+    "projectName": {
+      "type": "string",
+      "default": "my-project",
+      "description": "Project name for resource naming",
+      "required": true,
+      "placeholder": "my-project"
+    },
+    "environment": {
+      "type": "string",
+      "default": "dev",
+      "description": "Environment name",
+      "required": false,
+      "placeholder": "dev"
+    }
+  }
+}

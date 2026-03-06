@@ -1,0 +1,30 @@
+{
+  "_meta": {
+    "template_type": "base",
+    "template_id": "aws-route-table-atomic",
+    "description": "Base aws-route-table-atomic template extracted from Pulumi code",
+    "version": "1.0",
+    "generated_from": "pulumi.py",
+    "source_of_truth": "pulumi.py - This file is GENERATED. Edit pulumi.py instead."
+  },
+  "base_resources": [
+    {
+      "id": "aws-route-table-atomic:rt-{project}-{environment}",
+      "type": "aws:ec2:RouteTable",
+      "name": "rt-{project}-{environment}",
+      "description": "RouteTable resource - rt-{project}-{environment}",
+      "category": "Networking",
+      "from_sub_template": "aws-route-table-atomic",
+      "full_defaults": {
+        "tags": {
+          "Name": "archie-rt-{project}-{environment}",
+          "Environment": "{environment}",
+          "ManagedBy": "Archie"
+        }
+      },
+      "dependencies": [],
+      "dependents": [],
+      "optional": false
+    }
+  ]
+}

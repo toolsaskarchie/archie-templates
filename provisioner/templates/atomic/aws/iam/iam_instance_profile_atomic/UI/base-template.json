@@ -1,0 +1,30 @@
+{
+  "_meta": {
+    "template_type": "base",
+    "template_id": "aws-iam-instance-profile-atomic",
+    "description": "Base aws-iam-instance-profile-atomic template extracted from Pulumi code",
+    "version": "1.0",
+    "generated_from": "pulumi.py",
+    "source_of_truth": "pulumi.py - This file is GENERATED. Edit pulumi.py instead."
+  },
+  "base_resources": [
+    {
+      "id": "aws-iam-instance-profile-atomic:profile-{project}-{environment}",
+      "type": "aws:iam:InstanceProfile",
+      "name": "profile-{project}-{environment}",
+      "description": "IAM instance profile - profile-{project}-{environment}",
+      "category": "Security",
+      "from_sub_template": "aws-iam-instance-profile-atomic",
+      "full_defaults": {
+        "tags": {
+          "Name": "archie-profile-{project}-{environment}",
+          "Environment": "{environment}",
+          "ManagedBy": "Archie"
+        }
+      },
+      "dependencies": [],
+      "dependents": [],
+      "optional": false
+    }
+  ]
+}

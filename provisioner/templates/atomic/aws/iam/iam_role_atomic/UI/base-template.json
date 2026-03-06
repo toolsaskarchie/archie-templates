@@ -1,0 +1,30 @@
+{
+  "_meta": {
+    "template_type": "base",
+    "template_id": "aws-iam-role-atomic",
+    "description": "Base aws-iam-role-atomic template extracted from Pulumi code",
+    "version": "1.0",
+    "generated_from": "pulumi.py",
+    "source_of_truth": "pulumi.py - This file is GENERATED. Edit pulumi.py instead."
+  },
+  "base_resources": [
+    {
+      "id": "aws-iam-role-atomic:role-{project}-{environment}",
+      "type": "aws:iam:Role",
+      "name": "role-{project}-{environment}",
+      "description": "IAM role - role-{project}-{environment}",
+      "category": "Security",
+      "from_sub_template": "aws-iam-role-atomic",
+      "full_defaults": {
+        "tags": {
+          "Name": "archie-role-{project}-{environment}",
+          "Environment": "{environment}",
+          "ManagedBy": "Archie"
+        }
+      },
+      "dependencies": [],
+      "dependents": [],
+      "optional": false
+    }
+  ]
+}

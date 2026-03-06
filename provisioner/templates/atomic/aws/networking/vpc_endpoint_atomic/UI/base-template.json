@@ -1,0 +1,24 @@
+{
+  "_meta": {
+    "template_type": "base",
+    "template_id": "aws-vpc-endpoint-atomic",
+    "description": "Base aws-vpc-endpoint-atomic template extracted from Pulumi code",
+    "version": "1.0",
+    "generated_from": "pulumi.py",
+    "source_of_truth": "pulumi.py - This file is GENERATED. Edit pulumi.py instead."
+  },
+  "base_resources": [
+    {
+      "id": "aws-vpc-endpoint-atomic:vpce-{project}-{environment}",
+      "type": "aws:ec2:VpcEndpoint",
+      "name": "vpce-{project}-{environment}",
+      "description": "VpcEndpoint resource - vpce-{project}-{environment}",
+      "category": "Networking",
+      "from_sub_template": "aws-vpc-endpoint-atomic",
+      "full_defaults": {},
+      "dependencies": [],
+      "dependents": [],
+      "optional": false
+    }
+  ]
+}

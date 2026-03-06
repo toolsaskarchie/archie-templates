@@ -1,0 +1,58 @@
+{
+  "metadata": {
+    "cloudProvider": "Google Cloud Platform",
+    "cloudProviderLogo": "gcp",
+    "title": "Compute & VMs",
+    "category": "Compute",
+    "environment": "PROD & NONPROD",
+    "tier": "group",
+    "prompt": "Deploy GCP compute instances",
+    "description": "Comprehensive collection of Google Cloud Compute Engine resources, featuring production-ready Stacks for rapid deployment and modular Atomics for custom architectural control. This group provides a complete toolkit for building, scaling, and securing your GCP server infrastructure according to cloud best practices.",
+    "star_rating": "4.8",
+    "deployedCount": 45,
+    "deploy_count": 45,
+    "costPerMonth": "$30.00/mo",
+    "running_cost_monthly": "30.0",
+    "free_trial": false,
+    "action_name": "gcp-compute-group",
+    "version": "latest",
+    "cloud": "gcp",
+    "isListedInMarketplace": true,
+    "complexity_level": "intermediate",
+    "isGroup": true,
+    "resource_type": "Compute",
+    "subtitle": "GCP Stacks & Atomics",
+    "service": "Compute Engine",
+    "is_essential": true,
+    "created_at": "2024-12-28T12:00:00Z",
+    "updated_at": "2024-12-28T12:00:00Z",
+    "groupSections": [
+      {
+        "title": "Select a Configuration",
+        "layout": "grid",
+        "templates": [
+          "gcp-compute-nonprod"
+        ]
+      },
+      {
+        "title": "Building Blocks",
+        "layout": "grid",
+        "templates": [
+          "gcp-firewall-atomic"
+        ]
+      }
+    ],
+    "groupTemplates": [
+      "gcp-compute-nonprod",
+      "gcp-compute-instance-atomic",
+      "gcp-firewall-rule-atomic"
+    ],
+    "use_cases": [
+      "Web Applications",
+      "API Services",
+      "Batch Processing",
+      "Development Environments"
+    ]
+  },
+  "configuration": {}
+}

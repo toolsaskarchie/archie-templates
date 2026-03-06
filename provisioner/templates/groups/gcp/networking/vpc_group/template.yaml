@@ -1,0 +1,44 @@
+metadata:
+  name: gcp-vpc-group
+  title: GCP VPC Networking
+  description: Comprehensive collection of Google Cloud VPC networking resources, featuring production-ready Stacks for rapid deployment and modular Atomics for custom architectural control. This group provides a complete toolkit for building, scaling, and securing your network infrastructure according to cloud best practices.
+  category: Networking
+  version: latest
+  author: InnovativeApps
+  cloud: gcp
+  environment: PROD & NONPROD
+  tier: group
+  complexity: intermediate
+  deployment_time: 5-10 minutes
+  base_cost: $32.40/month
+  marketplace_group: gcp-vpc-group
+  is_listed_in_marketplace: true
+  features:
+  - Production-ready GCP Stacks
+  - modular Atomic Components
+  - Best-practice Firewall Rules
+  - Cloud NAT configurations
+  tags:
+  - networking
+  - vpc
+  - gcp
+  - group
+  use_cases:
+  - Multi-tier Applications
+  - Microservices Architecture
+  - Secure Cloud Infrastructure
+  - Hybrid Cloud Connectivity
+group_configuration:
+  sections:
+  - title: Select a Configuration
+    layout: list
+    templates:
+    - gcp-vpc-nonprod
+  - title: Building Blocks
+    layout: grid
+    templates:
+    - gcp-vpc-atomic
+    - gcp-subnet-atomic
+    - gcp-router-atomic
+    - gcp-nat-atomic
+    - gcp-firewall-atomic

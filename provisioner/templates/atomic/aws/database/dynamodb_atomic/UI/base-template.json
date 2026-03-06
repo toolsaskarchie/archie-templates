@@ -1,0 +1,24 @@
+{
+  "_meta": {
+    "template_type": "base",
+    "template_id": "aws-dynamodb-atomic",
+    "description": "Base aws-dynamodb-atomic template extracted from Pulumi code",
+    "version": "1.0",
+    "generated_from": "pulumi.py",
+    "source_of_truth": "pulumi.py - This file is GENERATED. Edit pulumi.py instead."
+  },
+  "base_resources": [
+    {
+      "id": "aws-dynamodb-atomic:generated-resource",
+      "type": "aws:dynamodb:Table",
+      "name": "generated-resource",
+      "description": "Table resource - generated-resource",
+      "category": "Other",
+      "from_sub_template": "aws-dynamodb-atomic",
+      "full_defaults": {},
+      "dependencies": [],
+      "dependents": [],
+      "optional": false
+    }
+  ]
+}

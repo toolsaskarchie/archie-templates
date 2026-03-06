@@ -1,0 +1,84 @@
+{
+  "metadata": {
+    "name": "dynamodb-atomic",
+    "title": "DynamoDB Table",
+    "description": "Standalone AWS DynamoDB Table resource.",
+    "category": "database",
+    "provider": "aws",
+    "tier": "atomic",
+    "action_name": "aws-dynamodb-atomic",
+    "version": "latest",
+    "author": "InnovativeApps",
+    "cloud": "aws",
+    "environment": "general"
+  },
+  "configuration": {
+    "type": "object",
+    "required": [],
+    "properties": {},
+    "smart_defaults": {}
+  },
+  "resources": [
+    {
+      "id": "aws-dynamodb-atomic:generated-resource",
+      "type": "aws:dynamodb:Table",
+      "name": "generated-resource",
+      "description": "Table resource - generated-resource",
+      "category": "Other",
+      "smart_defaults": {},
+      "optional": false,
+      "dependencies": [],
+      "dependents": []
+    }
+  ],
+  "pillars": {
+    "security": {
+      "score": "fair",
+      "description": "Implements security best practices for cloud infrastructure.",
+      "best_practices": [
+        "Basic security configurations",
+        "Access control mechanisms"
+      ]
+    },
+    "reliability": {
+      "score": "fair",
+      "description": "Ensures high availability and fault tolerance.",
+      "best_practices": [
+        "Automated recovery mechanisms",
+        "Fault-tolerant architecture patterns"
+      ]
+    },
+    "performance_efficiency": {
+      "score": "good",
+      "description": "Optimizes resource utilization and performance with scalable compute resources and efficient networking.",
+      "best_practices": [
+        "Scalable resource provisioning"
+      ]
+    },
+    "cost_optimization": {
+      "score": "good",
+      "description": "Balances cost efficiency with reliability through appropriate resource sizing and usage-based pricing.",
+      "best_practices": [
+        "Environment-specific parameter handling",
+        "Reusable infrastructure patterns reducing overhead",
+        "On-demand resource provisioning"
+      ]
+    },
+    "operational_excellence": {
+      "score": "good",
+      "description": "Enables operational best practices with infrastructure as code, monitoring, and automated management.",
+      "best_practices": [
+        "Infrastructure as Code with Pulumi for automated deployments",
+        "Version-controlled configuration"
+      ]
+    },
+    "sustainability": {
+      "score": "good",
+      "description": "Supports sustainable practices through efficient resource utilization and regional service usage.",
+      "best_practices": [
+        "Efficient resource utilization patterns",
+        "Automated scaling reducing over-provisioning"
+      ]
+    }
+  }
+}

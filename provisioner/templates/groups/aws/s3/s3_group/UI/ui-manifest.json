@@ -1,0 +1,41 @@
+{
+  "metadata": {
+    "cloudProvider": "AWS",
+    "cloudProviderLogo": "aws",
+    "title": "S3 Object Storage",
+    "subtitle": "Storage Stacks & Atomics",
+    "category": "Storage",
+    "environment": "PROD & NONPROD",
+    "tier": "group",
+    "prompt": "Create object storage",
+    "description": "Comprehensive collection of AWS S3 object storage resources, featuring production-ready Stacks for rapid deployment and modular Atomics for custom architectural control. This group provides a complete toolkit for building, scaling, and securing your cloud storage infrastructure according to cloud best practices.",
+    "action_name": "aws-s3-group",
+    "version": "latest",
+    "isGroup": true,
+    "groupSections": [
+      {
+        "title": "Select a Configuration",
+        "layout": "grid",
+        "templates": [
+          "aws-static-website"
+        ]
+      },
+      {
+        "title": "Building Blocks",
+        "layout": "grid",
+        "templates": [
+          "aws-basic-bucket"
+        ]
+      }
+    ],
+    "isListedInMarketplace": true,
+    "use_cases": [
+      "Static Website Hosting",
+      "Media Asset Storage",
+      "Backup & Archive",
+      "Data Lake Storage"
+    ],
+    "cloud": "aws"
+  },
+  "configuration": {}
+}

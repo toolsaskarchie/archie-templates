@@ -1,0 +1,58 @@
+# S3 Basic Bucket Template Metadata
+
+template:
+  # Identification
+  id: s3-demo-bucket
+  name: s3-demo-bucket
+  
+  # Display Information
+  title: S3 Basic Bucket
+  subtitle: Simple S3 bucket for testing
+  description: |
+    Creates a basic S3 bucket with minimal configuration. 
+    Perfect for testing deployment flow without complex infrastructure.
+    Includes versioning and basic lifecycle policies.
+  
+  # Classification
+  category: storage
+  provider: aws
+  tier: atomic
+  complexity: beginner
+  
+  # Visual
+  icon: 🗄️
+  
+  # Versioning
+  version: 1.0.0
+  status: stable
+  
+  # Pricing & Time
+  pricing_tier: free
+  estimated_cost: $0.00 - $0.50/month
+  deployment_time: 1-2 minutes
+  
+  # Marketing
+  use_cases:
+    - Testing deployment flow
+    - Static file hosting
+    - Basic data storage
+    - Development environments
+  
+  features:
+    - S3 bucket with versioning
+    - Encryption at rest
+    - Lifecycle policies
+    - Minimal configuration required
+  
+  outputs:
+    - Bucket name
+    - Bucket ARN
+    - Bucket region
+  
+  # Searchability
+  tags:
+    - s3
+    - storage
+    - basic
+    - testing
+    - bucket

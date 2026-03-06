@@ -1,0 +1,24 @@
+{
+  "_meta": {
+    "template_type": "base",
+    "template_id": "aws-route-atomic",
+    "description": "Base aws-route-atomic template extracted from Pulumi code",
+    "version": "1.0",
+    "generated_from": "pulumi.py",
+    "source_of_truth": "pulumi.py - This file is GENERATED. Edit pulumi.py instead."
+  },
+  "base_resources": [
+    {
+      "id": "aws-route-atomic:route-{project}-{environment}",
+      "type": "aws:ec2:Route",
+      "name": "route-{project}-{environment}",
+      "description": "Route resource - route-{project}-{environment}",
+      "category": "Networking",
+      "from_sub_template": "aws-route-atomic",
+      "full_defaults": {},
+      "dependencies": [],
+      "dependents": [],
+      "optional": false
+    }
+  ]
+}

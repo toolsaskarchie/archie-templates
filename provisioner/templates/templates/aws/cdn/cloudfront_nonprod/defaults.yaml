@@ -1,0 +1,61 @@
+# cloudfront_nonprod - Default Configuration
+# All resource configurations in one place for easy modification
+
+# =============================================================================
+# CloudFront Distribution Configuration
+# =============================================================================
+cloudfront:
+  enabled: true
+  comment: "CloudFront distribution for static website"
+  price_class: "PriceClass_100"  # Use only US, Canada, Europe
+  default_root_object: "index.html"
+
+# =============================================================================
+# Storage Objects Configuration
+# =============================================================================
+storage_objects:
+  # Static website files uploaded to S3 bucket
+  files:
+    - name: "index.html"
+      source: "index.html"
+      content_type: "text/html"
+      description: "Archie-branded congratulations page"
+    - name: "styles.css"
+      source: "styles.css"
+      content_type: "text/css"
+      description: "Styles with dark/light theme support"
+    - name: "archie-logo.png"
+      source: "archie-logo.png"
+      content_type: "image/png"
+      description: "Archie brand logo"
+
+# =============================================================================
+# S3 Bucket Configuration (inherited from static website template)
+# =============================================================================
+bucket:
+  versioning: false
+  force_destroy: true  # Allow bucket deletion even if not empty (nonprod only)
+
+# =============================================================================
+# Website Configuration (inherited from static website template)
+# =============================================================================
+website:
+  index_document: "index.html"
+  error_document: "error.html"
+
+# =============================================================================
+# Public Access Configuration (inherited from static website template)
+# =============================================================================
+public_access:
+  block_public_acls: false
+  block_public_policy: false
+  ignore_public_acls: false
+  restrict_public_buckets: false
+
+# =============================================================================
+# Tags Configuration
+# =============================================================================
+tags:
+  Environment: "nonprod"
+  ManagedBy: "Archie"
+  Purpose: "Content Delivery Network"

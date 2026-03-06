@@ -1,0 +1,78 @@
+{
+  "metadata": {
+    "action_name": "website-group",
+    "name": "website-group",
+    "title": "Deploy Website",
+    "subtitle": "Complete website deployment solutions",
+    "description": "Deploy websites and web applications with static hosting, compute instances, load balancing, and CDN distribution. Includes templates for AWS, Azure, and GCP.",
+    "version": "latest",
+    "author": "InnovativeApps",
+    "cloud": "multi",
+    "category": "Websites",
+    "tier": "group",
+    "isGroup": true,
+    "isListedInMarketplace": true,
+    "tags": [
+      "website",
+      "static-hosting",
+      "web-app",
+      "cdn",
+      "load-balancer",
+      "multi-cloud"
+    ],
+    "features": [
+      "Static Website Hosting",
+      "EC2 Web Servers",
+      "Load Balancing",
+      "CDN Distribution",
+      "Multi-Cloud Support"
+    ],
+    "use_cases": [
+      "Deploy static websites",
+      "Host web applications",
+      "Configure CDN delivery",
+      "Set up load balancing"
+    ],
+    "prompt": "Deploy a website",
+    "estimated_cost": "$5-50/month",
+    "deployment_time": "5-15 minutes",
+    "complexity": "medium",
+    "groupSections": [
+      {
+        "title": "Static Hosting",
+        "description": "Deploy static websites with cloud storage",
+        "templates": [
+          "aws-static-website",
+          "azure-static-website",
+          "gcp-static-website"
+        ]
+      },
+      {
+        "title": "Web Servers",
+        "description": "Deploy web applications on compute instances",
+        "templates": [
+          "aws-ec2-nonprod",
+          "aws-ec2-prod"
+        ]
+      },
+      {
+        "title": "Load Balancing",
+        "description": "Configure load balancers for high availability",
+        "templates": [
+          "aws-alb-nonprod"
+        ]
+      },
+      {
+        "title": "Content Delivery",
+        "description": "Set up CDN for global content distribution",
+        "templates": [
+          "aws-cloudfront-nonprod"
+        ]
+      }
+    ],
+    "environment": "PROD & NONPROD"
+  },
+  "resources": [],
+  "pillars": {},
+  "configuration": {}
+}

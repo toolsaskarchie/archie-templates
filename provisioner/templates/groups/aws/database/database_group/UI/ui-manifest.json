@@ -1,0 +1,98 @@
+{
+  "metadata": {
+    "cloudProvider": "AWS",
+    "cloudProviderLogo": "aws",
+    "title": "RDS Databases",
+    "category": "Database",
+    "environment": "PROD & NONPROD",
+    "tier": "group",    "prompt": "Create a SQL database",    "description": "Comprehensive collection of AWS Relational Database Service (RDS) templates and atomic database components. This group offers two distinct sections: 'Select a Configuration' with complete ready-to-deploy database solutions for non-production and production environments, and 'Building Blocks' with database-related components for users building custom data storage architectures.",
+    "star_rating": "5.0",
+    "deployedCount": 185,
+    "deploy_count": 185,
+    "costPerMonth": "Variable",
+    "running_cost_monthly": 0,
+    "free_trial": false,
+    "action_name": "aws-database-group",
+    "version": "latest",
+    "cloud": "aws",
+    "isListedInMarketplace": true,
+    "complexity_level": "intermediate",
+    "isGroup": true,
+    "resource_type": "Database",
+    "subtitle": "Database Stacks & Atomics",
+    "service": "RDS",
+    "is_essential": true,
+    "created_at": "2024-12-23T12:00:00Z",
+    "updated_at": "2024-12-28T13:30:00Z",
+    "groupSections": [
+      {
+        "title": "Select a Configuration",
+        "layout": "grid",
+        "templates": [
+          "aws-rds-postgres-nonprod",
+          "aws-rds-postgres",
+          "aws-aurora-nonprod"
+        ]
+      },
+      {
+        "title": "Building Blocks",
+        "layout": "grid",
+        "templates": [
+          "aws-aurora-cluster-atomic",
+          "aws-aurora-cluster-instance-atomic",
+          "aws-rds-subnet-group-atomic",
+          "aws-rds-atomic"
+        ]
+      }
+    ],
+    "groupTemplates": [
+      "aws-rds-postgres-nonprod",
+      "aws-rds-postgres",
+      "aws-aurora-cluster-atomic",
+      "aws-aurora-cluster-instance-atomic",
+      "aws-rds-subnet-group-atomic",
+      "aws-rds-atomic",
+      "aws-aurora-nonprod"
+    ],
+    "use_cases": [
+      "Transaction Processing",
+      "Data Analytics",
+      "Application Backend",
+      "Data Warehousing"
+    ]
+  },
+  "configuration": {
+    "action_name": "aws-database-group",
+    "version": "latest",
+    "isGroup": true,
+    "title": "RDS & Database Components",
+    "description": "Comprehensive collection of AWS Relational Database Service (RDS) templates and atomic database components. This group offers two distinct sections: 'Select a Configuration' with complete ready-to-deploy database solutions for non-production and production environments, and 'Building Blocks' with database-related components for users building custom data storage architectures.",
+    "groupSections": [
+      {
+        "title": "Select a Configuration",
+        "layout": "grid",
+        "templates": [
+          "aws-aurora-nonprod",
+          "aws-rds-atomic",
+          "aws-security-group-atomic",
+          "aws-redis-atomic",
+          "aws-aurora-cluster-instance-atomic",
+          "aws-rds-postgres",
+          "aws-rds-postgres-nonprod",
+          "aws-aurora-cluster-atomic",
+          "aws-rds-subnet-group-atomic"
+        ]
+      },
+      {
+        "title": "Building Blocks",
+        "layout": "grid",
+        "templates": [
+          "aws-rds-atomic",
+          "aws-rds-subnet-group-atomic",
+          "aws-redis-atomic",
+          "aws-security-group-atomic"
+        ]
+      }
+    ]
+  }
+}

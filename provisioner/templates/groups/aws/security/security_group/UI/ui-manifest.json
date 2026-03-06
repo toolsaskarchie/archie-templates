@@ -1,0 +1,59 @@
+{
+  "metadata": {
+    "cloudProvider": "AWS",
+    "cloudProviderLogo": "aws",
+    "title": "IAM & Security",
+    "category": "Security",
+    "environment": "PROD & NONPROD",
+    "tier": "group",
+    "prompt": "Configure IAM & security",
+    "description": "Comprehensive collection of AWS IAM and security resources, featuring production-ready Stacks for rapid deployment and modular Atomics for custom architectural control. This group provides a complete toolkit for managing, scaling, and securing your identity and access infrastructure according to cloud best practices.",
+    "star_rating": "5.0",
+    "deployedCount": 120,
+    "deploy_count": 120,
+    "costPerMonth": "Variable",
+    "running_cost_monthly": 0,
+    "free_trial": false,
+    "action_name": "aws-security-group",
+    "version": "latest",
+    "cloud": "aws",
+    "isListedInMarketplace": true,
+    "complexity_level": "intermediate",
+    "isGroup": true,
+    "resource_type": "Security",
+    "subtitle": "Security Stacks & Atomics",
+    "service": "IAM",
+    "is_essential": true,
+    "created_at": "2025-01-21T17:00:00Z",
+    "updated_at": "2025-01-21T17:00:00Z",
+    "groupSections": [
+      {
+        "title": "Select a Configuration",
+        "layout": "grid",
+        "templates": [
+          "aws-archie-role",
+          "aws-archie-secret"
+        ]
+      },
+      {
+        "title": "Building Blocks",
+        "layout": "grid",
+        "templates": [
+          "aws-secretsmanager-secret-atomic"
+        ]
+      }
+    ],
+    "groupTemplates": [
+      "aws-archie-role",
+      "aws-archie-secret",
+      "aws-secretsmanager-secret-atomic"
+    ],
+    "use_cases": [
+      "Access Management",
+      "Compliance & Governance",
+      "Identity Federation",
+      "Secure Authentication"
+    ]
+  },
+  "configuration": {}
+}

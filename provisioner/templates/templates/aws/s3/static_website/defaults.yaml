@@ -1,0 +1,52 @@
+# S3 Static Website - Default Configuration
+# All resource configurations in one place for easy modification
+
+# =============================================================================
+# S3 Bucket Configuration
+# =============================================================================
+bucket:
+  versioning: false
+  force_destroy: true  # Allow bucket deletion even if not empty (nonprod only)
+
+# =============================================================================
+# Website Configuration
+# =============================================================================
+website:
+  index_document: "index.html"
+  error_document: "error.html"
+
+# =============================================================================
+# Public Access Configuration
+# =============================================================================
+public_access:
+  block_public_acls: false
+  block_public_policy: false
+  ignore_public_acls: false
+  restrict_public_buckets: false
+
+# =============================================================================
+# CORS Configuration
+# =============================================================================
+cors:
+  enabled: true
+  allowed_methods: ["GET", "HEAD"]
+  allowed_origins: ["*"]
+  allowed_headers: ["*"]
+  max_age_seconds: 3000
+
+# =============================================================================
+# Source Files
+# =============================================================================
+source_files:
+  # Files to upload from Archie's source bucket
+  - "index.html"
+  - "styles.css"
+  - "archie-logo.png"
+
+# =============================================================================
+# Tags Configuration
+# =============================================================================
+tags:
+  Environment: "nonprod"
+  ManagedBy: "Archie"
+  Purpose: "Static Website Hosting"

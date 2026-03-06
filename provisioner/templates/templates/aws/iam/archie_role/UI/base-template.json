@@ -1,0 +1,76 @@
+{
+  "_meta": {
+    "template_type": "base",
+    "template_id": "aws-archie-role",
+    "description": "Base aws-archie-role template extracted from Pulumi code",
+    "version": "1.0",
+    "generated_from": "pulumi.py",
+    "source_of_truth": "pulumi.py - This file is GENERATED. Edit pulumi.py instead."
+  },
+  "base_resources": [
+    {
+      "id": "aws-archie-role:{project}",
+      "type": "aws:iam:Role",
+      "name": "{project}",
+      "description": "IAM role - {project}",
+      "category": "Security",
+      "full_defaults": {
+        "name": "archie-{project}",
+        "tags": {
+          "Name": "archie-{project}-{environment}",
+          "ManagedBy": "Archie"
+        }
+      },
+      "dependencies": [],
+      "dependents": [],
+      "optional": false
+    },
+    {
+      "id": "aws-archie-role:policy",
+      "type": "aws:iam:Policy",
+      "name": "policy",
+      "description": "IAM policy - policy",
+      "category": "Security",
+      "full_defaults": {
+        "name": "archie-policy",
+        "tags": {
+          "Name": "archie-policy-{environment}",
+          "ManagedBy": "Archie"
+        }
+      },
+      "dependencies": [],
+      "dependents": [],
+      "optional": false
+    },
+    {
+      "id": "aws-iam-role-atomic:role-{project}-{environment}",
+      "type": "aws:iam:Role",
+      "name": "role-{project}-{environment}",
+      "description": "IAM role - role-{project}-{environment}",
+      "category": "Security",
+      "from_sub_template": "IAMRoleAtomicTemplate",
+      "full_defaults": {
+        "tags": {
+          "Name": "archie-role-{project}-{environment}",
+          "Environment": "{environment}",
+          "ManagedBy": "Archie"
+        }
+      },
+      "dependencies": [],
+      "dependents": [],
+      "optional": false
+    },
+    {
+      "id": "aws-iam-policy-atomic:generated-resource",
+      "type": "aws:iam:Policy",
+      "name": "generated-resource",
+      "description": "Policy resource - generated-resource",
+      "category": "Security",
+      "from_sub_template": "IAMPolicyAtomicTemplate",
+      "full_defaults": {},
+      "dependencies": [],
+      "dependents": [],
+      "optional": false
+    }
+  ]
+}

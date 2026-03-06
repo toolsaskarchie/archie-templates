@@ -1,0 +1,36 @@
+{
+  "_meta": {
+    "template_type": "base",
+    "template_id": "aws-secretsmanager-secret-atomic",
+    "description": "Base aws-secretsmanager-secret-atomic template extracted from Pulumi code",
+    "version": "1.0",
+    "generated_from": "pulumi.py",
+    "source_of_truth": "pulumi.py - This file is GENERATED. Edit pulumi.py instead."
+  },
+  "base_resources": [
+    {
+      "id": "aws-secretsmanager-secret-atomic:generated-resource",
+      "type": "aws:secretsmanager:Secret",
+      "name": "generated-resource",
+      "description": "Secret resource - generated-resource",
+      "category": "Security",
+      "from_sub_template": "aws-secretsmanager-secret-atomic",
+      "full_defaults": {},
+      "dependencies": [],
+      "dependents": [],
+      "optional": false
+    },
+    {
+      "id": "aws-secretsmanager-secret-atomic:{project_name}-version",
+      "type": "aws:secretsmanager:SecretVersion",
+      "name": "{project_name}-version",
+      "description": "SecretVersion resource - {project_name}-version",
+      "category": "Security",
+      "from_sub_template": "aws-secretsmanager-secret-atomic",
+      "full_defaults": {},
+      "dependencies": [],
+      "dependents": [],
+      "optional": false
+    }
+  ]
+}

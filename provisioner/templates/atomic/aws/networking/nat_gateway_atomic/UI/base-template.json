@@ -1,0 +1,30 @@
+{
+  "_meta": {
+    "template_type": "base",
+    "template_id": "aws-nat-gateway-atomic",
+    "description": "Base aws-nat-gateway-atomic template extracted from Pulumi code",
+    "version": "1.0",
+    "generated_from": "pulumi.py",
+    "source_of_truth": "pulumi.py - This file is GENERATED. Edit pulumi.py instead."
+  },
+  "base_resources": [
+    {
+      "id": "aws-nat-gateway-atomic:nat-{project}-{environment}",
+      "type": "aws:ec2:NatGateway",
+      "name": "nat-{project}-{environment}",
+      "description": "NatGateway resource - nat-{project}-{environment}",
+      "category": "Networking",
+      "from_sub_template": "aws-nat-gateway-atomic",
+      "full_defaults": {
+        "tags": {
+          "Name": "archie-nat-{project}-{environment}",
+          "Environment": "{environment}",
+          "ManagedBy": "Archie"
+        }
+      },
+      "dependencies": [],
+      "dependents": [],
+      "optional": false
+    }
+  ]
+}

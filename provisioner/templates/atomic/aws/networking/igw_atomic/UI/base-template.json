@@ -1,0 +1,30 @@
+{
+  "_meta": {
+    "template_type": "base",
+    "template_id": "aws-igw-atomic",
+    "description": "Base aws-igw-atomic template extracted from Pulumi code",
+    "version": "1.0",
+    "generated_from": "pulumi.py",
+    "source_of_truth": "pulumi.py - This file is GENERATED. Edit pulumi.py instead."
+  },
+  "base_resources": [
+    {
+      "id": "aws-igw-atomic:igw-{project}-{environment}",
+      "type": "aws:ec2:InternetGateway",
+      "name": "igw-{project}-{environment}",
+      "description": "InternetGateway resource - igw-{project}-{environment}",
+      "category": "Networking",
+      "from_sub_template": "aws-igw-atomic",
+      "full_defaults": {
+        "tags": {
+          "Name": "archie-igw-{project}-{environment}",
+          "Environment": "{environment}",
+          "ManagedBy": "Archie"
+        }
+      },
+      "dependencies": [],
+      "dependents": [],
+      "optional": false
+    }
+  ]
+}

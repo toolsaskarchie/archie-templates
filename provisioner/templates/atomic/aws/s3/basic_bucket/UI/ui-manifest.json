@@ -1,0 +1,97 @@
+{
+  "metadata": {
+    "name": "s3-demo-bucket",
+    "title": "S3 Basic Bucket",
+    "subtitle": "Simple S3 bucket for testing",
+    "description": "Creates a basic S3 bucket with versioning and encryption",
+    "category": "storage",
+    "provider": "aws",
+    "icon": "\ud83d\uddc4\ufe0f",
+    "version": "latest",
+    "status": "stable",
+    "action_name": "aws-basic-bucket",
+    "author": "InnovativeApps",
+    "cloud": "aws",
+    "tier": "atomic",
+    "environment": "general"
+  },
+  "configuration": {
+    "type": "object",
+    "required": [],
+    "properties": {},
+    "smart_defaults": {}
+  },
+  "resources": [
+    {
+      "id": "aws-basic-bucket:{project_name}-bucket",
+      "type": "aws:s3:Bucket",
+      "name": "{project_name}-bucket",
+      "description": "Bucket resource - {project_name}-bucket",
+      "category": "Storage",
+      "smart_defaults": {},
+      "optional": false,
+      "dependencies": [],
+      "dependents": []
+    },
+    {
+      "id": "aws-basic-bucket:{project_name}-lifecycle",
+      "type": "aws:s3:BucketLifecycleConfigurationV2",
+      "name": "{project_name}-lifecycle",
+      "description": "BucketLifecycleConfigurationV2 resource - {project_name}-lifecycle",
+      "category": "Storage",
+      "smart_defaults": {},
+      "optional": false,
+      "dependencies": [],
+      "dependents": []
+    }
+  ],
+  "pillars": {
+    "security": {
+      "score": "good",
+      "description": "Implements security best practices for cloud infrastructure with network isolation, IAM roles, and secure access patterns.",
+      "best_practices": [
+        "Data encryption at rest and in transit"
+      ]
+    },
+    "reliability": {
+      "score": "fair",
+      "description": "Ensures high availability and fault tolerance.",
+      "best_practices": [
+        "Automated recovery mechanisms",
+        "Fault-tolerant architecture patterns"
+      ]
+    },
+    "performance_efficiency": {
+      "score": "good",
+      "description": "Optimizes resource utilization and performance with scalable compute resources and efficient networking.",
+      "best_practices": [
+        "Scalable resource provisioning"
+      ]
+    },
+    "cost_optimization": {
+      "score": "good",
+      "description": "Balances cost efficiency with reliability through appropriate resource sizing and usage-based pricing.",
+      "best_practices": [
+        "Environment-specific parameter handling",
+        "Reusable infrastructure patterns reducing overhead",
+        "On-demand resource provisioning"
+      ]
+    },
+    "operational_excellence": {
+      "score": "good",
+      "description": "Enables operational best practices with infrastructure as code, monitoring, and automated management.",
+      "best_practices": [
+        "Infrastructure as Code with Pulumi for automated deployments",
+        "Version-controlled configuration"
+      ]
+    },
+    "sustainability": {
+      "score": "good",
+      "description": "Supports sustainable practices through efficient resource utilization and regional service usage.",
+      "best_practices": [
+        "Efficient resource utilization patterns",
+        "Automated scaling reducing over-provisioning"
+      ]
+    }
+  }
+}

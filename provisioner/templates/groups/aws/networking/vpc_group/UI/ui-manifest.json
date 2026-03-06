@@ -1,0 +1,116 @@
+{
+  "metadata": {
+    "cloudProvider": "AWS",
+    "cloudProviderLogo": "aws",
+    "title": "VPC Networking",
+    "category": "Networking",
+    "environment": "PROD & NONPROD",
+    "tier": "group",
+    "prompt": "Build a secure VPC network",
+    "description": "Comprehensive collection of AWS VPC networking resources, featuring production-ready Stacks for rapid deployment and modular Atomics for custom architectural control. This group provides a complete toolkit for building, scaling, and securing your network infrastructure according to cloud best practices.",
+    "star_rating": 4.9,
+    "deployedCount": 245,
+    "deploy_count": 245,
+    "costPerMonth": "$0/mo",
+    "running_cost_monthly": 0,
+    "free_trial": false,
+    "action_name": "aws-vpc-group",
+    "version": "latest",
+    "cloud": "aws",
+    "isListedInMarketplace": true,
+    "complexity_level": "intermediate",
+    "isGroup": true,
+    "resource_type": "VPC",
+    "subtitle": "Networking Stacks & Atomics",
+    "service": "Virtual Private Cloud",
+    "is_essential": false,
+    "created_at": "2024-11-06T10:00:00Z",
+    "updated_at": "2024-12-28T14:00:00Z",
+    "groupSections": [
+      {
+        "title": "Select a Configuration",
+        "layout": "grid",
+        "templates": [
+          "aws-vpc-nonprod",
+          "aws-vpc-prod"
+        ]
+      },
+      {
+        "title": "Building Blocks",
+        "layout": "grid",
+        "templates": [
+          "aws-subnet-public",
+          "aws-subnet-atomic",
+          "aws-igw-atomic",
+          "aws-nat-gateway-atomic",
+          "aws-eip-atomic",
+          "aws-target-group",
+          "aws-listener",
+          "aws-security-group-atomic",
+          "aws-route-table-atomic",
+          "aws-rta-atomic",
+          "aws-nacl-atomic",
+          "aws-vpc-endpoint-atomic",
+          "aws-flow-logs-atomic"
+        ]
+      }
+    ],
+    "groupTemplates": [
+      "aws-vpc-nonprod",
+      "aws-vpc-prod",
+      "aws-vpc-atomic",
+      "aws-subnet-public",
+      "aws-subnet-atomic",
+      "aws-igw-atomic",
+      "aws-nat-gateway-atomic",
+      "aws-eip-atomic",
+      "aws-security-group-atomic",
+      "aws-route-table-atomic",
+      "aws-route-atomic",
+      "aws-rta-atomic",
+      "aws-nacl-atomic",
+      "aws-flow-logs-atomic",
+      "aws-vpc-endpoint-atomic"
+    ],
+    "use_cases": [
+      "Multi-tier Applications",
+      "Microservices Architecture",
+      "Secure Cloud Infrastructure",
+      "Hybrid Cloud Connectivity"
+    ]
+  },
+  "configuration": {
+    "action_name": "aws-vpc-group",
+    "version": "latest",
+    "isGroup": true,
+    "title": "VPC & Network Components",
+    "description": "Comprehensive collection of AWS Virtual Private Cloud templates and atomic networking components. This group offers two distinct sections: 'Select a Configuration' with complete ready-to-deploy VPC solutions for non-production and production environments, and 'Building Blocks' with atomic components (subnets, security groups, route tables) for advanced users building custom network architectures.",
+    "groupSections": [
+      {
+        "title": "Select a Configuration",
+        "layout": "grid",
+        "templates": [
+          "aws-vpc-nonprod",
+          "aws-vpc-prod"
+        ]
+      },
+      {
+        "title": "Building Blocks",
+        "layout": "grid",
+        "templates": [
+          "aws-subnet-public",
+          "aws-subnet-atomic",
+          "aws-igw-atomic",
+          "aws-nat-gateway-atomic",
+          "aws-eip-atomic",
+          "aws-security-group-atomic",
+          "aws-route-table-atomic",
+          "aws-rta-atomic",
+          "aws-nacl-atomic",
+          "aws-vpc-endpoint-atomic",
+          "aws-flow-logs-atomic"
+        ]
+      }
+    ]
+  }
+}

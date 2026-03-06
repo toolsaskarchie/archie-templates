@@ -1,0 +1,95 @@
+{
+  "_meta": {
+    "template_type": "base",
+    "template_id": "kubernetes-web-app",
+    "description": "Base kubernetes-web-app template extracted from Pulumi code",
+    "version": "1.0",
+    "generated_from": "pulumi.py",
+    "source_of_truth": "pulumi.py - This file is GENERATED. Edit pulumi.py instead."
+  },
+  "base_resources": [
+    {
+      "id": "kubernetes-web-app:{project_name}",
+      "type": "kubernetes:apps/v1:Deployment",
+      "name": "{project_name}",
+      "description": "kubernetes:apps/v1:Deployment resource",
+      "optional": false,
+      "full_defaults": {
+        "metadata": {},
+        "spec": {},
+        "opts": "{opts}"
+      },
+      "dependencies": [],
+      "dependents": []
+    },
+    {
+      "id": "kubernetes-web-app:{project_name}-config",
+      "type": "kubernetes:core/v1:ConfigMap",
+      "name": "{project_name}-config",
+      "description": "kubernetes:core/v1:ConfigMap resource",
+      "optional": false,
+      "full_defaults": {
+        "metadata": {
+          "name": "{config_app_name}-config"
+        },
+        "data": "{config_data}",
+        "opts": "{opts}"
+      },
+      "dependencies": [],
+      "dependents": []
+    },
+    {
+      "id": "kubernetes-web-app:{config_namespace}",
+      "type": "kubernetes:core/v1:Namespace",
+      "name": "{config_namespace}",
+      "description": "kubernetes:core/v1:Namespace resource",
+      "optional": false,
+      "full_defaults": {
+        "metadata": {},
+        "opts": "{opts}"
+      },
+      "conditional": {
+        "field": "namespace",
+        "operator": "!=",
+        "value": "default"
+      },
+      "dependencies": [],
+      "dependents": []
+    },
+    {
+      "id": "kubernetes-web-app:{project_name}-svc",
+      "type": "kubernetes:core/v1:Service",
+      "name": "{project_name}-svc",
+      "description": "kubernetes:core/v1:Service resource",
+      "optional": false,
+      "full_defaults": {
+        "metadata": {
+          "name": "{config_app_name}-service"
+        },
+        "spec": {},
+        "opts": "{opts}"
+      },
+      "dependencies": [],
+      "dependents": []
+    },
+    {
+      "id": "kubernetes-web-app:{project_name}-ingress",
+      "type": "kubernetes:networking.k8s.io/v1:Ingress",
+      "name": "{project_name}-ingress",
+      "description": "kubernetes:networking.k8s.io/v1:Ingress resource",
+      "optional": false,
+      "full_defaults": {
+        "metadata": {
+          "name": "{config_app_name}-ingress"
+        },
+        "spec": {},
+        "opts": "{opts}"
+      },
+      "conditional": {
+        "field": "enable_ingress"
+      },
+      "dependencies": [],
+      "dependents": []
+    }
+  ]
+}

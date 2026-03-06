@@ -1,0 +1,24 @@
+{
+  "_meta": {
+    "template_type": "base",
+    "template_id": "gcp-nat-atomic",
+    "description": "Base gcp-nat-atomic template extracted from Pulumi code",
+    "version": "1.0",
+    "generated_from": "pulumi.py",
+    "source_of_truth": "pulumi.py - This file is GENERATED. Edit pulumi.py instead."
+  },
+  "base_resources": [
+    {
+      "id": "gcp-nat-atomic:generated-resource",
+      "type": "gcp:compute:RouterNat",
+      "name": "generated-resource",
+      "description": "RouterNat resource - generated-resource",
+      "category": "Networking",
+      "from_sub_template": "gcp-nat-atomic",
+      "full_defaults": {},
+      "dependencies": [],
+      "dependents": [],
+      "optional": false
+    }
+  ]
+}

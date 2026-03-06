@@ -1,0 +1,72 @@
+{
+  "metadata": {
+    "cloudProvider": "Azure",
+    "cloudProviderLogo": "azure",
+    "title": "AKS Kubernetes",
+    "category": "Kubernetes",
+    "environment": "PROD & NONPROD",
+    "tier": "group",
+    "prompt": "Deploy Azure containers",
+    "description": "Comprehensive collection of Azure Kubernetes Service resources, featuring production-ready Stacks for rapid deployment and modular Atomics for custom architectural control. This group provides a complete toolkit for building, scaling, and securing your Azure containerized infrastructure according to cloud best practices.",
+    "star_rating": "5.0",
+    "deployedCount": 0,
+    "deploy_count": 0,
+    "costPerMonth": "$0.00/mo",
+    "running_cost_monthly": 0,
+    "free_trial": true,
+    "action_name": "azure-containers-group",
+    "version": "latest",
+    "cloud": "azure",
+    "isListedInMarketplace": true,
+    "complexity_level": "beginner",
+    "isGroup": true,
+    "resource_type": "Compute",
+    "subtitle": "Azure Stacks & Atomics",
+    "service": "App Service",
+    "is_essential": true,
+    "created_at": "2024-12-29T00:00:00Z",
+    "updated_at": "2024-12-29T00:00:00Z",
+    "groupSections": [
+      {
+        "title": "Container Web Applications",
+        "layout": "grid",
+        "templates": [
+          "azure-container-webapp"
+        ]
+      }
+    ],
+    "groupTemplates": [
+      "azure-container-webapp"
+    ],
+    "groupCount": 1,
+    "use_cases": [
+      "Microservices Hosting",
+      "Containerized Applications",
+      "SaaS Backend",
+      "CI/CD Pipelines"
+    ]
+  },
+  "configuration": {
+    "action_name": "azure-containers-group",
+    "category": "Kubernetes",
+    "version": "latest",
+    "isGroup": true,
+    "title": "Containers & Components",
+    "description": "Comprehensive collection of Azure containerized deployment templates. This group offers two distinct sections: 'Select a Configuration' with complete ready-to-deploy container solutions for non-production and production environments, and 'Building Blocks' with container-related components for users building custom containerized architectures.",
+    "groupSections": [
+      {
+        "title": "Select a Configuration",
+        "layout": "grid",
+        "templates": [
+          "azure-container-webapp",
+          "azure-vnet-atomic"
+        ]
+      },
+      {
+        "title": "Building Blocks",
+        "layout": "grid",
+        "templates": []
+      }
+    ]
+  }
+}

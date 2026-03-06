@@ -1,0 +1,128 @@
+{
+  "metadata": {
+    "name": "azure-vnet-atomic",
+    "title": "Azure Virtual Network",
+    "subtitle": "Single VNet resource",
+    "description": "Create a standalone Azure Virtual Network with configurable address space. This is an atomic resource containing only the VNet itself - no subnets, NSGs, or route tables.",
+    "category": "networking",
+    "provider": "azure",
+    "tier": "atomic",
+    "complexity": "simple",
+    "icon": "\ud83c\udf10",
+    "version": "latest",
+    "status": "stable",
+    "estimated_cost": "$0/month (VNet is free)",
+    "deployment_time": "1-2 minutes",
+    "use_cases": [
+      "Foundation for custom Azure network architecture",
+      "Expert users building networks manually",
+      "Testing and learning Azure VNet concepts",
+      "Multi-tier network designs"
+    ],
+    "features": [
+      "Single VNet resource",
+      "Configurable address space (one or more CIDR blocks)",
+      "Automatic resource group creation",
+      "Azure region/location selection",
+      "Resource tagging for organization"
+    ],
+    "outputs": [
+      "VNet ID",
+      "VNet name",
+      "Resource group name",
+      "Location",
+      "Address prefixes"
+    ],
+    "tags": [
+      "vnet",
+      "networking",
+      "azure",
+      "atomic",
+      "foundation"
+    ],
+    "action_name": "azure-vnet-atomic",
+    "author": "InnovativeApps",
+    "cloud": "azure",
+    "environment": "general"
+  },
+  "configuration": {
+    "type": "object",
+    "required": [],
+    "properties": {},
+    "smart_defaults": {}
+  },
+  "resources": [
+    {
+      "id": "azure-vnet-atomic:generated-resource",
+      "type": "azure:network:VirtualNetwork",
+      "name": "generated-resource",
+      "description": "VirtualNetwork resource - generated-resource",
+      "category": "Other",
+      "smart_defaults": {},
+      "optional": false,
+      "dependencies": [],
+      "dependents": []
+    },
+    {
+      "id": "azure-vnet-atomic:{project_name}-rg",
+      "type": "azure:resources:ResourceGroup",
+      "name": "{project_name}-rg",
+      "description": "ResourceGroup resource - {project_name}-rg",
+      "category": "Other",
+      "smart_defaults": {},
+      "optional": false,
+      "dependencies": [],
+      "dependents": []
+    }
+  ],
+  "pillars": {
+    "security": {
+      "score": "good",
+      "description": "Implements security best practices for cloud infrastructure with network isolation, IAM roles, and secure access patterns.",
+      "best_practices": [
+        "Network isolation with VPC architecture"
+      ]
+    },
+    "reliability": {
+      "score": "good",
+      "description": "Ensures high availability and fault tolerance with multi-AZ deployment and automated recovery mechanisms.",
+      "best_practices": [
+        "Load balancer distribution across subnets"
+      ]
+    },
+    "performance_efficiency": {
+      "score": "excellent",
+      "description": "Optimizes resource utilization and performance with scalable compute resources and efficient networking.",
+      "best_practices": [
+        "Elastic Load Balancing for traffic distribution",
+        "Optimized VPC subnet design for performance",
+        "Scalable resource provisioning"
+      ]
+    },
+    "cost_optimization": {
+      "score": "good",
+      "description": "Balances cost efficiency with reliability through appropriate resource sizing and usage-based pricing.",
+      "best_practices": [
+        "Environment-specific parameter handling",
+        "Reusable infrastructure patterns reducing overhead",
+        "On-demand resource provisioning"
+      ]
+    },
+    "operational_excellence": {
+      "score": "good",
+      "description": "Enables operational best practices with infrastructure as code, monitoring, and automated management.",
+      "best_practices": [
+        "Infrastructure as Code with Pulumi for automated deployments",
+        "Version-controlled configuration"
+      ]
+    },
+    "sustainability": {
+      "score": "good",
+      "description": "Supports sustainable practices through efficient resource utilization and regional service usage.",
+      "best_practices": [
+        "Efficient resource utilization patterns",
+        "Automated scaling reducing over-provisioning"
+      ]
+    }
+  }
+}

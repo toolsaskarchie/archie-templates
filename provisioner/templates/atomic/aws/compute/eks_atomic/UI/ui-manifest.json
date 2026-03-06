@@ -1,0 +1,102 @@
+{
+  "metadata": {
+    "name": "aws-eks-atomic",
+    "description": "Direct AWS EKS cluster deployment for custom Kubernetes infrastructures.",
+    "category": "kubernetes",
+    "version": "latest",
+    "author": "InnovativeApps",
+    "tags": [
+      "aws",
+      "eks",
+      "kubernetes",
+      "containers"
+    ],
+    "estimated_cost": "$144/month",
+    "complexity": "high",
+    "deployment_time": "15-20m",
+    "is_listed_in_marketplace": false,
+    "title": "AWS EKS Cluster (Atomic)",
+    "action_name": "aws-eks-atomic",
+    "cloud": "aws",
+    "tier": "atomic",
+    "environment": "general"
+  },
+  "configuration": {
+    "type": "object",
+    "required": [],
+    "properties": {},
+    "smart_defaults": {}
+  },
+  "resources": [
+    {
+      "id": "aws-eks-atomic:{project_name}-cluster",
+      "type": "aws:eks:Cluster",
+      "name": "{project_name}-cluster",
+      "description": "EKS Kubernetes cluster - {project_name}-cluster",
+      "category": "Compute",
+      "smart_defaults": {
+        "name": "archie-{project_name}-cluster",
+        "tags": {
+          "Name": "archie-{project_name}-cluster-{environment}",
+          "ManagedBy": "Archie"
+        }
+      },
+      "optional": false,
+      "dependencies": [],
+      "dependents": []
+    }
+  ],
+  "pillars": {
+    "security": {
+      "score": "good",
+      "description": "Implements security best practices for cloud infrastructure with network isolation, IAM roles, and secure access patterns.",
+      "best_practices": [
+        "Network security with security groups",
+        "Identity and access management",
+        "Network isolation with VPC architecture"
+      ]
+    },
+    "reliability": {
+      "score": "excellent",
+      "description": "Ensures high availability and fault tolerance with multi-AZ deployment and automated recovery mechanisms.",
+      "best_practices": [
+        "Multi-AZ VPC architecture across availability zones",
+        "Load balancer distribution across subnets"
+      ]
+    },
+    "performance_efficiency": {
+      "score": "good",
+      "description": "Optimizes resource utilization and performance with scalable compute resources and efficient networking.",
+      "best_practices": [
+        "Scalable resource provisioning"
+      ]
+    },
+    "cost_optimization": {
+      "score": "good",
+      "description": "Balances cost efficiency with reliability through appropriate resource sizing and usage-based pricing.",
+      "best_practices": [
+        "Environment-specific parameter handling",
+        "Reusable infrastructure patterns reducing overhead",
+        "On-demand resource provisioning"
+      ]
+    },
+    "operational_excellence": {
+      "score": "excellent",
+      "description": "Enables operational best practices with infrastructure as code, monitoring, and automated management.",
+      "best_practices": [
+        "Infrastructure as Code with Pulumi for automated deployments",
+        "Comprehensive logging with CloudWatch",
+        "Version-controlled configuration"
+      ]
+    },
+    "sustainability": {
+      "score": "good",
+      "description": "Supports sustainable practices through efficient resource utilization and regional service usage.",
+      "best_practices": [
+        "Regional AWS services reducing data transfer distances",
+        "Efficient resource utilization patterns",
+        "Automated scaling reducing over-provisioning"
+      ]
+    }
+  }
+}

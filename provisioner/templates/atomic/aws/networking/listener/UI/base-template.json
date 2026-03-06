@@ -1,0 +1,24 @@
+{
+  "_meta": {
+    "template_type": "base",
+    "template_id": "aws-listener",
+    "description": "Base aws-listener template extracted from Pulumi code",
+    "version": "1.0",
+    "generated_from": "pulumi.py",
+    "source_of_truth": "pulumi.py - This file is GENERATED. Edit pulumi.py instead."
+  },
+  "base_resources": [
+    {
+      "id": "aws-listener:{project_name}-listener",
+      "type": "aws:lb:Listener",
+      "name": "{project_name}-listener",
+      "description": "Listener resource - {project_name}-listener",
+      "category": "Other",
+      "from_sub_template": "aws-listener",
+      "full_defaults": {},
+      "dependencies": [],
+      "dependents": [],
+      "optional": false
+    }
+  ]
+}

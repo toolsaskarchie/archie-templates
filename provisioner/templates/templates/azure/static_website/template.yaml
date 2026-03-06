@@ -1,0 +1,77 @@
+metadata:
+  name: azure-static-website
+  title: Demo Static Website
+  description: Deploy an Archie-branded congratulations page on Azure Storage - perfect for your first Azure deployment!
+  category: website
+  cloud: azure
+  version: latest
+  author: InnovativeApps
+  tags:
+  - azure
+  - storage
+  - website
+  - static
+  - free
+  base_cost: $0.00/month
+  complexity: low
+  deployment_time: 3-5 minutes
+  marketplace_group: WEBSITES
+  action_name: azure-static-website
+  environment: prod
+  tier: template
+  use_cases:
+  - Production workloads
+  - Mission-critical applications
+  - Enterprise-grade infrastructure
+resources:
+  '{project_name}-rg':
+    type: azure-native:resources:ResourceGroup
+    name: '{project_name}-rg'
+    always_created: true
+    description: azure-native:resources:ResourceGroup resource
+    smart_defaults:
+      location: '{config_location}'
+      tags:
+        ManagedBy: Archie
+        Template: azure-static-website
+  '{project_name}-storage':
+    type: azure-native:storage:StorageAccount
+    name: '{project_name}-storage'
+    always_created: true
+    description: azure-native:storage:StorageAccount resource
+    smart_defaults:
+      account_name: '{sa_name}'
+      resource_group_name: '{config_name}'
+      location: '{config_location}'
+      sku:
+        name: Standard_LRS
+      kind: StorageV2
+      enable_https_traffic_only: true
+      tags:
+        ManagedBy: Archie
+  '{project_name}-static':
+    type: azure-native:storage:StorageAccountStaticWebsite
+    name: '{project_name}-static'
+    always_created: true
+    description: azure-native:storage:StorageAccountStaticWebsite resource
+    smart_defaults:
+      account_name: '{config_name}'
+      resource_group_name: '{config_name}'
+      index_document: index.html
+      error404_document: index.html
+configuration:
+  properties:
+    websiteName:
+      type: string
+      title: Website Name
+      default: my-azure-site
+    resourceGroup:
+      type: string
+      title: Resource Group
+    location:
+      type: string
+      title: Azure Region
+      default: eastus
+  required:
+  - websiteName
+  - resourceGroup

@@ -1,0 +1,24 @@
+{
+  "_meta": {
+    "template_type": "base",
+    "template_id": "gcp-vpc-atomic",
+    "description": "Base gcp-vpc-atomic template extracted from Pulumi code",
+    "version": "1.0",
+    "generated_from": "pulumi.py",
+    "source_of_truth": "pulumi.py - This file is GENERATED. Edit pulumi.py instead."
+  },
+  "base_resources": [
+    {
+      "id": "gcp-vpc-atomic:{project_name}-network",
+      "type": "gcp:compute:Network",
+      "name": "{project_name}-network",
+      "description": "Network resource - {project_name}-network",
+      "category": "Other",
+      "from_sub_template": "gcp-vpc-atomic",
+      "full_defaults": {},
+      "dependencies": [],
+      "dependents": [],
+      "optional": false
+    }
+  ]
+}

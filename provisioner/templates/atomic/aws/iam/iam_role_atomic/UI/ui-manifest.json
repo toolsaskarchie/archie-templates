@@ -1,0 +1,191 @@
+{
+  "metadata": {
+    "name": "iam-role-atomic",
+    "title": "IAM Role",
+    "subtitle": "Single IAM role resource",
+    "description": "Create a standalone IAM role with assume role policy, managed policies, and inline policies. This is an atomic resource containing only the IAM role itself.",
+    "category": "iam",
+    "provider": "aws",
+    "tier": "atomic",
+    "complexity": "simple",
+    "icon": "\ud83d\udd11",
+    "version": "latest",
+    "status": "stable",
+    "estimated_cost": "$0/month",
+    "deployment_time": "1 minute",
+    "use_cases": [
+      "Add IAM role to existing infrastructure",
+      "Expert users building custom architectures",
+      "Testing and learning IAM concepts"
+    ],
+    "features": [
+      "Single IAM role resource",
+      "Configurable assume role policy",
+      "Managed policy attachments",
+      "Inline policies",
+      "Tagging support"
+    ],
+    "outputs": [
+      "Role ARN",
+      "Role name"
+    ],
+    "prerequisites": [],
+    "tags": [
+      "iam",
+      "role",
+      "atomic",
+      "security"
+    ],
+    "action_name": "aws-iam-role-atomic",
+    "author": "InnovativeApps",
+    "cloud": "aws",
+    "environment": "general"
+  },
+  "configuration": {
+    "type": "object",
+    "required": ["projectName", "region"],
+    "properties": {
+      "region": {
+        "type": "string",
+        "title": "AWS Region",
+        "description": "AWS region for deployment",
+        "enum": ["us-east-1", "us-west-2", "eu-west-1", "ap-southeast-1"],
+        "default": "us-east-1"
+      },
+      "projectName": {
+        "type": "string",
+        "title": "Project Name",
+        "description": "The name of the project",
+        "pattern": "^[a-z0-9-]{1,63}$"
+      },
+      "assumeRolePolicy": {
+        "type": "string",
+        "title": "Assume Role Policy",
+        "description": "The policy that grants an entity permission to assume the role (JSON string or PolicyDocument)",
+        "default": ""
+      },
+      "description": {
+        "type": "string",
+        "title": "Description",
+        "description": "Description of the IAM role",
+        "default": ""
+      },
+      "inlinePolicies": {
+        "type": "array",
+        "title": "Inline Policies",
+        "description": "List of inline policy documents to attach to the role",
+        "items": {
+          "type": "object",
+          "properties": {
+            "name": {"type": "string"},
+            "policy": {"type": "string"}
+          }
+        },
+        "default": []
+      },
+      "managedPolicyArns": {
+        "type": "array",
+        "title": "Managed Policy ARNs",
+        "description": "Set of Amazon Resource Names (ARNs) of managed policies to attach",
+        "items": {"type": "string"},
+        "default": []
+      },
+      "maxSessionDuration": {
+        "type": "integer",
+        "title": "Max Session Duration",
+        "description": "Maximum session duration (in seconds) for role sessions (3600-43200)",
+        "minimum": 3600,
+        "maximum": 43200,
+        "default": 3600
+      },
+      "path": {
+        "type": "string",
+        "title": "Path",
+        "description": "Path to the role",
+        "default": "/"
+      },
+      "permissionsBoundary": {
+        "type": "string",
+        "title": "Permissions Boundary",
+        "description": "ARN of the policy used to set the permissions boundary for the role",
+        "default": ""
+      },
+      "tags": {
+        "type": "object",
+        "title": "Tags",
+        "description": "Key-value map of resource tags",
+        "additionalProperties": {"type": "string"},
+        "default": {}
+      }
+    },
+    "smart_defaults": {}
+  },
+  "resources": [
+    {
+      "id": "aws-iam-role-atomic:role-{project}-{environment}",
+      "type": "aws:iam:Role",
+      "name": "role-{project}-{environment}",
+      "description": "IAM role - role-{project}-{environment}",
+      "category": "Security",
+      "smart_defaults": {
+        "tags": {
+          "Name": "archie-role-{project}-{environment}",
+          "Environment": "{environment}",
+          "ManagedBy": "Archie"
+        }
+      },
+      "optional": false,
+      "dependencies": [],
+      "dependents": []
+    }
+  ],
+  "pillars": {
+    "security": {
+      "score": "good",
+      "description": "Implements security best practices for cloud infrastructure with network isolation, IAM roles, and secure access patterns.",
+      "best_practices": [
+        "Identity and access management"
+      ]
+    },
+    "reliability": {
+      "score": "fair",
+      "description": "Ensures high availability and fault tolerance.",
+      "best_practices": [
+        "Automated recovery mechanisms",
+        "Fault-tolerant architecture patterns"
+      ]
+    },
+    "performance_efficiency": {
+      "score": "good",
+      "description": "Optimizes resource utilization and performance with scalable compute resources and efficient networking.",
+      "best_practices": [
+        "Scalable resource provisioning"
+      ]
+    },
+    "cost_optimization": {
+      "score": "good",
+      "description": "Balances cost efficiency with reliability through appropriate resource sizing and usage-based pricing.",
+      "best_practices": [
+        "Environment-specific parameter handling",
+        "Reusable infrastructure patterns reducing overhead",
+        "On-demand resource provisioning"
+      ]
+    },
+    "operational_excellence": {
+      "score": "good",
+      "description": "Enables operational best practices with infrastructure as code, monitoring, and automated management.",
+      "best_practices": [
+        "Infrastructure as Code with Pulumi for automated deployments",
+        "Version-controlled configuration"
+      ]
+    },
+    "sustainability": {
+      "score": "good",
+      "description": "Supports sustainable practices through efficient resource utilization and regional service usage.",
+      "best_practices": [
+        "Efficient resource utilization patterns",
+        "Automated scaling reducing over-provisioning"
+      ]
+    }
+  }
+}

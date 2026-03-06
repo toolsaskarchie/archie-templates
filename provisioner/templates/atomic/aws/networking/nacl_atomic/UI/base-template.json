@@ -1,0 +1,24 @@
+{
+  "_meta": {
+    "template_type": "base",
+    "template_id": "aws-nacl-atomic",
+    "description": "Base aws-nacl-atomic template extracted from Pulumi code",
+    "version": "1.0",
+    "generated_from": "pulumi.py",
+    "source_of_truth": "pulumi.py - This file is GENERATED. Edit pulumi.py instead."
+  },
+  "base_resources": [
+    {
+      "id": "aws-nacl-atomic:nacl-{project}-{environment}",
+      "type": "aws:ec2:NetworkAcl",
+      "name": "nacl-{project}-{environment}",
+      "description": "NetworkAcl resource - nacl-{project}-{environment}",
+      "category": "Security",
+      "from_sub_template": "aws-nacl-atomic",
+      "full_defaults": {},
+      "dependencies": [],
+      "dependents": [],
+      "optional": false
+    }
+  ]
+}

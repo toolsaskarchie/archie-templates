@@ -1,0 +1,31 @@
+{
+  "_meta": {
+    "template_type": "base",
+    "template_id": "aws-subnet-public",
+    "description": "Base aws-subnet-public template extracted from Pulumi code",
+    "version": "1.0",
+    "generated_from": "pulumi.py",
+    "source_of_truth": "pulumi.py - This file is GENERATED. Edit pulumi.py instead."
+  },
+  "base_resources": [
+    {
+      "id": "aws-subnet-public:{project}-{environment}-subnet",
+      "type": "aws:ec2:Subnet",
+      "name": "{project}-{environment}-subnet",
+      "description": "Subnet resource - {project}-{environment}-subnet",
+      "category": "Networking",
+      "from_sub_template": "aws-subnet-public",
+      "full_defaults": {
+        "mapPublicIpOnLaunch": false,
+        "tags": {
+          "Name": "archie-{project}-{environment}-subnet",
+          "Environment": "{environment}",
+          "ManagedBy": "Archie"
+        }
+      },
+      "dependencies": [],
+      "dependents": [],
+      "optional": false
+    }
+  ]
+}

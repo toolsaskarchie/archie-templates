@@ -1,0 +1,122 @@
+{
+  "metadata": {
+    "name": "security-group-atomic",
+    "title": "Security Group",
+    "subtitle": "Single security group resource",
+    "description": "Create a standalone security group with configurable ingress and egress rules. This is an atomic resource containing only the security group itself - requires existing VPC.",
+    "category": "networking",
+    "provider": "aws",
+    "tier": "atomic",
+    "complexity": "simple",
+    "icon": "\ud83d\udee1\ufe0f",
+    "version": "latest",
+    "status": "stable",
+    "estimated_cost": "$0/month",
+    "deployment_time": "1 minute",
+    "use_cases": [
+      "Add security group to existing infrastructure",
+      "Expert users building custom architectures",
+      "Testing and learning security group concepts"
+    ],
+    "features": [
+      "Single security group resource",
+      "Configurable ingress rules",
+      "Configurable egress rules",
+      "VPC association",
+      "Tagging support"
+    ],
+    "outputs": [
+      "Security group ID",
+      "Security group name",
+      "VPC ID"
+    ],
+    "prerequisites": [
+      "VPC must exist"
+    ],
+    "tags": [
+      "security-group",
+      "networking",
+      "atomic",
+      "firewall"
+    ],
+    "action_name": "aws-security-group-atomic",
+    "author": "InnovativeApps",
+    "cloud": "aws",
+    "environment": "general"
+  },
+  "configuration": {
+    "type": "object",
+    "required": [],
+    "properties": {},
+    "smart_defaults": {}
+  },
+  "resources": [
+    {
+      "id": "aws-security-group-atomic:sg-{project}-{environment}",
+      "type": "aws:ec2:SecurityGroup",
+      "name": "sg-{project}-{environment}",
+      "description": "SecurityGroup resource - sg-{project}-{environment}",
+      "category": "Security",
+      "smart_defaults": {
+        "description": "Security group for sg-{project}-{environment}",
+        "tags": {
+          "Name": "archie-sg-{project}-{environment}",
+          "Environment": "{environment}",
+          "ManagedBy": "Archie"
+        }
+      },
+      "optional": false,
+      "dependencies": [],
+      "dependents": []
+    }
+  ],
+  "pillars": {
+    "security": {
+      "score": "good",
+      "description": "Implements security best practices for cloud infrastructure with network isolation, IAM roles, and secure access patterns.",
+      "best_practices": [
+        "Network security with security groups",
+        "Network isolation with VPC architecture"
+      ]
+    },
+    "reliability": {
+      "score": "good",
+      "description": "Ensures high availability and fault tolerance with multi-AZ deployment and automated recovery mechanisms.",
+      "best_practices": [
+        "Multi-AZ VPC architecture across availability zones"
+      ]
+    },
+    "performance_efficiency": {
+      "score": "good",
+      "description": "Optimizes resource utilization and performance with scalable compute resources and efficient networking.",
+      "best_practices": [
+        "Scalable resource provisioning"
+      ]
+    },
+    "cost_optimization": {
+      "score": "good",
+      "description": "Balances cost efficiency with reliability through appropriate resource sizing and usage-based pricing.",
+      "best_practices": [
+        "Environment-specific parameter handling",
+        "Reusable infrastructure patterns reducing overhead",
+        "On-demand resource provisioning"
+      ]
+    },
+    "operational_excellence": {
+      "score": "good",
+      "description": "Enables operational best practices with infrastructure as code, monitoring, and automated management.",
+      "best_practices": [
+        "Infrastructure as Code with Pulumi for automated deployments",
+        "Version-controlled configuration"
+      ]
+    },
+    "sustainability": {
+      "score": "good",
+      "description": "Supports sustainable practices through efficient resource utilization and regional service usage.",
+      "best_practices": [
+        "Efficient resource utilization patterns",
+        "Automated scaling reducing over-provisioning"
+      ]
+    }
+  }
+}

@@ -1,0 +1,38 @@
+{
+  "metadata": {
+    "cloudProvider": "AWS",
+    "cloudProviderLogo": "aws",
+    "title": "Redis Caching",
+    "subtitle": "Caching Stacks & Atomics",
+    "category": "Database",
+    "environment": "PROD & NONPROD",
+    "tier": "group",
+    "description": "Comprehensive collection of AWS ElastiCache Redis resources, featuring production-ready Stacks for rapid deployment and modular Atomics for custom architectural control. This group provides a complete toolkit for building, scaling, and securing your high-performance caching infrastructure according to cloud best practices.",
+    "action_name": "aws-elasticache-group",
+    "version": "latest",
+    "isGroup": true,
+    "groupSections": [
+      {
+        "title": "Select a Configuration",
+        "layout": "grid",
+        "templates": [
+          "aws-redis-nonprod"
+        ]
+      },
+      {
+        "title": "Building Blocks",
+        "layout": "grid",
+        "templates": []
+      }
+    ],
+    "isListedInMarketplace": true,
+    "use_cases": [
+      "Transaction Processing",
+      "Data Analytics",
+      "Application Backend",
+      "Data Warehousing"
+    ],
+    "cloud": "aws"
+  },
+  "configuration": {}
+}

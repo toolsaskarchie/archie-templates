@@ -1,0 +1,198 @@
+{
+  "_meta": {
+    "template_type": "base",
+    "template_id": "aws-cloudfront-nonprod",
+    "description": "Base aws-cloudfront-nonprod template extracted from Pulumi code",
+    "version": "1.0",
+    "generated_from": "pulumi.py",
+    "source_of_truth": "pulumi.py - This file is GENERATED. Edit pulumi.py instead."
+  },
+  "base_resources": [
+    {
+      "id": "aws-cloudfront-nonprod:{project_name}-distribution",
+      "type": "aws:cloudfront:Distribution",
+      "name": "{project_name}-distribution",
+      "description": "Distribution resource",
+      "optional": false,
+      "full_defaults": {
+        "origins": "{origins}",
+        "default_cache_behavior": "{default_cache_behavior}",
+        "enabled": "{config_cloudfront_enabled}",
+        "comment": "{config_cloudfront_comment}",
+        "price_class": "{config_cloudfront_price_class}",
+        "default_root_object": "{config_cloudfront_default_root_object}",
+        "custom_error_responses": [
+          {
+            "error_code": 404,
+            "response_code": 404,
+            "response_page_path": "/index.html",
+            "error_caching_min_ttl": 300
+          }
+        ],
+        "restrictions": {},
+        "viewer_certificate": {
+          "cloudfront_default_certificate": true
+        },
+        "tags": "{tags}"
+      },
+      "dependencies": [],
+      "dependents": []
+    },
+    {
+      "id": "aws-static-website:archie-guest-{bucket_name}",
+      "type": "aws:s3:Bucket",
+      "name": "archie-guest-{bucket_name}",
+      "description": "S3 bucket for object storage",
+      "optional": false,
+      "full_defaults": {
+        "bucket": "{bucket_name}",
+        "force_destroy": true,
+        "tags": {
+          "Name": "{bucket_name}"
+        }
+      },
+      "dependencies": [],
+      "dependents": [],
+      "from_sub_template": "S3StaticWebsiteTemplate"
+    },
+    {
+      "id": "aws-static-website:archie-logo-png",
+      "type": "aws:s3:BucketObject",
+      "name": "archie-logo-png",
+      "description": "Archie brand logo (archie-logo.png)",
+      "category": "Storage",
+      "full_defaults": {
+        "key": "archie-logo.png",
+        "content_type": "image/png",
+        "tags": {
+          "Name": "archie-archie-logo-png-{environment}",
+          "ManagedBy": "Archie"
+        }
+      },
+      "dependencies": [],
+      "dependents": [],
+      "optional": false,
+      "from_sub_template": "S3StaticWebsiteTemplate"
+    },
+    {
+      "id": "aws-static-website:index-html",
+      "type": "aws:s3:BucketObject",
+      "name": "index-html",
+      "description": "Archie-branded congratulations page (index.html)",
+      "category": "Storage",
+      "full_defaults": {
+        "key": "index.html",
+        "content_type": "text/html",
+        "tags": {
+          "Name": "archie-index-html-{environment}",
+          "ManagedBy": "Archie"
+        }
+      },
+      "dependencies": [],
+      "dependents": [],
+      "optional": false,
+      "from_sub_template": "S3StaticWebsiteTemplate"
+    },
+    {
+      "id": "aws-static-website:styles-css",
+      "type": "aws:s3:BucketObject",
+      "name": "styles-css",
+      "description": "Styles with dark/light theme support (styles.css)",
+      "category": "Storage",
+      "full_defaults": {
+        "key": "styles.css",
+        "content_type": "text/css",
+        "tags": {
+          "Name": "archie-styles-css-{environment}",
+          "ManagedBy": "Archie"
+        }
+      },
+      "dependencies": [],
+      "dependents": [],
+      "optional": false,
+      "from_sub_template": "S3StaticWebsiteTemplate"
+    },
+    {
+      "id": "aws-static-website:{project_name}-",
+      "type": "aws:s3:BucketObject",
+      "name": "{project_name}-",
+      "description": "BucketObject resource",
+      "optional": false,
+      "full_defaults": {
+        "bucket": "{config_id}",
+        "key": "{file_key}",
+        "source": "{computed}",
+        "content_type": "{content_type}"
+      },
+      "dependencies": [],
+      "dependents": [],
+      "from_sub_template": "S3StaticWebsiteTemplate"
+    },
+    {
+      "id": "aws-static-website:{project_name}-",
+      "type": "aws:s3:BucketObject",
+      "name": "{project_name}-",
+      "description": "BucketObject resource",
+      "optional": false,
+      "full_defaults": {
+        "bucket": "{config_id}",
+        "key": "{file_key}",
+        "content": "{file_content}",
+        "content_type": "{content_type}"
+      },
+      "dependencies": [],
+      "dependents": [],
+      "from_sub_template": "S3StaticWebsiteTemplate"
+    },
+    {
+      "id": "aws-static-website:{project_name}-bucket-policy",
+      "type": "aws:s3:BucketPolicy",
+      "name": "{project_name}-bucket-policy",
+      "description": "BucketPolicy resource",
+      "optional": false,
+      "full_defaults": {
+        "bucket": "{config_id}",
+        "policy": "{computed}"
+      },
+      "dependencies": [],
+      "dependents": [],
+      "from_sub_template": "S3StaticWebsiteTemplate"
+    },
+    {
+      "id": "aws-static-website:{project_name}-public-access",
+      "type": "aws:s3:BucketPublicAccessBlock",
+      "name": "{project_name}-public-access",
+      "description": "BucketPublicAccessBlock resource",
+      "optional": false,
+      "full_defaults": {
+        "bucket": "{config_id}",
+        "block_public_acls": false,
+        "block_public_policy": false,
+        "ignore_public_acls": false,
+        "restrict_public_buckets": false
+      },
+      "dependencies": [],
+      "dependents": [],
+      "from_sub_template": "S3StaticWebsiteTemplate"
+    },
+    {
+      "id": "aws-static-website:{project_name}-website-config",
+      "type": "aws:s3:BucketWebsiteConfigurationV2",
+      "name": "{project_name}-website-config",
+      "description": "BucketWebsiteConfigurationV2 resource",
+      "optional": false,
+      "full_defaults": {
+        "bucket": "{config_id}",
+        "index_document": {
+          "suffix": "index.html"
+        },
+        "error_document": {
+          "key": "index.html"
+        }
+      },
+      "dependencies": [],
+      "dependents": [],
+      "from_sub_template": "S3StaticWebsiteTemplate"
+    }
+  ]
+}

@@ -1,0 +1,53 @@
+metadata:
+  name: aws-vpc-group
+  title: AWS VPC Networking
+  description: Comprehensive collection of AWS VPC networking resources, featuring production-ready Stacks for rapid deployment and modular Atomics for custom architectural control. This group provides a complete toolkit for building, scaling, and securing your network infrastructure according to cloud best practices.
+  category: Networking
+  version: latest
+  author: InnovativeApps
+  cloud: aws
+  environment: PROD & NONPROD
+  tier: group
+  complexity: intermediate
+  deployment_time: 5-10 minutes
+  base_cost: $0/month
+  marketplace_group: aws-vpc-group
+  is_listed_in_marketplace: true
+  features:
+  - Production-ready VPC Stacks
+  - modular Atomic Components
+  - Best-practice Security Groups
+  - HA NAT Gateway configurations
+  tags:
+  - networking
+  - vpc
+  - aws
+  - group
+  use_cases:
+  - Multi-tier Applications
+  - Microservices Architecture
+  - Secure Cloud Infrastructure
+  - Hybrid Cloud Connectivity
+group_configuration:
+  sections:
+  - title: Select a Configuration
+    layout: grid
+    templates:
+    - aws-vpc-nonprod
+    - aws-vpc-prod
+  - title: Building Blocks
+    layout: grid
+    templates:
+    - aws-subnet-public
+    - aws-subnet-atomic
+    - aws-igw-atomic
+    - aws-nat-gateway-atomic
+    - aws-eip-atomic
+    - aws-target-group
+    - aws-listener
+    - aws-security-group-atomic
+    - aws-route-table-atomic
+    - aws-rta-atomic
+    - aws-nacl-atomic
+    - aws-vpc-endpoint-atomic
+    - aws-flow-logs-atomic

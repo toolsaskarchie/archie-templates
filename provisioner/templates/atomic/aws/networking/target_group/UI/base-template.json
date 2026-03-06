@@ -1,0 +1,24 @@
+{
+  "_meta": {
+    "template_type": "base",
+    "template_id": "aws-target-group",
+    "description": "Base aws-target-group template extracted from Pulumi code",
+    "version": "1.0",
+    "generated_from": "pulumi.py",
+    "source_of_truth": "pulumi.py - This file is GENERATED. Edit pulumi.py instead."
+  },
+  "base_resources": [
+    {
+      "id": "aws-target-group:{project_name}-target-group",
+      "type": "aws:lb:TargetGroup",
+      "name": "{project_name}-target-group",
+      "description": "TargetGroup resource - {project_name}-target-group",
+      "category": "Other",
+      "from_sub_template": "aws-target-group",
+      "full_defaults": {},
+      "dependencies": [],
+      "dependents": [],
+      "optional": false
+    }
+  ]
+}

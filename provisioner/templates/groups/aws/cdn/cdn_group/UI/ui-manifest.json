@@ -1,0 +1,82 @@
+{
+  "metadata": {
+    "cloudProvider": "AWS",
+    "cloudProviderLogo": "aws",
+    "title": "CloudFront CDN",
+    "subtitle": "CDN Stacks & Atomics",
+    "category": "CDN",
+    "description": "Comprehensive collection of AWS CloudFront CDN resources, featuring production-ready Stacks for rapid deployment and modular Atomics for custom architectural control. This group provides a complete toolkit for delivering, accelerating, and securing your global content according to cloud best practices.",
+    "star_rating": "4.9",
+    "deployedCount": 215,
+    "deploy_count": 215,
+    "isListedInMarketplace": true,
+    "isGroup": true,
+    "action_name": "aws-cdn-group",
+    "version": "latest",
+    "groupSections": [
+      {
+        "title": "Select a Configuration",
+        "layout": "grid",
+        "templates": [
+          "aws-cloudfront-nonprod"
+        ]
+      },
+      {
+        "title": "Building Blocks",
+        "layout": "grid",
+        "templates": []
+      }
+    ],
+    "groupTemplates": [
+      "aws-cloudfront-nonprod"
+    ],
+    "pillars": [
+      "Global Reach: Content cached at hundreds of AWS edge locations worldwide",
+      "Enhanced Security: Deep integration with AWS Shield and WAF support",
+      "Optimized Performance: Minimal latency for global users via edge delivery",
+      "Cost Control: Support for PriceClass_100 and optimized caching policies",
+      "Automated Lifecycle: Managed SSL certificates and origin access security"
+    ],
+    "features": [
+      "Global Edge Distribution",
+      "Origin Access Identity (OAI)",
+      "Custom Cache Policies",
+      "SSL/HTTPS Termination",
+      "PriceClass Optimization",
+      "Real-time Monitoring"
+    ],
+    "use_cases": [
+      "Global Website Delivery",
+      "SPA Asset Hosting",
+      "Media Streaming Content",
+      "Secure Origin Shielding"
+    ],
+    "time_to_provision": 300,
+    "complexity_level": "intermediate",
+    "resource_type": "CDN",
+    "cloud": "aws",
+    "tier": "group",
+    "environment": "PROD & NONPROD"
+  },
+  "configuration": {
+    "action_name": "aws-cdn-group",
+    "version": "latest",
+    "isGroup": true,
+    "title": "Content Delivery Network & Components",
+    "description": "Enterprise-grade content delivery network solutions using AWS CloudFront. This group offers ready-to-deploy global distribution configurations optimized for performance, security, and cost.",
+    "groupSections": [
+      {
+        "title": "Select a Configuration",
+        "layout": "grid",
+        "templates": [
+          "aws-cloudfront-nonprod"
+        ]
+      },
+      {
+        "title": "Building Blocks",
+        "layout": "grid",
+        "templates": []
+      }
+    ]
+  }
+}

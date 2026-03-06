@@ -1,0 +1,128 @@
+{
+  "metadata": {
+    "name": "ec2-atomic",
+    "title": "EC2 Instance",
+    "subtitle": "Single EC2 instance resource",
+    "description": "Create a standalone EC2 instance with configurable AMI, instance type, security groups, and user data. This is an atomic resource containing only the EC2 instance itself - requires existing VPC, subnet, and security groups.",
+    "category": "compute",
+    "provider": "aws",
+    "tier": "atomic",
+    "complexity": "simple",
+    "icon": "\ud83d\udcbb",
+    "version": "latest",
+    "status": "stable",
+    "estimated_cost": "$7-30/month (depends on instance type)",
+    "deployment_time": "1-2 minutes",
+    "use_cases": [
+      "Add instance to existing infrastructure",
+      "Expert users building custom architectures",
+      "Testing and learning EC2 concepts"
+    ],
+    "features": [
+      "Single EC2 instance resource",
+      "Configurable AMI and instance type",
+      "Security group associations",
+      "IAM instance profile support",
+      "SSH key pair support",
+      "User data scripts"
+    ],
+    "outputs": [
+      "Instance ID",
+      "Instance name",
+      "Private IP address",
+      "Public IP address (if applicable)",
+      "Instance type",
+      "AMI ID"
+    ],
+    "prerequisites": [
+      "VPC must exist",
+      "Subnet must exist",
+      "Security groups must exist"
+    ],
+    "tags": [
+      "ec2",
+      "compute",
+      "atomic",
+      "instance"
+    ],
+    "action_name": "aws-ec2-atomic",
+    "author": "InnovativeApps",
+    "cloud": "aws",
+    "environment": "general"
+  },
+  "configuration": {
+    "type": "object",
+    "required": [],
+    "properties": {},
+    "smart_defaults": {}
+  },
+  "resources": [
+    {
+      "id": "aws-ec2-atomic:ec2-{project}-{environment}",
+      "type": "aws:ec2:Instance",
+      "name": "ec2-{project}-{environment}",
+      "description": "EC2 instance - ec2-{project}-{environment}",
+      "category": "Compute",
+      "smart_defaults": {
+        "tags": {
+          "Name": "archie-ec2-{project}-{environment}",
+          "Environment": "{environment}",
+          "ManagedBy": "Archie"
+        }
+      },
+      "optional": false,
+      "dependencies": [],
+      "dependents": []
+    }
+  ],
+  "pillars": {
+    "security": {
+      "score": "good",
+      "description": "Implements security best practices for cloud infrastructure with network isolation, IAM roles, and secure access patterns.",
+      "best_practices": [
+        "Network security with security groups",
+        "Network isolation with VPC architecture"
+      ]
+    },
+    "reliability": {
+      "score": "excellent",
+      "description": "Ensures high availability and fault tolerance with multi-AZ deployment and automated recovery mechanisms.",
+      "best_practices": [
+        "Multi-AZ VPC architecture across availability zones",
+        "Load balancer distribution across subnets"
+      ]
+    },
+    "performance_efficiency": {
+      "score": "good",
+      "description": "Optimizes resource utilization and performance with scalable compute resources and efficient networking.",
+      "best_practices": [
+        "Scalable resource provisioning"
+      ]
+    },
+    "cost_optimization": {
+      "score": "good",
+      "description": "Balances cost efficiency with reliability through appropriate resource sizing and usage-based pricing.",
+      "best_practices": [
+        "Environment-specific parameter handling",
+        "Reusable infrastructure patterns reducing overhead",
+        "On-demand resource provisioning"
+      ]
+    },
+    "operational_excellence": {
+      "score": "good",
+      "description": "Enables operational best practices with infrastructure as code, monitoring, and automated management.",
+      "best_practices": [
+        "Infrastructure as Code with Pulumi for automated deployments",
+        "Version-controlled configuration"
+      ]
+    },
+    "sustainability": {
+      "score": "good",
+      "description": "Supports sustainable practices through efficient resource utilization and regional service usage.",
+      "best_practices": [
+        "Efficient resource utilization patterns",
+        "Automated scaling reducing over-provisioning"
+      ]
+    }
+  }
+}

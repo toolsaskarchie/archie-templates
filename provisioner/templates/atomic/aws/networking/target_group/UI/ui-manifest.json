@@ -1,0 +1,112 @@
+{
+  "metadata": {
+    "name": "target-group-atomic",
+    "title": "Target Group",
+    "subtitle": "Single target group resource",
+    "description": "Create a standalone load balancer target group. Requires existing VPC.",
+    "category": "networking",
+    "provider": "aws",
+    "tier": "atomic",
+    "complexity": "simple",
+    "icon": "\ud83c\udfaf",
+    "version": "latest",
+    "status": "stable",
+    "estimated_cost": "$0/month",
+    "deployment_time": "1 minute",
+    "use_cases": [
+      "Add target group to existing infrastructure",
+      "Expert users building custom architectures"
+    ],
+    "features": [
+      "HTTP/HTTPS target group",
+      "Health check configuration",
+      "Instance or IP target types",
+      "Custom port and protocol"
+    ],
+    "outputs": [
+      "Target group ARN",
+      "Target group name",
+      "Target group ID"
+    ],
+    "prerequisites": [
+      "VPC must exist"
+    ],
+    "tags": [
+      "target-group",
+      "load-balancer",
+      "networking",
+      "atomic"
+    ],
+    "action_name": "aws-target-group",
+    "author": "InnovativeApps",
+    "cloud": "aws",
+    "environment": "general"
+  },
+  "configuration": {
+    "type": "object",
+    "required": [],
+    "properties": {},
+    "smart_defaults": {}
+  },
+  "resources": [
+    {
+      "id": "aws-target-group:{project_name}-target-group",
+      "type": "aws:lb:TargetGroup",
+      "name": "{project_name}-target-group",
+      "description": "TargetGroup resource - {project_name}-target-group",
+      "category": "Other",
+      "smart_defaults": {},
+      "optional": false,
+      "dependencies": [],
+      "dependents": []
+    }
+  ],
+  "pillars": {
+    "security": {
+      "score": "good",
+      "description": "Implements security best practices for cloud infrastructure with network isolation, IAM roles, and secure access patterns.",
+      "best_practices": [
+        "Network isolation with VPC architecture"
+      ]
+    },
+    "reliability": {
+      "score": "good",
+      "description": "Ensures high availability and fault tolerance with multi-AZ deployment and automated recovery mechanisms.",
+      "best_practices": [
+        "Multi-AZ VPC architecture across availability zones"
+      ]
+    },
+    "performance_efficiency": {
+      "score": "good",
+      "description": "Optimizes resource utilization and performance with scalable compute resources and efficient networking.",
+      "best_practices": [
+        "Scalable resource provisioning"
+      ]
+    },
+    "cost_optimization": {
+      "score": "good",
+      "description": "Balances cost efficiency with reliability through appropriate resource sizing and usage-based pricing.",
+      "best_practices": [
+        "Environment-specific parameter handling",
+        "Reusable infrastructure patterns reducing overhead",
+        "On-demand resource provisioning"
+      ]
+    },
+    "operational_excellence": {
+      "score": "good",
+      "description": "Enables operational best practices with infrastructure as code, monitoring, and automated management.",
+      "best_practices": [
+        "Infrastructure as Code with Pulumi for automated deployments",
+        "Version-controlled configuration"
+      ]
+    },
+    "sustainability": {
+      "score": "good",
+      "description": "Supports sustainable practices through efficient resource utilization and regional service usage.",
+      "best_practices": [
+        "Efficient resource utilization patterns",
+        "Automated scaling reducing over-provisioning"
+      ]
+    }
+  }
+}

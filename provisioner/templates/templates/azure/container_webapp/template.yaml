@@ -1,0 +1,103 @@
+metadata:
+  name: azure-container-webapp
+  title: Container Web App
+  description: Deploy an Archie-branded congratulations page as a containerized web app on Azure App Service.
+  category: compute
+  cloud: azure
+  version: latest
+  author: InnovativeApps
+  tags:
+  - azure
+  - app-service
+  - container
+  - docker
+  - webapp
+  base_cost: $0.00/month (Free Tier)
+  complexity: low
+  deployment_time: 5-7 minutes
+  marketplace_group: WEBSITES
+  action_name: azure-container-webapp
+  environment: prod
+  tier: template
+  use_cases:
+  - Production workloads
+  - Mission-critical applications
+  - Enterprise-grade infrastructure
+resources:
+  index-html:
+    type: aws:s3:BucketObject
+    name: index-html
+    always_created: true
+    description: Archie-branded congratulations page (index.html)
+    smart_defaults:
+      key: index.html
+      content_type: text/html
+      tags:
+        Name: archie-index-html-{environment}
+        ManagedBy: Archie
+  styles-css:
+    type: aws:s3:BucketObject
+    name: styles-css
+    always_created: true
+    description: Styles with dark/light theme support (styles.css)
+    smart_defaults:
+      key: styles.css
+      content_type: text/css
+      tags:
+        Name: archie-styles-css-{environment}
+        ManagedBy: Archie
+  '{project_name}-rg':
+    type: azure-native:resources:ResourceGroup
+    name: '{project_name}-rg'
+    always_created: true
+    description: azure-native:resources:ResourceGroup resource
+    smart_defaults:
+      location: '{config_location}'
+      tags:
+        ManagedBy: Archie
+  '{project_name}-plan':
+    type: azure-native:web:AppServicePlan
+    name: '{project_name}-plan'
+    always_created: true
+    description: azure-native:web:AppServicePlan resource
+    smart_defaults:
+      name: plan-{safe_project}-{random_suffix}
+      resource_group_name: '{config_name}'
+      location: '{config_location}'
+      kind: Linux
+      reserved: true
+      sku:
+        name: F1
+        tier: Free
+      tags:
+        ManagedBy: Archie
+  '{project_name}-app':
+    type: azure-native:web:WebApp
+    name: '{project_name}-app'
+    always_created: true
+    description: azure-native:web:WebApp resource
+    smart_defaults:
+      name: '{safe_project}-app-{random_suffix}'
+      resource_group_name: '{config_name}'
+      location: '{config_location}'
+      server_farm_id: '{config_id}'
+      https_only: true
+      site_config: '{computed}'
+      tags:
+        ManagedBy: Archie
+configuration:
+  properties:
+    appName:
+      type: string
+      title: App Name
+      default: my-azure-app
+    resourceGroup:
+      type: string
+      title: Resource Group
+    location:
+      type: string
+      title: Azure Region
+      default: eastus
+  required:
+  - appName
+  - resourceGroup

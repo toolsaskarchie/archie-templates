@@ -1,0 +1,95 @@
+{
+  "metadata": {
+    "name": "aws-aurora-cluster-atomic",
+    "title": "Aurora Cluster",
+    "description": "AWS Aurora database cluster resource.",
+    "category": "database",
+    "author": "InnovativeApps",
+    "version": "latest",
+    "tags": [
+      "aws",
+      "database",
+      "aurora",
+      "atomic"
+    ],
+    "estimated_cost": "N/A",
+    "complexity": "medium",
+    "deployment_time": "10-15 minutes",
+    "action_name": "aws-aurora-cluster-atomic",
+    "cloud": "aws",
+    "tier": "atomic",
+    "environment": "general"
+  },
+  "configuration": {
+    "type": "object",
+    "required": [],
+    "properties": {},
+    "smart_defaults": {}
+  },
+  "resources": [
+    {
+      "id": "aws-aurora-cluster-atomic:generated-resource",
+      "type": "aws:rds:Cluster",
+      "name": "generated-resource",
+      "description": "Cluster resource - generated-resource",
+      "category": "Compute",
+      "smart_defaults": {},
+      "optional": false,
+      "dependencies": [],
+      "dependents": []
+    }
+  ],
+  "pillars": {
+    "security": {
+      "score": "good",
+      "description": "Implements security best practices for cloud infrastructure with network isolation, IAM roles, and secure access patterns.",
+      "best_practices": [
+        "Network security with security groups",
+        "Data encryption at rest and in transit",
+        "Network isolation with VPC architecture"
+      ]
+    },
+    "reliability": {
+      "score": "excellent",
+      "description": "Ensures high availability and fault tolerance with multi-AZ deployment and automated recovery mechanisms.",
+      "best_practices": [
+        "Multi-AZ VPC architecture across availability zones",
+        "Load balancer distribution across subnets"
+      ]
+    },
+    "performance_efficiency": {
+      "score": "good",
+      "description": "Optimizes resource utilization and performance with scalable compute resources and efficient networking.",
+      "best_practices": [
+        "Scalable resource provisioning"
+      ]
+    },
+    "cost_optimization": {
+      "score": "good",
+      "description": "Balances cost efficiency with reliability through appropriate resource sizing and usage-based pricing.",
+      "best_practices": [
+        "Environment-specific parameter handling",
+        "Reusable infrastructure patterns reducing overhead",
+        "On-demand resource provisioning"
+      ]
+    },
+    "operational_excellence": {
+      "score": "excellent",
+      "description": "Enables operational best practices with infrastructure as code, monitoring, and automated management.",
+      "best_practices": [
+        "Infrastructure as Code with Pulumi for automated deployments",
+        "Comprehensive logging with CloudWatch",
+        "Version-controlled configuration"
+      ]
+    },
+    "sustainability": {
+      "score": "good",
+      "description": "Supports sustainable practices through efficient resource utilization and regional service usage.",
+      "best_practices": [
+        "Regional AWS services reducing data transfer distances",
+        "Efficient resource utilization patterns",
+        "Automated scaling reducing over-provisioning"
+      ]
+    }
+  }
+}

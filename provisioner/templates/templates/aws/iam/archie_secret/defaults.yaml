@@ -1,0 +1,6 @@
+# ============================================================================
+# Archie Secret Configuration
+# ============================================================================
+secret:
+  name_prefix: "archie/credentials"
+  description: "Cloud credentials for Archie AI DevOps Assistant. Used for the 'Secrets' deployment method."

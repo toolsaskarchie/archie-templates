@@ -1,0 +1,74 @@
+metadata:
+  name: aws-archie-secret
+  title: Archie Onboarding Secret
+  description: Securely store your AWS Access Keys in AWS Secrets Manager for Archie's 'Secret' deployment method. Ideal for users who want to manage their own sensitive credentials while giving Archie safe access.
+  category: security
+  version: latest
+  author: InnovativeApps
+  features:
+  - Secure credential storage (Secrets Manager)
+  - Principle of Least Privilege support
+  - Automated Secret ARN generation
+  - Directly compatible with Archie Onboarding
+  - Encrypted at rest by default
+  tags:
+  - iam
+  - secrets
+  - security
+  - onboarding
+  - managed
+  estimated_cost: $0.40/month (AWS Secrets Manager cost)
+  complexity: beginner
+  deployment_time: 1-2 minutes
+  marketplace_group: aws-security-group
+  is_listed_in_marketplace: true
+  action_name: aws-archie-secret
+  environment: prod
+  cloud: aws
+  tier: template
+  use_cases:
+  - Production workloads
+  - Mission-critical applications
+  - Enterprise-grade infrastructure
+resources:
+  secret:
+    type: aws:secretsmanager:Secret
+    name: secret
+    always_created: true
+    description: Resource - secret
+    smart_defaults:
+      name: archie-secret
+      tags:
+        Name: archie-secret-{environment}
+        ManagedBy: Archie
+configuration:
+  properties:
+    secret_name:
+      type: string
+      title: Secret Name
+      description: Get secret name generated from project/env.
+      group: General Settings
+      order: 1
+    access_key:
+      type: string
+      title: AWS Access Key ID
+      description: The Access Key ID for Archie's service user
+      placeholder: AKIA...
+      is_secret: true
+      order: 2
+    secret_key:
+      type: string
+      title: AWS Secret Access Key
+      description: The Secret Access Key for Archie's service user
+      placeholder: wJalr...
+      is_secret: true
+      order: 3
+    projectName:
+      type: string
+      title: Project Name
+      description: Unique identifier for this project (e.g., 'myapp')
+      order: 1
+  required:
+  - projectName
+  - access_key
+  - secret_key

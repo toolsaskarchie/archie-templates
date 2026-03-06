@@ -1,0 +1,207 @@
+{
+  "metadata": {
+    "name": "kubernetes-web-app",
+    "title": "Simple Web App",
+    "description": "Deploy a simple web application to Kubernetes with Deployment, Service, and optional Ingress.",
+    "category": "compute",
+    "cloud": "kubernetes",
+    "version": "latest",
+    "author": "InnovativeApps",
+    "tags": [
+      "kubernetes",
+      "docker",
+      "k8s",
+      "webapp"
+    ],
+    "complexity": "medium",
+    "deployment_time": "2-4 minutes",
+    "marketplace_group": "COMPUTE",
+    "action_name": "kubernetes-web-app",
+    "environment": "prod",
+    "tier": "template",
+    "use_cases": [
+      "Production workloads",
+      "Mission-critical applications",
+      "Enterprise-grade infrastructure"
+    ]
+  },
+  "configuration": {
+    "type": "object",
+    "required": [
+      "appName",
+      "image"
+    ],
+    "properties": {
+      "resource_labels": {
+        "type": "string",
+        "title": "Resource Labels",
+        "description": "Get resource labels for Kubernetes resources.",
+        "group": "General Settings",
+        "order": 1
+      },
+      "appName": {
+        "type": "string",
+        "title": "App Name",
+        "default": "my-web-app"
+      },
+      "image": {
+        "type": "string",
+        "title": "Container Image",
+        "default": "nginx:latest"
+      },
+      "replicas": {
+        "type": "integer",
+        "title": "Replicas",
+        "default": 2
+      },
+      "namespace": {
+        "type": "string",
+        "title": "Namespace",
+        "default": "default"
+      },
+      "serviceType": {
+        "type": "string",
+        "title": "Service Type",
+        "enum": [
+          "ClusterIP",
+          "NodePort",
+          "LoadBalancer"
+        ],
+        "default": "LoadBalancer"
+      }
+    },
+    "smart_defaults": {}
+  },
+  "resources": [
+    {
+      "id": "kubernetes-web-app:{project_name}",
+      "type": "kubernetes:apps/v1:Deployment",
+      "name": "{project_name}",
+      "description": "kubernetes:apps/v1:Deployment resource",
+      "category": "Other",
+      "smart_defaults": {
+        "metadata": {},
+        "spec": {},
+        "opts": "{opts}"
+      },
+      "optional": false,
+      "dependencies": [],
+      "dependents": []
+    },
+    {
+      "id": "kubernetes-web-app:{project_name}-config",
+      "type": "kubernetes:core/v1:ConfigMap",
+      "name": "{project_name}-config",
+      "description": "kubernetes:core/v1:ConfigMap resource",
+      "category": "Other",
+      "smart_defaults": {
+        "metadata": {
+          "name": "{config_app_name}-config"
+        },
+        "data": "{config_data}",
+        "opts": "{opts}"
+      },
+      "optional": false,
+      "dependencies": [],
+      "dependents": []
+    },
+    {
+      "id": "kubernetes-web-app:{config_namespace}",
+      "type": "kubernetes:core/v1:Namespace",
+      "name": "{config_namespace}",
+      "description": "kubernetes:core/v1:Namespace resource",
+      "category": "Other",
+      "smart_defaults": {
+        "metadata": {},
+        "opts": "{opts}"
+      },
+      "optional": false,
+      "dependencies": [],
+      "dependents": []
+    },
+    {
+      "id": "kubernetes-web-app:{project_name}-svc",
+      "type": "kubernetes:core/v1:Service",
+      "name": "{project_name}-svc",
+      "description": "kubernetes:core/v1:Service resource",
+      "category": "Other",
+      "smart_defaults": {
+        "metadata": {
+          "name": "{config_app_name}-service"
+        },
+        "spec": {},
+        "opts": "{opts}"
+      },
+      "optional": false,
+      "dependencies": [],
+      "dependents": []
+    },
+    {
+      "id": "kubernetes-web-app:{project_name}-ingress",
+      "type": "kubernetes:networking.k8s.io/v1:Ingress",
+      "name": "{project_name}-ingress",
+      "description": "kubernetes:networking.k8s.io/v1:Ingress resource",
+      "category": "Other",
+      "smart_defaults": {
+        "metadata": {
+          "name": "{config_app_name}-ingress"
+        },
+        "spec": {},
+        "opts": "{opts}"
+      },
+      "optional": false,
+      "dependencies": [],
+      "dependents": []
+    }
+  ],
+  "pillars": {
+    "security": {
+      "score": "fair",
+      "description": "Implements security best practices for cloud infrastructure.",
+      "best_practices": [
+        "Basic security configurations",
+        "Access control mechanisms"
+      ]
+    },
+    "reliability": {
+      "score": "good",
+      "description": "Ensures high availability and fault tolerance with multi-AZ deployment and automated recovery mechanisms.",
+      "best_practices": [
+        "Proper resource dependency management"
+      ]
+    },
+    "performance_efficiency": {
+      "score": "fair",
+      "description": "Optimizes resource utilization and performance.",
+      "best_practices": [
+        "Scalable resource allocation",
+        "Performance monitoring capabilities"
+      ]
+    },
+    "cost_optimization": {
+      "score": "good",
+      "description": "Balances cost efficiency with reliability through appropriate resource sizing and usage-based pricing.",
+      "best_practices": [
+        "Environment-specific parameter handling",
+        "On-demand resource provisioning"
+      ]
+    },
+    "operational_excellence": {
+      "score": "good",
+      "description": "Enables operational best practices with infrastructure as code, monitoring, and automated management.",
+      "best_practices": [
+        "Infrastructure as Code with Pulumi for automated deployments",
+        "Version-controlled configuration"
+      ]
+    },
+    "sustainability": {
+      "score": "good",
+      "description": "Supports sustainable practices through efficient resource utilization and regional service usage.",
+      "best_practices": [
+        "Regional AWS services reducing data transfer distances",
+        "Efficient resource utilization patterns",
+        "Automated scaling reducing over-provisioning"
+      ]
+    }
+  }
+}

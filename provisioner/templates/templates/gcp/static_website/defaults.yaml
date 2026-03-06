@@ -1,0 +1,49 @@
+# GCP Static Website - Default Configuration
+# All resource configurations in one place for easy modification
+
+# =============================================================================
+# Storage Bucket Configuration
+# =============================================================================
+bucket:
+  location: "US"
+  storage_class: "STANDARD"
+  force_destroy: true  # Allow bucket deletion even if not empty
+  
+# =============================================================================
+# Website Configuration
+# =============================================================================
+website:
+  main_page_suffix: "index.html"
+  not_found_page: "404.html"
+
+# =============================================================================
+# Public Access Configuration
+# =============================================================================
+public_access:
+  # Make all objects publicly readable
+  uniform_bucket_level_access: true
+
+# =============================================================================
+# CORS Configuration
+# =============================================================================
+cors:
+  - origin: ["*"]
+    method: ["GET", "HEAD"]
+    response_header: ["*"]
+    max_age_seconds: 3600
+
+# =============================================================================
+# Source Files
+# =============================================================================
+source_files:
+  - "index.html"
+  - "404.html"
+  - "styles.css"
+
+# =============================================================================
+# Labels (GCP equivalent of tags)
+# =============================================================================
+labels:
+  environment: "nonprod"
+  managed_by: "archie"
+  purpose: "static-website"

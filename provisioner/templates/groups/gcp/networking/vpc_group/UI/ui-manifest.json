@@ -1,0 +1,91 @@
+{
+  "metadata": {
+    "cloudProvider": "Google Cloud Platform",
+    "cloudProviderLogo": "gcp",
+    "title": "Networking & VPC",
+    "category": "Networking",
+    "environment": "PROD & NONPROD",
+    "tier": "group",
+    "prompt": "Build a GCP network",
+    "description": "Comprehensive collection of Google Cloud VPC networking resources, featuring production-ready Stacks for rapid deployment and modular Atomics for custom architectural control. This group provides a complete toolkit for building, scaling, and securing your GCP network infrastructure according to cloud best practices.",
+    "star_rating": 4.8,
+    "deployedCount": 120,
+    "deploy_count": 120,
+    "costPerMonth": "$32.40/mo",
+    "running_cost_monthly": 32.4,
+    "free_trial": false,
+    "action_name": "gcp-vpc-group",
+    "version": "latest",
+    "cloud": "gcp",
+    "isListedInMarketplace": true,
+    "complexity_level": "intermediate",
+    "isGroup": true,
+    "resource_type": "VPC",
+    "subtitle": "GCP Stacks & Atomics",
+    "service": "Virtual Private Cloud",
+    "is_essential": false,
+    "created_at": "2024-12-28T12:00:00Z",
+    "updated_at": "2024-12-28T12:00:00Z",
+    "groupSections": [
+      {
+        "title": "Select a Configuration",
+        "layout": "grid",
+        "templates": [
+          "gcp-vpc-nonprod"
+        ]
+      },
+      {
+        "title": "Building Blocks",
+        "layout": "grid",
+        "templates": [
+          "gcp-vpc-atomic",
+          "gcp-subnet-atomic",
+          "gcp-router-atomic",
+          "gcp-nat-atomic",
+          "gcp-firewall-atomic"
+        ]
+      }
+    ],
+    "groupTemplates": [
+      "gcp-vpc-nonprod",
+      "gcp-vpc-atomic",
+      "gcp-subnet-atomic",
+      "gcp-router-atomic",
+      "gcp-nat-atomic",
+      "gcp-firewall-atomic"
+    ],
+    "use_cases": [
+      "Multi-tier Applications",
+      "Microservices Architecture",
+      "Secure Cloud Infrastructure",
+      "Hybrid Cloud Connectivity"
+    ]
+  },
+  "configuration": {
+    "action_name": "gcp-vpc-group",
+    "version": "latest",
+    "isGroup": true,
+    "title": "GCP Networking",
+    "description": "Comprehensive collection of Google Cloud networking templates. This group offers two distinct sections: 'Select a Configuration' with ready-to-deploy VPC solutions, and 'Building Blocks' with atomic components (VPC, subnets, routers, NAT) for building custom network architectures.",
+    "groupSections": [
+      {
+        "title": "Select a Configuration",
+        "layout": "grid",
+        "templates": [
+          "gcp-vpc-nonprod"
+        ]
+      },
+      {
+        "title": "Building Blocks",
+        "layout": "grid",
+        "templates": [
+          "gcp-vpc-atomic",
+          "gcp-subnet-atomic",
+          "gcp-router-atomic",
+          "gcp-nat-atomic",
+          "gcp-firewall-atomic"
+        ]
+      }
+    ]
+  }
+}

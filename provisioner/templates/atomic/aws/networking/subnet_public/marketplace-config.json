@@ -1,0 +1,230 @@
+{
+  "action_name": "public-subnet",
+  "version": "latest",
+  "description": "Create a public subnet with two options: let Archie create a new VPC for you, or add a subnet to your existing VPC. Perfect for adding public-facing resources like web servers, load balancers, or bastion hosts.",
+  "architecture_principles": [
+    "Flexible VPC Options: Create new VPC or use existing - Archie handles dependencies automatically",
+    "VPC Scanning: Automatically discover existing VPCs in your account for easy selection",
+    "Internet Access: Automatic Internet Gateway creation and routing for public connectivity",
+    "Smart Defaults: Pre-configured CIDR blocks that avoid conflicts",
+    "Quick Setup: Minimal configuration required - Archie takes care of the complexity"
+  ],
+  "resources": [
+    {
+      "type": "aws:ec2:Vpc",
+      "name": "vpc",
+      "description": "VPC with auto-generated unique CIDR",
+      "config": {
+        "cidr_block": "{vpcCidr}",
+        "enable_dns_hostnames": true,
+        "enable_dns_support": true,
+        "tags": {
+          "Name": "{vpcName}",
+          "Project": "{project_name}",
+          "ManagedBy": "Archie"
+        }
+      }
+    },
+    {
+      "type": "aws:ec2:Subnet",
+      "name": "public-subnet",
+      "description": "Public subnet with internet access",
+      "config": {
+        "vpc_id": "{vpc.id}",
+        "cidr_block": "{cidrBlock}",
+        "availability_zone": "{availabilityZone}",
+        "map_public_ip_on_launch": "{mapPublicIp}",
+        "tags": {
+          "Name": "{subnetName}",
+          "Project": "{project_name}",
+          "Type": "Public",
+          "ManagedBy": "Archie"
+        }
+      }
+    },
+    {
+      "type": "aws:ec2:InternetGateway",
+      "name": "igw",
+      "description": "Internet Gateway for public access",
+      "config": {
+        "tags": {
+          "Name": "{project_name}-igw",
+          "Project": "{project_name}",
+          "ManagedBy": "Archie"
+        }
+      }
+    },
+    {
+      "type": "aws:ec2:RouteTable",
+      "name": "public-rt",
+      "description": "Route table for public subnet",
+      "config": {
+        "vpc_id": "{vpc.id}",
+        "tags": {
+          "Name": "{project_name}-public-rt",
+          "Project": "{project_name}",
+          "ManagedBy": "Archie"
+        }
+      }
+    }
+  ],
+  "configuration": {
+    "smart_defaults": {
+      "vpcCidr": "Auto-generated unique 10.X.0.0/16 range per deployment",
+      "vpcName": "{project_name}-vpc",
+      "cidrBlock": "10.0.1.0/24 (within VPC range)",
+      "subnetName": "public-subnet",
+      "availabilityZone": "Auto-selected based on region",
+      "mapPublicIp": true,
+      "createIgw": true
+    }
+  },
+  "parameters": {
+    "vpcMode": {
+      "type": "string",
+      "description": "VPC Mode",
+      "required": true,
+      "default": "new",
+      "hidden": true,
+      "allowed_values": [
+        {
+          "value": "new",
+          "label": "Create New VPC",
+          "description": "Let Archie create a new VPC with optimal settings"
+        },
+        {
+          "value": "existing",
+          "label": "Use Existing VPC",
+          "description": "Add subnet to an existing VPC in your account"
+        }
+      ],
+      "help_text": "Choose whether to create a new VPC or use an existing one"
+    },
+    "vpcName": {
+      "type": "string",
+      "description": "Name for the new VPC (only for 'new' mode)",
+      "default": "archie-vpc",
+      "placeholder": "my-vpc",
+      "help_text": "Only required when creating a new VPC",
+      "conditional": {
+        "field": "vpcMode",
+        "value": "new"
+      }
+    },
+    "vpcCidr": {
+      "type": "string",
+      "description": "CIDR block for the new VPC (only for 'new' mode)",
+      "default": "10.0.0.0/16",
+      "placeholder": "10.0.0.0/16",
+      "help_text": "Auto-generated unique CIDR if not specified",
+      "conditional": {
+        "field": "vpcMode",
+        "value": "new"
+      }
+    },
+    "vpcId": {
+      "type": "string",
+      "description": "Select existing VPC",
+      "required": false,
+      "placeholder": "vpc-0123456789abcdef0",
+      "help_text": "Scan your account or enter VPC ID manually",
+      "scan_enabled": true,
+      "scan_resource": "vpcs",
+      "conditional": {
+        "field": "vpcMode",
+        "value": "existing"
+      }
+    },
+    "subnetName": {
+      "type": "string",
+      "default": "public-subnet",
+      "description": "Name for the subnet",
+      "placeholder": "my-public-subnet",
+      "order": 1
+    },
+    "cidrMode": {
+      "type": "radio",
+      "default": "auto",
+      "description": "CIDR block configuration method",
+      "order": 2,
+      "allowed_values": [
+        {
+          "value": "auto",
+          "label": "Auto Calculate",
+          "description": "Automatically calculate CIDR based on VPC configuration"
+        },
+        {
+          "value": "manual",
+          "label": "Manual Input",
+          "description": "Specify CIDR block manually"
+        }
+      ]
+    },
+    "cidrBlock": {
+      "type": "string",
+      "default": "10.0.1.0/24",
+      "description": "CIDR block for the subnet",
+      "placeholder": "10.0.1.0/24",
+      "help_text": "Must be within your VPC CIDR range. Each /24 provides 251 usable IP addresses",
+      "validation": "Must be a valid CIDR block (e.g., 10.0.1.0/24, 172.16.0.0/20, 192.168.1.0/28)",
+      "order": 2.5,
+      "conditional": {
+        "field": "cidrMode",
+        "value": "manual"
+      }
+    },
+    "availabilityZone": {
+      "type": "string",
+      "description": "Availability zone for the subnet (Optional)",
+      "required": false,
+      "placeholder": "us-east-1a",
+      "order": 5,
+      "allowed_values": [
+        "auto",
+        "us-east-1a",
+        "us-east-1b",
+        "us-east-1c",
+        "us-east-1d",
+        "us-east-1e",
+        "us-east-1f",
+        "us-west-2a",
+        "us-west-2b",
+        "us-west-2c",
+        "us-west-2d"
+      ],
+      "help_text": "Leave empty for automatic selection, or choose a specific AZ for precise placement"
+    },
+    "mapPublicIp": {
+      "type": "boolean",
+      "default": true,
+      "description": "Automatically assign public IP addresses to instances launched in this subnet",
+      "help_text": "Recommended for public subnets. Instances will be directly accessible from the internet",
+      "order": 3
+    },
+    "createIgw": {
+      "type": "boolean",
+      "default": true,
+      "description": "Create and attach an Internet Gateway for internet access",
+      "help_text": "Required for internet connectivity. Disable only if your VPC already has an IGW",
+      "order": 4
+    }
+  },
+  "outputs": {
+    "subnet_id": "The ID of the created subnet (use this for launching instances)",
+    "subnet_arn": "ARN of the subnet",
+    "availability_zone": "The availability zone where subnet was created",
+    "cidr_block": "The CIDR block of the subnet",
+    "internet_gateway_id": "Internet Gateway ID (if created)",
+    "route_table_id": "Route table ID associated with the subnet"
+  },
+  "estimated_cost": "$0.00-$1.00/month",
+  "deployment_time": "2-3 minutes",
+  "tags": [
+    "aws",
+    "networking",
+    "vpc",
+    "subnet",
+    "atomic",
+    "building-block"
+  ]
+}

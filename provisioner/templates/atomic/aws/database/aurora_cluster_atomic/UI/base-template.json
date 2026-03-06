@@ -1,0 +1,24 @@
+{
+  "_meta": {
+    "template_type": "base",
+    "template_id": "aws-aurora-cluster-atomic",
+    "description": "Base aws-aurora-cluster-atomic template extracted from Pulumi code",
+    "version": "1.0",
+    "generated_from": "pulumi.py",
+    "source_of_truth": "pulumi.py - This file is GENERATED. Edit pulumi.py instead."
+  },
+  "base_resources": [
+    {
+      "id": "aws-aurora-cluster-atomic:generated-resource",
+      "type": "aws:rds:Cluster",
+      "name": "generated-resource",
+      "description": "Cluster resource - generated-resource",
+      "category": "Compute",
+      "from_sub_template": "aws-aurora-cluster-atomic",
+      "full_defaults": {},
+      "dependencies": [],
+      "dependents": [],
+      "optional": false
+    }
+  ]
+}

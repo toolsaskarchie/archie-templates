@@ -1,0 +1,247 @@
+{
+  "metadata": {
+    "pillars": {
+      "operational_excellence": {
+        "score": "7",
+        "description": "Automated deployment with infrastructure as code. aws-subnet_atomic follows IaC best practices.",
+        "best_practices": [
+          "One-click deployment with Archie IaC",
+          "Infrastructure as Code for consistency",
+          "Automated resource provisioning",
+          "Version controlled configuration"
+        ]
+      },
+      "security": {
+        "score": "7",
+        "description": "Follows security best practices with proper IAM roles and network isolation where applicable.",
+        "best_practices": [
+          "Least privilege IAM policies",
+          "Encrypted data at rest",
+          "Secure network configuration",
+          "Regular security updates"
+        ]
+      },
+      "performance": {
+        "score": "7",
+        "description": "Optimized for performance with appropriate resource sizing and configuration.",
+        "best_practices": [
+          "Right-sized resources",
+          "Performance monitoring enabled",
+          "Optimized network configuration",
+          "Efficient resource utilization"
+        ]
+      },
+      "cost": {
+        "score": "7",
+        "description": "Cost-optimized with appropriate resource sizing and managed services.",
+        "best_practices": [
+          "Right-sized resources for workload",
+          "Managed services reduce operational costs",
+          "Resource tagging for cost tracking",
+          "Automated provisioning reduces waste"
+        ]
+      },
+      "sustainability": {
+        "score": "6",
+        "description": "Uses cloud-managed services for efficient resource utilization and reduced carbon footprint.",
+        "best_practices": [
+          "Managed cloud services reduce overhead",
+          "Efficient resource allocation",
+          "Auto-scaling for optimal utilization",
+          "Minimal idle resources"
+        ]
+      },
+      "reliability": {
+        "score": "7",
+        "description": "Designed for reliability with appropriate redundancy and fault tolerance.",
+        "best_practices": [
+          "Automated provisioning reduces errors",
+          "Consistent deployment process",
+          "Monitoring and logging enabled",
+          "Infrastructure as Code ensures repeatability"
+        ]
+      }
+    },
+    "free_trial": false,
+    "action_name": "aws-subnet-atomic",
+    "deployment_scope": "single-region",
+    "certifications": [
+      "aws-well-architected"
+    ],
+    "cloudProvider": "AWS",
+    "pricing_model": "basic",
+    "pillars_text": [
+      "Automated deployment with Archie IaC",
+      "Production-ready infrastructure",
+      "Security best practices included"
+    ],
+    "cloud": "aws",
+    "features": [
+      "0 managed resources",
+      "One-click deployment",
+      "Fully automated"
+    ],
+    "marketplaceGroup": "aws-vpc-group",
+    "resources": [],
+    "running_cost_monthly": 0,
+    "time_to_provision": 180,
+    "owner": "Archielabs",
+    "costPerMonth": "$0/mo",
+    "tags": [
+      "aws-subnet-atomic",
+      "networking",
+      "aws"
+    ],
+    "infra": {
+      "resources": [],
+      "pillars": [
+        "Automated deployment with Archie IaC",
+        "Production-ready infrastructure",
+        "Security best practices included"
+      ],
+      "configuration": {
+        "smart_defaults": {}
+      },
+      "version": "latest",
+      "action_name": "aws-subnet-atomic"
+    },
+    "environment": "general",
+    "use_cases": [
+      "Networking infrastructure",
+      "Production workloads"
+    ],
+    "version": "latest",
+    "deploy_count": 0,
+    "created_at": "2026-01-01T00:00:00Z",
+    "star_rating": "4.5",
+    "tier": "atomic",
+    "subtitle": "",
+    "deployedCount": 0,
+    "service": "Networking",
+    "updated_at": "2026-01-01T00:00:00Z",
+    "is_essential": false,
+    "category": "Networking",
+    "cloudProviderLogo": "aws",
+    "isListedInMarketplace": false,
+    "description": "Standalone AWS Subnet resource.",
+    "title": "Subnet"
+  },
+  "configuration": {
+    "action_name": "aws-subnet-atomic",
+    "version": "latest",
+    "description": "Standalone AWS Subnet resource.",
+    "pillars": [],
+    "configuration": {
+      "type": "object",
+      "properties": {
+        "projectName": {
+          "type": "string",
+          "title": "Project Name",
+          "description": "The name of the project",
+          "pattern": "^[a-z0-9-]{1,63}$"
+        },
+        "region": {
+          "type": "string",
+          "title": "AWS Region",
+          "description": "The AWS region to deploy into"
+        }
+      },
+      "required": [
+        "projectName",
+        "region"
+      ]
+    },
+    "resources": [
+      {
+        "id": "subnet_atomic:unknown",
+        "type": "aws:ec2:Subnet",
+        "name": "unknown",
+        "description": "Subnet - unknown",
+        "category": "Networking"
+      }
+    ]
+  },
+  "infra": {
+    "resources": [
+      {
+        "id": "subnet_atomic:unknown",
+        "type": "aws:ec2:Subnet",
+        "name": "unknown",
+        "description": "Subnet - unknown",
+        "category": "Networking"
+      }
+    ],
+    "configuration": {
+      "smart_defaults": {}
+    },
+    "pillars": [
+      "Automated deployment with Archie IaC",
+      "Production-ready infrastructure",
+      "Security best practices included"
+    ],
+    "action_name": "subnet_atomic",
+    "version": "latest"
+  },
+  "pillars": {
+    "operational_excellence": {
+      "score": "7",
+      "description": "Automated deployment with infrastructure as code. aws-subnet_atomic follows IaC best practices.",
+      "best_practices": [
+        "One-click deployment with Archie IaC",
+        "Infrastructure as Code for consistency",
+        "Automated resource provisioning",
+        "Version controlled configuration"
+      ]
+    },
+    "security": {
+      "score": "7",
+      "description": "Follows security best practices with proper IAM roles and network isolation where applicable.",
+      "best_practices": [
+        "Least privilege IAM policies",
+        "Encrypted data at rest",
+        "Secure network configuration",
+        "Regular security updates"
+      ]
+    },
+    "performance": {
+      "score": "7",
+      "description": "Optimized for performance with appropriate resource sizing and configuration.",
+      "best_practices": [
+        "Right-sized resources",
+        "Performance monitoring enabled",
+        "Optimized network configuration",
+        "Efficient resource utilization"
+      ]
+    },
+    "sustainability": {
+      "score": "6",
+      "description": "Uses cloud-managed services for efficient resource utilization and reduced carbon footprint.",
+      "best_practices": [
+        "Managed cloud services reduce overhead",
+        "Efficient resource allocation",
+        "Auto-scaling for optimal utilization",
+        "Minimal idle resources"
+      ]
+    },
+    "reliability": {
+      "score": "7",
+      "description": "Designed for reliability with appropriate redundancy and fault tolerance.",
+      "best_practices": [
+        "Automated provisioning reduces errors",
+        "Consistent deployment process",
+        "Monitoring and logging enabled",
+        "Infrastructure as Code ensures repeatability"
+      ]
+    },
+    "cost": {
+      "score": "7",
+      "description": "Cost-optimized with appropriate resource sizing and managed services.",
+      "best_practices": [
+        "Right-sized resources for workload",
+        "Managed services reduce operational costs",
+        "Resource tagging for cost tracking",
+        "Automated provisioning reduces waste"
+      ]
+    }
+  }
+}

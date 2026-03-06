@@ -1,0 +1,269 @@
+metadata:
+  name: aws-rds-postgres
+  title: Enterprise PostgreSQL Database
+  description: Enterprise-ready PostgreSQL deployment featuring high-availability Multi-AZ architecture.
+  category: database
+  version: latest
+  author: InnovativeApps
+  cloud: aws
+  environment: prod
+  base_template: aws-vpc-prod
+  base_cost: $45/month
+  features:
+  - High-Availability Multi-AZ Deployment
+  - Auto-Scaling gp3 Storage with Encryption at Rest
+  - Secure Password Management via AWS Secrets Manager
+  - Full VPC Isolation with Managed Security Groups
+  - Pre-configured CloudWatch Logs & Monitoring
+  tags:
+  - database
+  - postgresql
+  - rds
+  - production
+  - high-availability
+  complexity: advanced
+  deployment_time: 15-20 minutes
+  action_name: aws-rds-postgres
+  tier: template
+
+resources:
+  # 1. PRIMARY DATABASE RESOURCES (Must be first)
+  '{namer_rds}':
+    type: aws:rds:Instance
+    name: '{namer_rds}'
+    always_created: true
+    resource_category: Database
+    smart_defaults:
+      instance_class: '{config_db_instance_class}'
+      allocated_storage: '{config_allocated_storage}'
+      engine: postgres
+      engine_version: '{config_engine_version}'
+      identifier: '{namer_rds}'
+      db_name: '{config_db_name}'
+      username: '{config_db_username}'
+      password: '{db_password}'
+      db_subnet_group_name: '{config_name}'
+      vpc_security_group_ids:
+      - '{sg_id}'
+      publicly_accessible: '{config_publicly_accessible}'
+      multi_az: '{computed}'
+      storage_type: gp3
+      storage_encrypted: '{config_storage_encrypted}'
+      backup_retention_period: '{config_backup_retention_days}'
+      skip_final_snapshot: '{config_skip_final_snapshot}'
+      performance_insights_enabled: true
+      performance_insights_retention_period: 7
+      copy_tags_to_snapshot: true
+      deletion_protection: true
+      tags:
+        Name: '{db_identifier}'
+
+  '{project_name}-password':
+    type: aws:secretsmanager:Secret
+    name: '{project_name}-password'
+    always_created: true
+    resource_category: Database
+    smart_defaults: {}
+
+  '{project_name}-password-version':
+    type: aws:secretsmanager:SecretVersion
+    name: '{project_name}-password-version'
+    always_created: true
+    resource_category: Database
+    smart_defaults: {}
+
+  '{namer_resource}':
+    type: aws:rds:SubnetGroup
+    name: '{namer_resource}'
+    always_created: true
+    resource_category: Subnet
+    smart_defaults:
+      subnet_ids: '{config_subnet_ids}'
+      description: Subnet group for {db_identifier}
+      tags:
+        Name: '{sng_name}'
+
+  '{project}-{environment}-db-sg':
+    type: aws:ec2:SecurityGroup
+    name: '{project}-{environment}-db-sg'
+    always_created: true
+    resource_category: SecurityGroup
+    smart_defaults:
+      vpc_id: '{config_id}'
+      description: Security group for database tier
+      egress: []
+      tags:
+        Name: '{db_sg_name}'
+        Project: '{project_name}'
+        Environment: prod
+        Tier: db
+        ManagedBy: Archie
+
+  # 2. INHERITED NETWORKING OVERRIDES
+  vpc-{project}-{environment}-{region_short}-{network_num}:
+    resource_category: Vpc
+  'pubsub-{project}-{environment}-az1':
+    resource_category: Subnet
+  'pubsub-{project}-{environment}-az2':
+    resource_category: Subnet
+  'pubsub-{project}-{environment}-az3':
+    resource_category: Subnet
+  'privsub-{project}-{environment}-az1':
+    resource_category: Subnet
+  'privsub-{project}-{environment}-az2':
+    resource_category: Subnet
+  'privsub-{project}-{environment}-az3':
+    resource_category: Subnet
+  'isolatedsub-{project}-{environment}-az1':
+    resource_category: Subnet
+  'isolatedsub-{project}-{environment}-az2':
+    resource_category: Subnet
+  'isolatedsub-{project}-{environment}-az3':
+    resource_category: Subnet
+  'sg-web-{project}-{environment}':
+    resource_category: SecurityGroup
+  'sg-app-{project}-{environment}':
+    resource_category: SecurityGroup
+  'sg-access-{project}-{environment}':
+    resource_category: SecurityGroup
+  'flowlog-{project}-{environment}':
+    resource_category: FlowLog
+
+configuration:
+  properties:
+    # 1. DATABASE SETTINGS
+    db_header:
+      type: separator
+      title: Database Configuration
+      group: Database Settings
+      isEssential: true
+      order: 80
+    dbName:
+      type: string
+      title: Database Name
+      description: Primary database name
+      default: mydb
+      group: Database Settings
+      isEssential: true
+      order: 81
+      resource_category: Database
+    dbUsername:
+      type: string
+      title: Master Username
+      description: Database administrator username
+      default: postgres
+      group: Database Settings
+      isEssential: true
+      order: 82
+      resource_category: Database
+    engineVersion:
+      type: string
+      title: Engine Version
+      description: Version of postgres
+      default: '15'
+      group: Database Settings
+      order: 83
+      resource_category: Database
+    instanceClass:
+      type: string
+      title: Instance Class
+      description: Compute and memory capacity
+      default: db.t3.micro
+      enum:
+      - db.t3.micro
+      - db.t3.small
+      - db.t3.medium
+      - db.t3.large
+      - db.m5.large
+      group: Database Settings
+      isEssential: true
+      order: 84
+      resource_category: Database
+    allocatedStorage:
+      type: number
+      title: Allocated Storage (GB)
+      description: Initial storage capacity
+      default: 20
+      group: Database Settings
+      order: 85
+      resource_category: Database
+    maxAllocatedStorage:
+      type: number
+      title: Max Storage (GB)
+      description: Auto-scaling storage limit
+      default: 100
+      group: Database Settings
+      order: 86
+      resource_category: Database
+    backupRetentionDays:
+      type: number
+      title: Backup Retention (Days)
+      description: Number of days to keep backups
+      default: 3
+      group: Database Settings
+      order: 87
+      resource_category: Database
+
+    # 2. INHERITED NETWORKING MAPPINGS
+    vpc_mode:
+      type: select
+      title: VPC Selection
+      description: Deploy into a new or existing VPC
+      default: new
+      options:
+      - label: Create New VPC
+        value: new
+      - label: Use Existing VPC
+        value: existing
+      group: Networking & Connectivity
+      isEssential: false
+      order: 11
+    enable_nat_gateway:
+      type: boolean
+      title: Provision NAT Gateway
+      description: Provide internet access to private subnets
+      default: true
+      group: Networking & Connectivity
+      isEssential: true
+      order: 60
+      resource_category: NatGateway
+    enable_flow_logs:
+      type: boolean
+      title: Enable Flow Logs
+      description: Capture IP traffic information
+      default: true
+      group: Observability
+      isEssential: true
+      order: 201
+      resource_category: FlowLog
+    enable_rds_endpoint:
+      type: boolean
+      default: false
+      title: Enable RDS VPC Endpoint
+      description: Private interface endpoint for RDS API calls
+      order: 102
+      group: High Availability & Cost
+      resource_category: VpcEndpoint
+    enable_ssm_endpoints:
+      type: boolean
+      title: Enable SSM Endpoints
+      description: Interface Endpoints for secure management
+      default: true
+      group: Security & Connectivity
+      isEssential: true
+      order: 151
+      resource_category: VpcEndpoint
+
+  required:
+  - project_name
+  - dbName
+  - dbUsername
+  - region
+
+outputs:
+  db_instance_id:
+    description: ID of the RDS instance
+    value: ${rds.id}
+  db_endpoint:
+    description: Database connection endpoint
+    value: ${rds.endpoint}

@@ -1,0 +1,39 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "type": "object",
+  "title": "S3 Basic Bucket Configuration",
+  "description": "Configuration for creating a basic S3 bucket",
+  "properties": {
+    "bucketName": {
+      "type": "string",
+      "title": "Bucket Name",
+      "description": "Name for the S3 bucket (must be globally unique)",
+      "pattern": "^[a-z0-9][a-z0-9-]{1,61}[a-z0-9]$",
+      "minLength": 3,
+      "maxLength": 63
+    },
+    "region": {
+      "type": "string",
+      "title": "AWS Region",
+      "description": "AWS region where the bucket will be created",
+      "enum": ["us-east-1", "us-west-2", "eu-west-1", "ap-southeast-1"],
+      "default": "us-east-1"
+    },
+    "enableVersioning": {
+      "type": "boolean",
+      "title": "Enable Versioning",
+      "description": "Enable versioning to keep multiple versions of objects",
+      "default": true
+    },
+    "lifecycleDays": {
+      "type": "integer",
+      "title": "Lifecycle Days",
+      "description": "Number of days before objects are deleted (0 to disable)",
+      "minimum": 0,
+      "maximum": 3650,
+      "default": 90
+    }
+  },
+  "required": ["bucketName"],
+  "additionalProperties": false
+}

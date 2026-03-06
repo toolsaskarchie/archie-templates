@@ -1,0 +1,24 @@
+{
+  "_meta": {
+    "template_type": "base",
+    "template_id": "gcp-firewall-atomic",
+    "description": "Base gcp-firewall-atomic template extracted from Pulumi code",
+    "version": "1.0",
+    "generated_from": "pulumi.py",
+    "source_of_truth": "pulumi.py - This file is GENERATED. Edit pulumi.py instead."
+  },
+  "base_resources": [
+    {
+      "id": "gcp-firewall-atomic:{project_name}-firewall",
+      "type": "gcp:compute:Firewall",
+      "name": "{project_name}-firewall",
+      "description": "Firewall resource - {project_name}-firewall",
+      "category": "Other",
+      "from_sub_template": "gcp-firewall-atomic",
+      "full_defaults": {},
+      "dependencies": [],
+      "dependents": [],
+      "optional": false
+    }
+  ]
+}

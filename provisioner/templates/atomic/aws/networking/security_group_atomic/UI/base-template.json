@@ -1,0 +1,31 @@
+{
+  "_meta": {
+    "template_type": "base",
+    "template_id": "aws-security-group-atomic",
+    "description": "Base aws-security-group-atomic template extracted from Pulumi code",
+    "version": "1.0",
+    "generated_from": "pulumi.py",
+    "source_of_truth": "pulumi.py - This file is GENERATED. Edit pulumi.py instead."
+  },
+  "base_resources": [
+    {
+      "id": "aws-security-group-atomic:sg-{project}-{environment}",
+      "type": "aws:ec2:SecurityGroup",
+      "name": "sg-{project}-{environment}",
+      "description": "SecurityGroup resource - sg-{project}-{environment}",
+      "category": "Security",
+      "from_sub_template": "aws-security-group-atomic",
+      "full_defaults": {
+        "description": "Security group for sg-{project}-{environment}",
+        "tags": {
+          "Name": "archie-sg-{project}-{environment}",
+          "Environment": "{environment}",
+          "ManagedBy": "Archie"
+        }
+      },
+      "dependencies": [],
+      "dependents": [],
+      "optional": false
+    }
+  ]
+}

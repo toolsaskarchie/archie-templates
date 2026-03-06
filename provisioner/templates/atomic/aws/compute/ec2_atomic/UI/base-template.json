@@ -1,0 +1,30 @@
+{
+  "_meta": {
+    "template_type": "base",
+    "template_id": "aws-ec2-atomic",
+    "description": "Base aws-ec2-atomic template extracted from Pulumi code",
+    "version": "1.0",
+    "generated_from": "pulumi.py",
+    "source_of_truth": "pulumi.py - This file is GENERATED. Edit pulumi.py instead."
+  },
+  "base_resources": [
+    {
+      "id": "aws-ec2-atomic:ec2-{project}-{environment}",
+      "type": "aws:ec2:Instance",
+      "name": "ec2-{project}-{environment}",
+      "description": "EC2 instance - ec2-{project}-{environment}",
+      "category": "Compute",
+      "from_sub_template": "aws-ec2-atomic",
+      "full_defaults": {
+        "tags": {
+          "Name": "archie-ec2-{project}-{environment}",
+          "Environment": "{environment}",
+          "ManagedBy": "Archie"
+        }
+      },
+      "dependencies": [],
+      "dependents": [],
+      "optional": false
+    }
+  ]
+}

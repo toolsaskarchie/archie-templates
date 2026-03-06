@@ -1,0 +1,24 @@
+{
+  "_meta": {
+    "template_type": "base",
+    "template_id": "gcp-router-atomic",
+    "description": "Base gcp-router-atomic template extracted from Pulumi code",
+    "version": "1.0",
+    "generated_from": "pulumi.py",
+    "source_of_truth": "pulumi.py - This file is GENERATED. Edit pulumi.py instead."
+  },
+  "base_resources": [
+    {
+      "id": "gcp-router-atomic:generated-resource",
+      "type": "gcp:compute:Router",
+      "name": "generated-resource",
+      "description": "Router resource - generated-resource",
+      "category": "Networking",
+      "from_sub_template": "gcp-router-atomic",
+      "full_defaults": {},
+      "dependencies": [],
+      "dependents": [],
+      "optional": false
+    }
+  ]
+}

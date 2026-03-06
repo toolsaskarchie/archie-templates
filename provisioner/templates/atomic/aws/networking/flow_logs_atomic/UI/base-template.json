@@ -1,0 +1,54 @@
+{
+  "_meta": {
+    "template_type": "base",
+    "template_id": "aws-flow-logs-atomic",
+    "description": "Base aws-flow-logs-atomic template extracted from Pulumi code",
+    "version": "1.0",
+    "generated_from": "pulumi.py",
+    "source_of_truth": "pulumi.py - This file is GENERATED. Edit pulumi.py instead."
+  },
+  "base_resources": [
+    {
+      "id": "aws-flow-logs-atomic:{project_name}-role",
+      "type": "aws:iam:Role",
+      "name": "{project_name}-role",
+      "description": "IAM role - {project_name}-role",
+      "category": "Security",
+      "from_sub_template": "aws-flow-logs-atomic",
+      "full_defaults": {
+        "tags": {
+          "Name": "archie-{project_name}-role",
+          "Environment": "{environment}",
+          "ManagedBy": "Archie"
+        }
+      },
+      "dependencies": [],
+      "dependents": [],
+      "optional": false
+    },
+    {
+      "id": "aws-flow-logs-atomic:{project_name}-log-group",
+      "type": "aws:cloudwatch:LogGroup",
+      "name": "{project_name}-log-group",
+      "description": "LogGroup resource - {project_name}-log-group",
+      "category": "Monitoring",
+      "from_sub_template": "aws-flow-logs-atomic",
+      "full_defaults": {},
+      "dependencies": [],
+      "dependents": [],
+      "optional": false
+    },
+    {
+      "id": "aws-flow-logs-atomic:flowlog-{project}-{environment}",
+      "type": "aws:ec2:FlowLog",
+      "name": "flowlog-{project}-{environment}",
+      "description": "FlowLog resource - flowlog-{project}-{environment}",
+      "category": "Monitoring",
+      "from_sub_template": "aws-flow-logs-atomic",
+      "full_defaults": {},
+      "dependencies": [],
+      "dependents": [],
+      "optional": false
+    }
+  ]
+}

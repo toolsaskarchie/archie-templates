@@ -1,0 +1,36 @@
+{
+  "_meta": {
+    "template_type": "base",
+    "template_id": "azure-vnet-atomic",
+    "description": "Base azure-vnet-atomic template extracted from Pulumi code",
+    "version": "1.0",
+    "generated_from": "pulumi.py",
+    "source_of_truth": "pulumi.py - This file is GENERATED. Edit pulumi.py instead."
+  },
+  "base_resources": [
+    {
+      "id": "azure-vnet-atomic:generated-resource",
+      "type": "azure:network:VirtualNetwork",
+      "name": "generated-resource",
+      "description": "VirtualNetwork resource - generated-resource",
+      "category": "Other",
+      "from_sub_template": "azure-vnet-atomic",
+      "full_defaults": {},
+      "dependencies": [],
+      "dependents": [],
+      "optional": false
+    },
+    {
+      "id": "azure-vnet-atomic:{project_name}-rg",
+      "type": "azure:resources:ResourceGroup",
+      "name": "{project_name}-rg",
+      "description": "ResourceGroup resource - {project_name}-rg",
+      "category": "Other",
+      "from_sub_template": "azure-vnet-atomic",
+      "full_defaults": {},
+      "dependencies": [],
+      "dependents": [],
+      "optional": false
+    }
+  ]
+}

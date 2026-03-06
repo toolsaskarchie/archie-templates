@@ -1,0 +1,84 @@
+{
+  "_meta": {
+    "template_type": "base",
+    "template_id": "aws-redis-nonprod",
+    "description": "Base aws-redis-nonprod template extracted from Pulumi code",
+    "version": "1.0",
+    "generated_from": "pulumi.py",
+    "source_of_truth": "pulumi.py - This file is GENERATED. Edit pulumi.py instead."
+  },
+  "base_resources": [
+    {
+      "id": "aws-redis-nonprod:cluster",
+      "type": "aws:elasticache:Cluster",
+      "name": "cluster",
+      "description": "ElastiCache Redis cluster - cluster",
+      "category": "Compute",
+      "full_defaults": {
+        "name": "archie-cluster",
+        "tags": {
+          "Name": "archie-cluster-{environment}",
+          "ManagedBy": "Archie"
+        }
+      },
+      "dependencies": [],
+      "dependents": [],
+      "optional": false
+    },
+    {
+      "id": "aws-redis-nonprod:subnet-group",
+      "type": "aws:elasticache:SubnetGroup",
+      "name": "subnet-group",
+      "description": "ElastiCache subnet group - subnet-group",
+      "category": "Networking",
+      "full_defaults": {
+        "name": "archie-subnet-group",
+        "tags": {
+          "Name": "archie-subnet-group-{environment}",
+          "ManagedBy": "Archie"
+        }
+      },
+      "dependencies": [],
+      "dependents": [],
+      "optional": false
+    },
+    {
+      "id": "aws-redis-nonprod:sg",
+      "type": "aws:ec2:SecurityGroup",
+      "name": "sg",
+      "description": "Security group - sg",
+      "category": "Security",
+      "full_defaults": {
+        "vpcId": "{vpc_id}",
+        "description": "Security group for sg",
+        "name": "archie-sg",
+        "tags": {
+          "Name": "archie-sg-{environment}",
+          "Environment": "{environment}"
+        }
+      },
+      "dependencies": [],
+      "dependents": [],
+      "optional": false
+    },
+    {
+      "id": "aws-security-group-atomic:sg-{project}-{environment}",
+      "type": "aws:ec2:SecurityGroup",
+      "name": "sg-{project}-{environment}",
+      "description": "SecurityGroup resource - sg-{project}-{environment}",
+      "category": "Security",
+      "from_sub_template": "SecurityGroupAtomicTemplate",
+      "full_defaults": {
+        "description": "Security group for sg-{project}-{environment}",
+        "tags": {
+          "Name": "archie-sg-{project}-{environment}",
+          "Environment": "{environment}",
+          "ManagedBy": "Archie"
+        }
+      },
+      "dependencies": [],
+      "dependents": [],
+      "optional": false
+    }
+  ]
+}

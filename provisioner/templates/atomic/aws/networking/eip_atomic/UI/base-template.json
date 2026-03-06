@@ -1,0 +1,31 @@
+{
+  "_meta": {
+    "template_type": "base",
+    "template_id": "aws-eip-atomic",
+    "description": "Base aws-eip-atomic template extracted from Pulumi code",
+    "version": "1.0",
+    "generated_from": "pulumi.py",
+    "source_of_truth": "pulumi.py - This file is GENERATED. Edit pulumi.py instead."
+  },
+  "base_resources": [
+    {
+      "id": "aws-eip-atomic:eip-{project}-{environment}",
+      "type": "aws:ec2:Eip",
+      "name": "eip-{project}-{environment}",
+      "description": "Eip resource - eip-{project}-{environment}",
+      "category": "Networking",
+      "from_sub_template": "aws-eip-atomic",
+      "full_defaults": {
+        "domain": "vpc",
+        "tags": {
+          "Name": "archie-eip-{project}-{environment}",
+          "Environment": "{environment}",
+          "ManagedBy": "Archie"
+        }
+      },
+      "dependencies": [],
+      "dependents": [],
+      "optional": false
+    }
+  ]
+}

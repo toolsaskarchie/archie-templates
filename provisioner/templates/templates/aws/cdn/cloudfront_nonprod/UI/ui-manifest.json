@@ -1,0 +1,560 @@
+{
+  "metadata": {
+    "name": "aws-cloudfront-nonprod",
+    "title": "CloudFront CDN",
+    "description": "Accelerates static content delivery globally. Chains a high-availability S3 origin with Amazon CloudFront for edge-caching excellence, automatic HTTPS, and low-latency access for users worldwide.",
+    "category": "networking",
+    "version": "latest",
+    "author": "InnovativeApps",
+    "tags": [
+      "cloudfront",
+      "cdn",
+      "s3",
+      "global",
+      "networking"
+    ],
+    "features": [
+      "Global Content Delivery via CloudFront Edge",
+      "Automated SSL/TLS (HTTPS) for security",
+      "Edge Caching Policies for minimized origin load",
+      "Orchestrated S3 Origin Deployment",
+      "Built-in SPA routing support"
+    ],
+    "estimated_cost": "$0 - $2.00/month (traffic dependent)",
+    "complexity": "intermediate",
+    "deployment_time": "5-10 minutes",
+    "marketplace_group": "WEBSITES",
+    "architecture": {
+      "summary": "CloudFront NonProd Template"
+    },
+    "action_name": "aws-cloudfront-nonprod",
+    "environment": "nonprod",
+    "cloud": "aws",
+    "tier": "template",
+    "use_cases": [
+      "Development and testing environments",
+      "Staging infrastructure",
+      "Non-production workloads"
+    ]
+  },
+  "configuration": {
+    "type": "object",
+    "required": [
+      "project_name",
+      "region"
+    ],
+    "properties": {
+      "cloudfront_enabled": {
+        "type": "boolean",
+        "title": "Cloudfront Enabled",
+        "description": "Get CloudFront enabled status from defaults.yaml.",
+        "group": "General Settings",
+        "order": 1
+      },
+      "cloudfront_comment": {
+        "type": "string",
+        "title": "Cloudfront Comment",
+        "description": "Get CloudFront comment from defaults.yaml.",
+        "group": "General Settings",
+        "order": 2
+      },
+      "cloudfront_price_class": {
+        "type": "string",
+        "title": "Cloudfront Price Class",
+        "description": "Get CloudFront price class from defaults.yaml.",
+        "group": "General Settings",
+        "order": 3
+      },
+      "cloudfront_default_root_object": {
+        "type": "string",
+        "title": "Cloudfront Default Root Object",
+        "description": "Get CloudFront default root object from defaults.yaml.",
+        "group": "General Settings",
+        "order": 4
+      },
+      "storage_files": {
+        "type": "string",
+        "title": "Storage Files",
+        "description": "Get storage files configuration from defaults.yaml.",
+        "group": "Storage Configuration",
+        "order": 5
+      },
+      "bucket_versioning": {
+        "type": "boolean",
+        "title": "Bucket Versioning",
+        "description": "Get S3 bucket versioning from defaults.yaml.",
+        "group": "General Settings",
+        "order": 6
+      },
+      "bucket_force_destroy": {
+        "type": "boolean",
+        "title": "Bucket Force Destroy",
+        "description": "Get S3 bucket force destroy setting from defaults.yaml.",
+        "group": "General Settings",
+        "order": 7
+      },
+      "website_index_document": {
+        "type": "string",
+        "title": "Website Index Document",
+        "description": "Get website index document from defaults.yaml.",
+        "group": "General Settings",
+        "order": 8
+      },
+      "website_error_document": {
+        "type": "string",
+        "title": "Website Error Document",
+        "description": "Get website error document from defaults.yaml.",
+        "group": "General Settings",
+        "order": 9
+      },
+      "public_access_config": {
+        "type": "string",
+        "title": "Public Access Config",
+        "description": "Get public access configuration from defaults.yaml.",
+        "group": "General Settings",
+        "order": 10
+      },
+      "project_name": {
+        "type": "string",
+        "title": "Project Name",
+        "description": "Project Name",
+        "help_text": "Name of your project for resource tagging and tracking",
+        "placeholder": "my-project",
+        "group": "Essentials",
+        "isEssential": true,
+        "order": 0
+      },
+      "region": {
+        "type": "string",
+        "title": "AWS Region",
+        "description": "AWS Region",
+        "default": "us-east-1",
+        "enum": [
+          "us-east-1",
+          "us-east-2",
+          "us-west-1",
+          "us-west-2",
+          "eu-west-1",
+          "eu-central-1"
+        ],
+        "group": "Essentials",
+        "isEssential": true,
+        "order": 1
+      },
+      "cdn_header": {
+        "type": "separator",
+        "title": "Content Delivery Configuration",
+        "group": "Networking & Connectivity",
+        "isEssential": true,
+        "order": 10
+      },
+      "cloudfront": {
+        "type": "object",
+        "title": "CloudFront Distribution",
+        "order": 11,
+        "properties": {
+          "enabled": {
+            "type": "boolean",
+            "title": "Distribution Enabled",
+            "description": "Whether the CloudFront distribution is enabled",
+            "default": true
+          },
+          "price_class": {
+            "type": "string",
+            "title": "Price Class",
+            "description": "CloudFront price class determining global edge locations",
+            "enum": [
+              "PriceClass_100",
+              "PriceClass_200",
+              "PriceClass_All"
+            ],
+            "default": "PriceClass_100"
+          },
+          "default_root_object": {
+            "type": "string",
+            "title": "Default Root Object",
+            "description": "Default file to serve for root requests",
+            "default": "index.html"
+          }
+        }
+      },
+      "storage_header": {
+        "type": "separator",
+        "title": "Storage Configuration",
+        "group": "Networking & Connectivity",
+        "isEssential": true,
+        "order": 20
+      },
+      "storage_objects": {
+        "type": "object",
+        "title": "Static Files",
+        "description": "Configuration for static files uploaded to storage",
+        "order": 21,
+        "properties": {
+          "files": {
+            "type": "array",
+            "title": "Static Files",
+            "description": "List of static files to upload",
+            "items": {
+              "type": "object",
+              "properties": {
+                "name": {
+                  "type": "string",
+                  "title": "File Name"
+                },
+                "source": {
+                  "type": "string",
+                  "title": "Source Path"
+                },
+                "content_type": {
+                  "type": "string",
+                  "title": "Content Type"
+                },
+                "description": {
+                  "type": "string",
+                  "title": "Description"
+                }
+              }
+            },
+            "default": [
+              {
+                "name": "index.html",
+                "source": "index.html",
+                "content_type": "text/html",
+                "description": "Main page"
+              },
+              {
+                "name": "styles.css",
+                "source": "styles.css",
+                "content_type": "text/css",
+                "description": "Stylesheet"
+              }
+            ]
+          }
+        }
+      },
+      "bucket": {
+        "type": "object",
+        "title": "Storage Bucket",
+        "order": 22,
+        "properties": {
+          "versioning": {
+            "type": "boolean",
+            "title": "Versioning Enabled",
+            "description": "Enable storage bucket versioning",
+            "default": false
+          },
+          "force_destroy": {
+            "type": "boolean",
+            "title": "Force Destroy",
+            "description": "Allow bucket deletion even if not empty",
+            "default": true
+          }
+        }
+      },
+      "website": {
+        "type": "object",
+        "title": "Website Hosting",
+        "order": 23,
+        "properties": {
+          "index_document": {
+            "type": "string",
+            "title": "Index Document",
+            "description": "Default file for directory requests",
+            "default": "index.html"
+          },
+          "error_document": {
+            "type": "string",
+            "title": "Error Document",
+            "description": "Error page for 404 responses",
+            "default": "error.html"
+          }
+        }
+      },
+      "flow_logs_header": {
+        "type": "separator",
+        "title": "Flow Logs Configuration",
+        "group": "Observability",
+        "isEssential": true,
+        "order": 200
+      },
+      "enable_flow_logs": {
+        "type": "boolean",
+        "title": "Enable Flow Logs",
+        "description": "Capture IP traffic information",
+        "default": true,
+        "group": "Observability",
+        "isEssential": true,
+        "order": 201
+      },
+      "log_destination_type": {
+        "type": "select",
+        "title": "Flow Log Destination",
+        "description": "Where to store flow logs",
+        "default": "cloud-watch-logs",
+        "options": [
+          {
+            "label": "CloudWatch Logs",
+            "value": "cloud-watch-logs"
+          },
+          {
+            "label": "S3 Bucket",
+            "value": "s3"
+          }
+        ],
+        "group": "Observability",
+        "visibleIf": {
+          "enable_flow_logs": true
+        },
+        "order": 202
+      },
+      "flow_log_retention": {
+        "type": "number",
+        "title": "Log Retention (Days)",
+        "description": "How long to keep flow logs",
+        "default": 7,
+        "group": "Observability",
+        "visibleIf": {
+          "enable_flow_logs": true
+        },
+        "order": 203
+      }
+    },
+    "smart_defaults": {}
+  },
+  "resources": [
+    {
+      "id": "aws-cloudfront-nonprod:{project_name}-distribution",
+      "type": "aws:cloudfront:Distribution",
+      "name": "{project_name}-distribution",
+      "description": "Distribution resource",
+      "category": "Other",
+      "smart_defaults": {
+        "origins": "{origins}",
+        "default_cache_behavior": "{default_cache_behavior}",
+        "enabled": "{config_cloudfront_enabled}",
+        "comment": "{config_cloudfront_comment}",
+        "price_class": "{config_cloudfront_price_class}",
+        "default_root_object": "{config_cloudfront_default_root_object}",
+        "custom_error_responses": [
+          {
+            "error_code": 404,
+            "response_code": 404,
+            "response_page_path": "/index.html",
+            "error_caching_min_ttl": 300
+          }
+        ],
+        "restrictions": {},
+        "viewer_certificate": {
+          "cloudfront_default_certificate": true
+        },
+        "tags": "{tags}"
+      },
+      "optional": false,
+      "dependencies": [],
+      "dependents": []
+    },
+    {
+      "id": "aws-static-website:archie-guest-{bucket_name}",
+      "type": "aws:s3:Bucket",
+      "name": "archie-guest-{bucket_name}",
+      "description": "S3 bucket for object storage",
+      "category": "Other",
+      "smart_defaults": {
+        "bucket": "{bucket_name}",
+        "force_destroy": true,
+        "tags": {
+          "Name": "{bucket_name}"
+        }
+      },
+      "optional": false,
+      "dependencies": [],
+      "dependents": []
+    },
+    {
+      "id": "aws-static-website:archie-logo-png",
+      "type": "aws:s3:BucketObject",
+      "name": "archie-logo-png",
+      "description": "Archie brand logo (archie-logo.png)",
+      "category": "Storage",
+      "smart_defaults": {
+        "key": "archie-logo.png",
+        "content_type": "image/png",
+        "tags": {
+          "Name": "archie-archie-logo-png-{environment}",
+          "ManagedBy": "Archie"
+        }
+      },
+      "optional": false,
+      "dependencies": [],
+      "dependents": []
+    },
+    {
+      "id": "aws-static-website:index-html",
+      "type": "aws:s3:BucketObject",
+      "name": "index-html",
+      "description": "Archie-branded congratulations page (index.html)",
+      "category": "Storage",
+      "smart_defaults": {
+        "key": "index.html",
+        "content_type": "text/html",
+        "tags": {
+          "Name": "archie-index-html-{environment}",
+          "ManagedBy": "Archie"
+        }
+      },
+      "optional": false,
+      "dependencies": [],
+      "dependents": []
+    },
+    {
+      "id": "aws-static-website:styles-css",
+      "type": "aws:s3:BucketObject",
+      "name": "styles-css",
+      "description": "Styles with dark/light theme support (styles.css)",
+      "category": "Storage",
+      "smart_defaults": {
+        "key": "styles.css",
+        "content_type": "text/css",
+        "tags": {
+          "Name": "archie-styles-css-{environment}",
+          "ManagedBy": "Archie"
+        }
+      },
+      "optional": false,
+      "dependencies": [],
+      "dependents": []
+    },
+    {
+      "id": "aws-static-website:{project_name}-",
+      "type": "aws:s3:BucketObject",
+      "name": "{project_name}-",
+      "description": "BucketObject resource",
+      "category": "Other",
+      "smart_defaults": {
+        "bucket": "{config_id}",
+        "key": "{file_key}",
+        "source": "{computed}",
+        "content_type": "{content_type}"
+      },
+      "optional": false,
+      "dependencies": [],
+      "dependents": []
+    },
+    {
+      "id": "aws-static-website:{project_name}-",
+      "type": "aws:s3:BucketObject",
+      "name": "{project_name}-",
+      "description": "BucketObject resource",
+      "category": "Other",
+      "smart_defaults": {
+        "bucket": "{config_id}",
+        "key": "{file_key}",
+        "content": "{file_content}",
+        "content_type": "{content_type}"
+      },
+      "optional": false,
+      "dependencies": [],
+      "dependents": []
+    },
+    {
+      "id": "aws-static-website:{project_name}-bucket-policy",
+      "type": "aws:s3:BucketPolicy",
+      "name": "{project_name}-bucket-policy",
+      "description": "BucketPolicy resource",
+      "category": "Other",
+      "smart_defaults": {
+        "bucket": "{config_id}",
+        "policy": "{computed}"
+      },
+      "optional": false,
+      "dependencies": [],
+      "dependents": []
+    },
+    {
+      "id": "aws-static-website:{project_name}-public-access",
+      "type": "aws:s3:BucketPublicAccessBlock",
+      "name": "{project_name}-public-access",
+      "description": "BucketPublicAccessBlock resource",
+      "category": "Other",
+      "smart_defaults": {
+        "bucket": "{config_id}",
+        "block_public_acls": false,
+        "block_public_policy": false,
+        "ignore_public_acls": false,
+        "restrict_public_buckets": false
+      },
+      "optional": false,
+      "dependencies": [],
+      "dependents": []
+    },
+    {
+      "id": "aws-static-website:{project_name}-website-config",
+      "type": "aws:s3:BucketWebsiteConfigurationV2",
+      "name": "{project_name}-website-config",
+      "description": "BucketWebsiteConfigurationV2 resource",
+      "category": "Other",
+      "smart_defaults": {
+        "bucket": "{config_id}",
+        "index_document": {
+          "suffix": "index.html"
+        },
+        "error_document": {
+          "key": "index.html"
+        }
+      },
+      "optional": false,
+      "dependencies": [],
+      "dependents": []
+    }
+  ],
+  "pillars": {
+    "security": {
+      "score": "good",
+      "description": "Implements security best practices for cloud infrastructure with network isolation, IAM roles, and secure access patterns.",
+      "best_practices": [
+        "Data encryption at rest and in transit"
+      ]
+    },
+    "reliability": {
+      "score": "fair",
+      "description": "Ensures high availability and fault tolerance.",
+      "best_practices": [
+        "Automated recovery mechanisms",
+        "Fault-tolerant architecture patterns"
+      ]
+    },
+    "performance_efficiency": {
+      "score": "fair",
+      "description": "Optimizes resource utilization and performance.",
+      "best_practices": [
+        "Scalable resource allocation",
+        "Performance monitoring capabilities"
+      ]
+    },
+    "cost_optimization": {
+      "score": "good",
+      "description": "Balances cost efficiency with reliability through appropriate resource sizing and usage-based pricing.",
+      "best_practices": [
+        "Environment-specific parameter handling",
+        "On-demand resource provisioning"
+      ]
+    },
+    "operational_excellence": {
+      "score": "good",
+      "description": "Enables operational best practices with infrastructure as code, monitoring, and automated management.",
+      "best_practices": [
+        "Infrastructure as Code with Pulumi for automated deployments",
+        "Version-controlled configuration"
+      ]
+    },
+    "sustainability": {
+      "score": "good",
+      "description": "Supports sustainable practices through efficient resource utilization and regional service usage.",
+      "best_practices": [
+        "Efficient resource utilization patterns",
+        "Automated scaling reducing over-provisioning"
+      ]
+    }
+  }
+}

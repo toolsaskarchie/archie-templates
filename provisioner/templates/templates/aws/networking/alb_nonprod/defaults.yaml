@@ -1,0 +1,14 @@
+# alb_nonprod - Default Configuration
+# All resource configurations in one place for easy modification
+
+vpc:
+  enable_nat_gateway: true
+database:
+  port: 443
+features:
+  enable_nat_gateway: true
+  enable_flow_logs: true
+  enable_s3_endpoint: true
+  enable_dynamodb_endpoint: true
+  enable_ssm: true
+  enabled: true
