@@ -2,11 +2,31 @@
   "pillars": [
     {
       "title": "Security",
-      "description": "IAM policies follow least-privilege principle. MFA enforced for sensitive operations. Secrets rotated automatically."
+      "description": "Archie Onboarding Secret implements encryption at rest and in transit, network isolation via VPC and security groups. All sensitive configurations are parameterized to enforce organizational standards."
+    },
+    {
+      "title": "Reliability",
+      "description": "Infrastructure as Code ensures consistent, repeatable deployments of Archie Onboarding Secret."
+    },
+    {
+      "title": "Cost Optimization",
+      "description": "Configurable resource sizing allows teams to match capacity to actual workload requirements."
     },
     {
       "title": "Operational Excellence",
-      "description": "CloudTrail logging for audit trail. Config rules for compliance monitoring. Automated remediation for common findings."
+      "description": "Consistent resource tagging supports cost allocation and operational visibility. Pulumi state management tracks all infrastructure changes with full audit trail."
     }
+  ],
+  "features": [
+    "Encryption at rest and in transit",
+    "Resource tagging for cost allocation",
+    "VPC network isolation",
+    "Infrastructure as Code with Pulumi"
+  ],
+  "use_cases": [
+    "Production infrastructure deployment",
+    "Development environment setup",
+    "Infrastructure standardization",
+    "Cloud resource management"
   ]
 }
