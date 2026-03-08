@@ -1,0 +1,11 @@
+{
+  "pillars": [],
+  "features": [
+    "Least-privilege IAM",
+    "Secret rotation",
+    "Audit logging",
+    "Compliance monitoring",
+    "Encryption key management"
+  ],
+  "estimated_cost": "$0 - $5/mo"
+}
