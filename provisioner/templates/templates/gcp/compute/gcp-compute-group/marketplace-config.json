@@ -1,26 +1,5 @@
 {
-  "pillars": [
-    {
-      "title": "Reliability",
-      "description": "Auto-scaling groups and health checks ensure high availability. Multi-AZ deployment minimizes single points of failure."
-    },
-    {
-      "title": "Security",
-      "description": "Security groups restrict traffic to necessary ports. IAM roles follow least-privilege principle. Encryption at rest and in transit."
-    },
-    {
-      "title": "Performance",
-      "description": "Instance types selected for workload requirements. EBS volumes optimized for IOPS. Monitoring via CloudWatch metrics."
-    },
-    {
-      "title": "Cost Optimization",
-      "description": "Right-sized instances with auto-scaling to match demand. Spot instances available for non-critical workloads."
-    },
-    {
-      "title": "Operational Excellence",
-      "description": "CloudWatch alarms and dashboards for proactive monitoring. Automated patching and updates via SSM."
-    }
-  ],
+  "pillars": [],
   "features": [
     "Auto-scaling based on demand",
     "Multi-AZ high availability",
@@ -28,5 +7,5 @@
     "Automated security patching",
     "Custom AMI support"
   ],
-  "estimated_cost": "$15 — $300/mo"
+  "estimated_cost": "$15 - $300/mo"
 }
