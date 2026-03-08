@@ -1,41 +1,40 @@
 {
   "features": [
-    "Automated backups",
-    "Multi-AZ failover",
-    "Encryption at rest",
-    "Performance insights",
-    "Configurable retention period"
+    "Multi-AZ deployment for high availability",
+    "CloudWatch monitoring and alerting",
+    "Automated backups with configurable retention",
+    "IAM roles with least-privilege access",
+    "Resource tagging for cost allocation",
+    "Managed database engine",
+    "Aurora Serverless v2 compatible",
+    "Infrastructure as Code with Pulumi"
   ],
   "use_cases": [
-    "Transactional workloads",
-    "Analytics and reporting",
-    "Session storage",
-    "Content management"
+    "High-throughput transactional databases",
+    "Global distributed applications",
+    "Serverless database workloads",
+    "Multi-writer database clusters"
   ],
   "pillars": [
     {
-      "title": "Operational Excellence",
-      "description": "Enables operational best practices with infrastructure as code, monitoring, and automated management."
-    },
-    {
       "title": "Security",
-      "description": "Implements security best practices for cloud infrastructure."
-    },
-    {
-      "title": "Performance Efficiency",
-      "description": "Optimizes resource utilization and performance with scalable compute resources and efficient networking."
-    },
-    {
-      "title": "Sustainability",
-      "description": "Supports sustainable practices through efficient resource utilization and regional service usage."
+      "description": "Aurora Cluster Instance implements IAM roles with least-privilege policies. All sensitive configurations are parameterized to enforce organizational standards."
     },
     {
       "title": "Reliability",
-      "description": "Ensures high availability and fault tolerance."
+      "description": "Multi-AZ deployment ensures resilience against availability zone failures. Automated backups with configurable retention protect against data loss."
     },
     {
       "title": "Cost Optimization",
-      "description": "Balances cost efficiency with reliability through appropriate resource sizing and usage-based pricing."
+      "description": "Configurable resource sizing allows teams to match capacity to actual workload requirements."
+    },
+    {
+      "title": "Performance Efficiency",
+      "description": "CloudWatch metrics provide visibility into resource utilization."
+    },
+    {
+      "title": "Operational Excellence",
+      "description": "CloudWatch integration enables proactive monitoring and alerting. Consistent resource tagging supports cost allocation and operational visibility. Pulumi state management tracks all infrastructure changes with full audit trail."
     }
   ]
 }
