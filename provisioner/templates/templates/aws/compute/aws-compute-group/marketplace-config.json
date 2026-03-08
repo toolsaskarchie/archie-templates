@@ -1,32 +1,26 @@
 {
   "pillars": [
     {
-      "title": "Reliability",
-      "description": "Auto-scaling groups and health checks ensure high availability. Multi-AZ deployment minimizes single points of failure."
-    },
-    {
       "title": "Security",
-      "description": "Security groups restrict traffic to necessary ports. IAM roles follow least-privilege principle. Encryption at rest and in transit."
+      "description": "EC2 Compute implements security group rules and access controls. All sensitive configurations are parameterized to enforce organizational standards."
     },
     {
-      "title": "Performance",
-      "description": "Instance types selected for workload requirements. EBS volumes optimized for IOPS. Monitoring via CloudWatch metrics."
+      "title": "Reliability",
+      "description": "Infrastructure as Code ensures consistent, repeatable deployments of EC2 Compute."
     },
     {
       "title": "Cost Optimization",
-      "description": "Right-sized instances with auto-scaling to match demand. Spot instances available for non-critical workloads."
-    },
-    {
-      "title": "Operational Excellence",
-      "description": "CloudWatch alarms and dashboards for proactive monitoring. Automated patching and updates via SSM."
+      "description": "Configurable resource sizing allows teams to match capacity to actual workload requirements."
     }
   ],
   "features": [
-    "Auto-scaling based on demand",
-    "Multi-AZ high availability",
-    "CloudWatch monitoring and alarms",
-    "Automated security patching",
-    "Custom AMI support"
+    "Infrastructure as Code with Pulumi"
   ],
-  "estimated_cost": "$15 — $300/mo"
+  "estimated_cost": "$15 — $300/mo",
+  "use_cases": [
+    "Complete stack deployment",
+    "Production-ready architecture",
+    "Multi-resource orchestration",
+    "Standardized infrastructure pattern"
+  ]
 }
