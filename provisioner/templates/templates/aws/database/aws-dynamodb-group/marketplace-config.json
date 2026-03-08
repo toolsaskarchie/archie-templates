@@ -1,0 +1,28 @@
+{
+  "pillars": [
+    {
+      "title": "Reliability",
+      "description": "Multi-AZ deployment with automated failover. Automated backups with configurable retention. Point-in-time recovery enabled."
+    },
+    {
+      "title": "Security",
+      "description": "Encryption at rest using KMS. Database deployed in private subnets. IAM authentication and SSL/TLS for connections."
+    },
+    {
+      "title": "Performance",
+      "description": "Instance class selected for workload IOPS requirements. Read replicas available for read-heavy workloads. Connection pooling configured."
+    },
+    {
+      "title": "Cost Optimization",
+      "description": "Reserved instances for predictable workloads. Storage auto-scaling prevents over-provisioning. Automated snapshot cleanup."
+    }
+  ],
+  "features": [
+    "Automated backups",
+    "Multi-AZ failover",
+    "Encryption at rest",
+    "Performance insights",
+    "Configurable retention period"
+  ],
+  "estimated_cost": "$15 — $500/mo"
+}
