@@ -1,0 +1,42 @@
+{
+  "pillars": [
+    {
+      "title": "Operational Excellence",
+      "description": "Enables operational best practices with infrastructure as code, monitoring, and automated management."
+    },
+    {
+      "title": "Security",
+      "description": "Implements security best practices for cloud infrastructure with network isolation, IAM roles, and secure access patterns."
+    },
+    {
+      "title": "Performance Efficiency",
+      "description": "Optimizes resource utilization and performance with scalable compute resources and efficient networking."
+    },
+    {
+      "title": "Sustainability",
+      "description": "Supports sustainable practices through efficient resource utilization and regional service usage."
+    },
+    {
+      "title": "Reliability",
+      "description": "Ensures high availability and fault tolerance."
+    },
+    {
+      "title": "Cost Optimization",
+      "description": "Balances cost efficiency with reliability through appropriate resource sizing and usage-based pricing."
+    }
+  ],
+  "features": [
+    "Server-side encryption",
+    "Versioning support",
+    "Lifecycle policies",
+    "Cross-region replication",
+    "Access logging"
+  ],
+  "use_cases": [
+    "Static asset hosting",
+    "Data lake storage",
+    "Backup and archival",
+    "Log aggregation"
+  ],
+  "estimated_cost": "$1 - $50/mo"
+}
