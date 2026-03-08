@@ -1,11 +1,28 @@
 {
-  "pillars": [],
-  "features": [
-    "Server-side encryption",
-    "Versioning support",
-    "Lifecycle policies",
-    "Cross-region replication",
-    "Access logging"
+  "pillars": [
+    {
+      "title": "Security",
+      "description": "S3 Object Storage implements security group rules and access controls. All sensitive configurations are parameterized to enforce organizational standards."
+    },
+    {
+      "title": "Reliability",
+      "description": "Infrastructure as Code ensures consistent, repeatable deployments of S3 Object Storage."
+    },
+    {
+      "title": "Cost Optimization",
+      "description": "Configurable resource sizing allows teams to match capacity to actual workload requirements."
+    }
   ],
-  "estimated_cost": "$1 - $50/mo"
+  "features": [
+    "Versioning and lifecycle policies",
+    "Server-side encryption",
+    "Infrastructure as Code with Pulumi"
+  ],
+  "estimated_cost": "$1 - $50/mo",
+  "use_cases": [
+    "Static asset hosting",
+    "Data lake storage",
+    "Application artifact storage",
+    "Backup and archival"
+  ]
 }
