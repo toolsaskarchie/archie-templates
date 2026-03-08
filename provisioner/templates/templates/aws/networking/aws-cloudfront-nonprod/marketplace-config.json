@@ -1,0 +1,37 @@
+{
+  "pillars": [
+    {
+      "title": "Security",
+      "description": "CloudFront CDN implements encryption at rest and in transit. All sensitive configurations are parameterized to enforce organizational standards."
+    },
+    {
+      "title": "Reliability",
+      "description": "Infrastructure as Code ensures consistent, repeatable deployments of CloudFront CDN."
+    },
+    {
+      "title": "Cost Optimization",
+      "description": "Non-production configuration uses smaller instance sizes and reduced redundancy to minimize costs."
+    },
+    {
+      "title": "Performance Efficiency",
+      "description": "Configurable instance types and resource parameters allow tuning CloudFront CDN for specific workload characteristics."
+    },
+    {
+      "title": "Operational Excellence",
+      "description": "Consistent resource tagging supports cost allocation and operational visibility. Pulumi state management tracks all infrastructure changes with full audit trail."
+    }
+  ],
+  "features": [
+    "Encryption at rest and in transit",
+    "Resource tagging for cost allocation",
+    "Global edge caching",
+    "HTTPS with ACM certificates",
+    "Infrastructure as Code with Pulumi"
+  ],
+  "use_cases": [
+    "Global content delivery",
+    "Static website acceleration",
+    "API response caching",
+    "Media streaming"
+  ]
+}
