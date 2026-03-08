@@ -1,11 +1,28 @@
 {
-  "pillars": [],
-  "features": [
-    "Automated backups",
-    "Multi-AZ failover",
-    "Encryption at rest",
-    "Performance insights",
-    "Configurable retention period"
+  "pillars": [
+    {
+      "title": "Security",
+      "description": "Redis Caching implements security group rules and access controls. All sensitive configurations are parameterized to enforce organizational standards."
+    },
+    {
+      "title": "Reliability",
+      "description": "Infrastructure as Code ensures consistent, repeatable deployments of Redis Caching."
+    },
+    {
+      "title": "Cost Optimization",
+      "description": "Configurable resource sizing allows teams to match capacity to actual workload requirements."
+    }
   ],
-  "estimated_cost": "$15 - $500/mo"
+  "features": [
+    "In-memory caching",
+    "Cluster mode support",
+    "Infrastructure as Code with Pulumi"
+  ],
+  "estimated_cost": "$15 - $500/mo",
+  "use_cases": [
+    "Application caching layer",
+    "Session storage",
+    "Real-time analytics",
+    "Message queue buffering"
+  ]
 }
