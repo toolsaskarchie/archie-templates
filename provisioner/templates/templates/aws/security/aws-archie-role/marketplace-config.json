@@ -2,11 +2,36 @@
   "pillars": [
     {
       "title": "Security",
-      "description": "IAM policies follow least-privilege principle. MFA enforced for sensitive operations. Secrets rotated automatically."
+      "description": "Archie Cross-Account Role implements IAM roles with least-privilege policies, network isolation via VPC and security groups. All sensitive configurations are parameterized to enforce organizational standards."
+    },
+    {
+      "title": "Reliability",
+      "description": "Infrastructure as Code ensures consistent, repeatable deployments of Archie Cross-Account Role."
+    },
+    {
+      "title": "Cost Optimization",
+      "description": "Configurable resource sizing allows teams to match capacity to actual workload requirements."
+    },
+    {
+      "title": "Performance Efficiency",
+      "description": "CloudWatch metrics provide visibility into resource utilization."
     },
     {
       "title": "Operational Excellence",
-      "description": "CloudTrail logging for audit trail. Config rules for compliance monitoring. Automated remediation for common findings."
+      "description": "CloudWatch integration enables proactive monitoring and alerting. Consistent resource tagging supports cost allocation and operational visibility. Pulumi state management tracks all infrastructure changes with full audit trail."
     }
+  ],
+  "features": [
+    "CloudWatch monitoring and alerting",
+    "IAM roles with least-privilege access",
+    "Resource tagging for cost allocation",
+    "VPC network isolation",
+    "Infrastructure as Code with Pulumi"
+  ],
+  "use_cases": [
+    "Production infrastructure deployment",
+    "Development environment setup",
+    "Infrastructure standardization",
+    "Cloud resource management"
   ]
 }
