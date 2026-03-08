@@ -1,0 +1,15 @@
+{
+  "features": [
+    "Automated backups",
+    "Multi-AZ failover",
+    "Encryption at rest",
+    "Performance insights",
+    "Configurable retention period"
+  ],
+  "use_cases": [
+    "Transactional workloads",
+    "Analytics and reporting",
+    "Session storage",
+    "Content management"
+  ]
+}
