@@ -5,5 +5,5 @@
       "description": "[{'title': 'Logical Isolation', 'icon': 'shield-lock', 'description': 'The VPC provides a logically isolated section of the AWS Cloud where you can launch AWS resources in a virtual network that you define.'}, {'title': 'Custom Address Space', 'icon': 'network-wired', 'description': 'Complete control over your IP address range, subnets, and configuration of route tables and network gateways.'}, {'title': 'Security by Design', 'icon': 'check-circle', 'description': 'Foundation for multiple layers of security, including security groups and network access control lists.'}]"
     }
   ],
-  "estimated_cost": "$0 - $100/mo"
+  "estimated_cost": "$0 — $100/mo"
 }
