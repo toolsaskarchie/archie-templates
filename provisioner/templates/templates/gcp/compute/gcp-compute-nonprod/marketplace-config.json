@@ -1,0 +1,35 @@
+{
+  "pillars": [
+    {
+      "title": "Security",
+      "description": "Compute Engine Instance implements network isolation via VPC and security groups. All sensitive configurations are parameterized to enforce organizational standards."
+    },
+    {
+      "title": "Reliability",
+      "description": "Infrastructure as Code ensures consistent, repeatable deployments of Compute Engine Instance."
+    },
+    {
+      "title": "Cost Optimization",
+      "description": "Non-production configuration uses smaller instance sizes and reduced redundancy to minimize costs."
+    },
+    {
+      "title": "Performance Efficiency",
+      "description": "Configurable instance types and resource parameters allow tuning Compute Engine Instance for specific workload characteristics."
+    },
+    {
+      "title": "Operational Excellence",
+      "description": "Consistent resource tagging supports cost allocation and operational visibility. Pulumi state management tracks all infrastructure changes with full audit trail."
+    }
+  ],
+  "features": [
+    "Resource tagging for cost allocation",
+    "VPC network isolation",
+    "Infrastructure as Code with Pulumi"
+  ],
+  "use_cases": [
+    "Production infrastructure deployment",
+    "Development environment setup",
+    "Infrastructure standardization",
+    "Cloud resource management"
+  ]
+}
