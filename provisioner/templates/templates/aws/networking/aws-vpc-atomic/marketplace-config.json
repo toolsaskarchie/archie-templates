@@ -1,9 +1,32 @@
 {
   "pillars": [
     {
-      "title": "Principles",
-      "description": "[{'title': 'Logical Isolation', 'icon': 'shield-lock', 'description': 'The VPC provides a logically isolated section of the AWS Cloud where you can launch AWS resources in a virtual network that you define.'}, {'title': 'Custom Address Space', 'icon': 'network-wired', 'description': 'Complete control over your IP address range, subnets, and configuration of route tables and network gateways.'}, {'title': 'Security by Design', 'icon': 'check-circle', 'description': 'Foundation for multiple layers of security, including security groups and network access control lists.'}]"
+      "title": "Security",
+      "description": "VPC implements network isolation via VPC and security groups. All sensitive configurations are parameterized to enforce organizational standards."
+    },
+    {
+      "title": "Reliability",
+      "description": "Infrastructure as Code ensures consistent, repeatable deployments of VPC."
+    },
+    {
+      "title": "Cost Optimization",
+      "description": "Configurable resource sizing allows teams to match capacity to actual workload requirements."
+    },
+    {
+      "title": "Operational Excellence",
+      "description": "Consistent resource tagging supports cost allocation and operational visibility. Pulumi state management tracks all infrastructure changes with full audit trail."
     }
   ],
-  "estimated_cost": "$0 — $100/mo"
+  "estimated_cost": "$0 — $100/mo",
+  "features": [
+    "Resource tagging for cost allocation",
+    "VPC network isolation",
+    "Infrastructure as Code with Pulumi"
+  ],
+  "use_cases": [
+    "Standalone VPC deployment",
+    "Component in larger architecture",
+    "Infrastructure building block",
+    "Custom composition element"
+  ]
 }
