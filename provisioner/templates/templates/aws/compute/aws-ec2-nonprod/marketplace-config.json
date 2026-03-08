@@ -1,0 +1,9 @@
+{
+  "use_cases": [
+    "Development and testing workloads",
+    "Web application hosting",
+    "Database development instances",
+    "CI/CD build agents",
+    "Application backend services"
+  ]
+}
