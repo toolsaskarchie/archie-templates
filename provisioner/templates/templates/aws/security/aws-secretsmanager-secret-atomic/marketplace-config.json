@@ -1,0 +1,8 @@
+{
+  "use_cases": [
+    "Compliance enforcement",
+    "Secret management",
+    "Access control",
+    "Audit trails"
+  ]
+}
