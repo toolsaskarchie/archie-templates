@@ -1,3 +1,29 @@
 {
-  "estimated_cost": "$0 — $100/mo"
+  "estimated_cost": "$0 - $100/mo",
+  "pillars": [
+    {
+      "title": "Operational Excellence",
+      "description": "Automated deployment with infrastructure as code. aws-subnet_atomic follows IaC best practices."
+    },
+    {
+      "title": "Security",
+      "description": "Follows security best practices with proper IAM roles and network isolation where applicable."
+    },
+    {
+      "title": "Performance",
+      "description": "Optimized for performance with appropriate resource sizing and configuration."
+    },
+    {
+      "title": "Cost",
+      "description": "Cost-optimized with appropriate resource sizing and managed services."
+    },
+    {
+      "title": "Sustainability",
+      "description": "Uses cloud-managed services for efficient resource utilization and reduced carbon footprint."
+    },
+    {
+      "title": "Reliability",
+      "description": "Designed for reliability with appropriate redundancy and fault tolerance."
+    }
+  ]
 }
