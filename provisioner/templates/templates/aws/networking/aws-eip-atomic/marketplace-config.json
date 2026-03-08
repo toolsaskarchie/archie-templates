@@ -12,5 +12,31 @@
     "Service isolation",
     "Microservice networking"
   ],
-  "estimated_cost": "$0 — $100/mo"
+  "estimated_cost": "$0 - $100/mo",
+  "pillars": [
+    {
+      "title": "Operational Excellence",
+      "description": "Enables operational best practices with infrastructure as code, monitoring, and automated management."
+    },
+    {
+      "title": "Security",
+      "description": "Implements security best practices for cloud infrastructure."
+    },
+    {
+      "title": "Performance Efficiency",
+      "description": "Optimizes resource utilization and performance with scalable compute resources and efficient networking."
+    },
+    {
+      "title": "Sustainability",
+      "description": "Supports sustainable practices through efficient resource utilization and regional service usage."
+    },
+    {
+      "title": "Reliability",
+      "description": "Ensures high availability and fault tolerance."
+    },
+    {
+      "title": "Cost Optimization",
+      "description": "Balances cost efficiency with reliability through appropriate resource sizing and usage-based pricing."
+    }
+  ]
 }
