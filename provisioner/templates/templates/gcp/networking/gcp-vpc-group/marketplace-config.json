@@ -1,0 +1,20 @@
+{
+  "pillars": [
+    {
+      "title": "Reliability",
+      "description": "Multi-AZ subnet layout with redundant NAT gateways. Route tables ensure traffic flows through proper network paths."
+    },
+    {
+      "title": "Security",
+      "description": "Network ACLs and security groups provide defense in depth. Private subnets isolate sensitive workloads from public internet."
+    },
+    {
+      "title": "Performance",
+      "description": "VPC endpoints reduce data transfer costs and latency for AWS service calls. Proper CIDR planning prevents IP exhaustion."
+    },
+    {
+      "title": "Cost Optimization",
+      "description": "Shared VPC infrastructure reduces per-service networking costs. NAT gateway usage monitored to optimize data transfer."
+    }
+  ]
+}
