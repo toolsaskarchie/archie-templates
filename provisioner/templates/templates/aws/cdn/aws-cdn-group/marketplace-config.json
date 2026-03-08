@@ -1,21 +1,4 @@
 {
-  "pillars": [
-    {
-      "title": "Reliability",
-      "description": "CloudFront's global edge network provides high availability. Origin failover configured for backend resilience."
-    },
-    {
-      "title": "Security",
-      "description": "HTTPS enforced with ACM certificates. WAF integration for application-layer protection. Origin access identity restricts direct S3 access."
-    },
-    {
-      "title": "Performance",
-      "description": "Edge caching reduces latency for global users. Compression enabled for faster delivery. Custom cache policies per content type."
-    },
-    {
-      "title": "Cost Optimization",
-      "description": "Caching reduces origin requests and data transfer. Price class selection limits edge locations to needed regions."
-    }
-  ],
-  "estimated_cost": "$0 — $50/mo"
+  "pillars": [],
+  "estimated_cost": "$0 - $50/mo"
 }
