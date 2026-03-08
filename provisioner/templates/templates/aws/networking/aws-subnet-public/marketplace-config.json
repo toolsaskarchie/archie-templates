@@ -1,0 +1,15 @@
+{
+  "features": [
+    "Multi-AZ subnet layout",
+    "Private and public subnets",
+    "NAT gateway for outbound traffic",
+    "VPC Flow Logs enabled",
+    "Network ACL protection"
+  ],
+  "use_cases": [
+    "Multi-tier application architecture",
+    "Hybrid cloud connectivity",
+    "Service isolation",
+    "Microservice networking"
+  ]
+}
