@@ -1,0 +1,12 @@
+{
+  "pillars": [
+    {
+      "title": "Security",
+      "description": "IAM policies follow least-privilege principle. MFA enforced for sensitive operations. Secrets rotated automatically."
+    },
+    {
+      "title": "Operational Excellence",
+      "description": "CloudTrail logging for audit trail. Config rules for compliance monitoring. Automated remediation for common findings."
+    }
+  ]
+}
