@@ -1,42 +1,26 @@
 {
   "features": [
-    "Multi-AZ subnet layout",
-    "Private and public subnets",
-    "NAT gateway for outbound traffic",
-    "VPC Flow Logs enabled",
-    "Network ACL protection"
+    "Infrastructure as Code with Pulumi"
   ],
   "use_cases": [
-    "Multi-tier application architecture",
-    "Hybrid cloud connectivity",
-    "Service isolation",
-    "Microservice networking"
+    "Standalone GCP Firewall deployment",
+    "Component in larger architecture",
+    "Infrastructure building block",
+    "Custom composition element"
   ],
   "estimated_cost": "$0 - $100/mo",
   "pillars": [
     {
-      "title": "Operational Excellence",
-      "description": "Enables operational best practices with infrastructure as code, monitoring, and automated management."
-    },
-    {
       "title": "Security",
-      "description": "Implements security best practices for cloud infrastructure."
-    },
-    {
-      "title": "Performance Efficiency",
-      "description": "Optimizes resource utilization and performance with scalable compute resources and efficient networking."
-    },
-    {
-      "title": "Sustainability",
-      "description": "Supports sustainable practices through efficient resource utilization and regional service usage."
+      "description": "GCP Firewall implements security group rules and access controls. All sensitive configurations are parameterized to enforce organizational standards."
     },
     {
       "title": "Reliability",
-      "description": "Ensures high availability and fault tolerance."
+      "description": "Infrastructure as Code ensures consistent, repeatable deployments of GCP Firewall."
     },
     {
       "title": "Cost Optimization",
-      "description": "Balances cost efficiency with reliability through appropriate resource sizing and usage-based pricing."
+      "description": "Configurable resource sizing allows teams to match capacity to actual workload requirements."
     }
   ]
 }
