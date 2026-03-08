@@ -1,22 +1,5 @@
 {
-  "pillars": [
-    {
-      "title": "Reliability",
-      "description": "ECS/EKS services maintain desired task count. Health checks automatically replace unhealthy containers. Multi-AZ task placement."
-    },
-    {
-      "title": "Security",
-      "description": "Task roles follow least-privilege. Container images scanned for vulnerabilities. Secrets injected via Secrets Manager or SSM."
-    },
-    {
-      "title": "Performance",
-      "description": "Right-sized CPU and memory reservations. Auto-scaling based on custom metrics. Service discovery for low-latency communication."
-    },
-    {
-      "title": "Cost Optimization",
-      "description": "Fargate Spot for fault-tolerant workloads. Right-sized task definitions prevent over-provisioning. Shared ALB across services."
-    }
-  ],
+  "pillars": [],
   "features": [
     "Auto-scaling services",
     "Health check monitoring",
@@ -24,5 +7,5 @@
     "Load balancer integration",
     "Blue/green deployments"
   ],
-  "estimated_cost": "$20 — $300/mo"
+  "estimated_cost": "$20 - $300/mo"
 }
