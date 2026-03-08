@@ -1,4 +1,28 @@
 {
-  "pillars": [],
-  "estimated_cost": "$0 - $50/mo"
+  "pillars": [
+    {
+      "title": "Security",
+      "description": "CloudFront CDN implements security group rules and access controls. All sensitive configurations are parameterized to enforce organizational standards."
+    },
+    {
+      "title": "Reliability",
+      "description": "Infrastructure as Code ensures consistent, repeatable deployments of CloudFront CDN."
+    },
+    {
+      "title": "Cost Optimization",
+      "description": "Configurable resource sizing allows teams to match capacity to actual workload requirements."
+    }
+  ],
+  "estimated_cost": "$0 - $50/mo",
+  "features": [
+    "Global edge caching",
+    "HTTPS with ACM certificates",
+    "Infrastructure as Code with Pulumi"
+  ],
+  "use_cases": [
+    "Global content delivery",
+    "Static website acceleration",
+    "API response caching",
+    "Media streaming"
+  ]
 }
