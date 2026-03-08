@@ -1,0 +1,34 @@
+{
+  "pillars": [
+    {
+      "title": "Security",
+      "description": "Simple Web App implements security group rules and access controls. All sensitive configurations are parameterized to enforce organizational standards."
+    },
+    {
+      "title": "Reliability",
+      "description": "Infrastructure as Code ensures consistent, repeatable deployments of Simple Web App."
+    },
+    {
+      "title": "Cost Optimization",
+      "description": "Configurable resource sizing allows teams to match capacity to actual workload requirements."
+    },
+    {
+      "title": "Performance Efficiency",
+      "description": "Load balancing distributes traffic across healthy targets."
+    },
+    {
+      "title": "Operational Excellence",
+      "description": "Pulumi state management tracks all infrastructure changes with full audit trail."
+    }
+  ],
+  "features": [
+    "Load balancer integration",
+    "Infrastructure as Code with Pulumi"
+  ],
+  "use_cases": [
+    "Container workload management",
+    "Microservice deployment",
+    "Stateless application hosting",
+    "Development clusters"
+  ]
+}
