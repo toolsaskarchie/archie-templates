@@ -1,42 +1,32 @@
 {
   "features": [
-    "Multi-AZ subnet layout",
-    "Private and public subnets",
-    "NAT gateway for outbound traffic",
-    "VPC Flow Logs enabled",
-    "Network ACL protection"
+    "Resource tagging for cost allocation",
+    "VPC network isolation",
+    "Infrastructure as Code with Pulumi"
   ],
   "use_cases": [
-    "Multi-tier application architecture",
-    "Hybrid cloud connectivity",
-    "Service isolation",
-    "Microservice networking"
+    "Standalone VPC Endpoint deployment",
+    "Component in larger architecture",
+    "Infrastructure building block",
+    "Custom composition element"
   ],
   "estimated_cost": "$0 - $100/mo",
   "pillars": [
     {
-      "title": "Operational Excellence",
-      "description": "Enables operational best practices with infrastructure as code, monitoring, and automated management."
-    },
-    {
       "title": "Security",
-      "description": "Implements security best practices for cloud infrastructure with network isolation, IAM roles, and secure access patterns."
-    },
-    {
-      "title": "Performance Efficiency",
-      "description": "Optimizes resource utilization and performance with scalable compute resources and efficient networking."
-    },
-    {
-      "title": "Sustainability",
-      "description": "Supports sustainable practices through efficient resource utilization and regional service usage."
+      "description": "VPC Endpoint implements network isolation via VPC and security groups. All sensitive configurations are parameterized to enforce organizational standards."
     },
     {
       "title": "Reliability",
-      "description": "Ensures high availability and fault tolerance with multi-AZ deployment and automated recovery mechanisms."
+      "description": "Infrastructure as Code ensures consistent, repeatable deployments of VPC Endpoint."
     },
     {
       "title": "Cost Optimization",
-      "description": "Balances cost efficiency with reliability through appropriate resource sizing and usage-based pricing."
+      "description": "Configurable resource sizing allows teams to match capacity to actual workload requirements."
+    },
+    {
+      "title": "Operational Excellence",
+      "description": "Consistent resource tagging supports cost allocation and operational visibility. Pulumi state management tracks all infrastructure changes with full audit trail."
     }
   ]
 }
