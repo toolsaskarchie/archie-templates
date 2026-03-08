@@ -1,0 +1,33 @@
+{
+  "pillars": [
+    {
+      "title": "Security",
+      "description": "DynamoDB NoSQL Table implements encryption at rest and in transit. All sensitive configurations are parameterized to enforce organizational standards."
+    },
+    {
+      "title": "Reliability",
+      "description": "Infrastructure as Code ensures consistent, repeatable deployments of DynamoDB NoSQL Table."
+    },
+    {
+      "title": "Cost Optimization",
+      "description": "Configurable resource sizing allows teams to match capacity to actual workload requirements."
+    },
+    {
+      "title": "Operational Excellence",
+      "description": "Consistent resource tagging supports cost allocation and operational visibility. Pulumi state management tracks all infrastructure changes with full audit trail."
+    }
+  ],
+  "features": [
+    "Encryption at rest and in transit",
+    "Resource tagging for cost allocation",
+    "On-demand or provisioned capacity",
+    "Global secondary indexes",
+    "Infrastructure as Code with Pulumi"
+  ],
+  "use_cases": [
+    "High-performance key-value storage",
+    "Session management",
+    "Real-time leaderboards",
+    "IoT data ingestion"
+  ]
+}
