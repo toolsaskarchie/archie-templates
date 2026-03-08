@@ -1,11 +1,26 @@
 {
-  "pillars": [],
-  "features": [
-    "Auto-scaling based on demand",
-    "Multi-AZ high availability",
-    "CloudWatch monitoring and alarms",
-    "Automated security patching",
-    "Custom AMI support"
+  "pillars": [
+    {
+      "title": "Security",
+      "description": "ELB Load Balancing implements security group rules and access controls. All sensitive configurations are parameterized to enforce organizational standards."
+    },
+    {
+      "title": "Reliability",
+      "description": "Infrastructure as Code ensures consistent, repeatable deployments of ELB Load Balancing."
+    },
+    {
+      "title": "Cost Optimization",
+      "description": "Configurable resource sizing allows teams to match capacity to actual workload requirements."
+    }
   ],
-  "estimated_cost": "$10 - $200/mo"
+  "features": [
+    "Infrastructure as Code with Pulumi"
+  ],
+  "estimated_cost": "$10 - $200/mo",
+  "use_cases": [
+    "Complete stack deployment",
+    "Production-ready architecture",
+    "Multi-resource orchestration",
+    "Standardized infrastructure pattern"
+  ]
 }
