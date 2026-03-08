@@ -1,0 +1,11 @@
+{
+  "pillars": [],
+  "features": [
+    "Server-side encryption",
+    "Versioning support",
+    "Lifecycle policies",
+    "Cross-region replication",
+    "Access logging"
+  ],
+  "estimated_cost": "$1 - $50/mo"
+}
