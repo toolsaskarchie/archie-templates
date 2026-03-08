@@ -1,11 +1,26 @@
 {
-  "pillars": [],
-  "features": [
-    "Auto-scaling services",
-    "Health check monitoring",
-    "Service discovery",
-    "Load balancer integration",
-    "Blue/green deployments"
+  "pillars": [
+    {
+      "title": "Security",
+      "description": "Cloud-Native Apps implements security group rules and access controls. All sensitive configurations are parameterized to enforce organizational standards."
+    },
+    {
+      "title": "Reliability",
+      "description": "Infrastructure as Code ensures consistent, repeatable deployments of Cloud-Native Apps."
+    },
+    {
+      "title": "Cost Optimization",
+      "description": "Configurable resource sizing allows teams to match capacity to actual workload requirements."
+    }
   ],
-  "estimated_cost": "$20 - $300/mo"
+  "features": [
+    "Infrastructure as Code with Pulumi"
+  ],
+  "estimated_cost": "$20 - $300/mo",
+  "use_cases": [
+    "Container workload management",
+    "Microservice deployment",
+    "Stateless application hosting",
+    "Development clusters"
+  ]
 }
