@@ -1,11 +1,26 @@
 {
-  "pillars": [],
-  "features": [
-    "Least-privilege IAM",
-    "Secret rotation",
-    "Audit logging",
-    "Compliance monitoring",
-    "Encryption key management"
+  "pillars": [
+    {
+      "title": "Security",
+      "description": "IAM & Security implements security group rules and access controls. All sensitive configurations are parameterized to enforce organizational standards."
+    },
+    {
+      "title": "Reliability",
+      "description": "Infrastructure as Code ensures consistent, repeatable deployments of IAM & Security."
+    },
+    {
+      "title": "Cost Optimization",
+      "description": "Configurable resource sizing allows teams to match capacity to actual workload requirements."
+    }
   ],
-  "estimated_cost": "$0 - $5/mo"
+  "features": [
+    "Infrastructure as Code with Pulumi"
+  ],
+  "estimated_cost": "$0 - $5/mo",
+  "use_cases": [
+    "Complete stack deployment",
+    "Production-ready architecture",
+    "Multi-resource orchestration",
+    "Standardized infrastructure pattern"
+  ]
 }
