@@ -469,6 +469,17 @@ class EC2NonProdConfig:
             'enable_ssm': self.enable_ssm
         }]
 
+    @property
+    def instance_count(self) -> int:
+        """Number of EC2 instances to create, defaults to 1."""
+        val = self.get_parameter('instance_count')
+        if val is not None:
+            try:
+                return int(val)
+            except (ValueError, TypeError):
+                pass
+        return 1
+
     @classmethod
     def get_config_schema(cls) -> Dict[str, Any]:
         """Get configuration schema for the UI"""
