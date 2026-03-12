@@ -1,0 +1,9 @@
+{
+  "use_cases": [
+    "Web application hosting",
+    "Batch processing workloads",
+    "CI/CD build environments",
+    "Development and testing"
+  ],
+  "estimated_cost": "$10 — $200/mo"
+}
