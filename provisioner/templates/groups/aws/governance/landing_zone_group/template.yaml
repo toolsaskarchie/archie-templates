@@ -1,0 +1,39 @@
+metadata:
+  name: aws-landing-zone-group
+  title: AWS Landing Zone & Governance
+  description: Enterprise multi-account landing zone based on AWS MALZ. Complete governance toolkit with Organizations, SCPs, centralized logging, compliance, threat detection, and SSO. Deploy the full landing zone or use individual governance atomics.
+  category: Governance
+  version: latest
+  author: AskArchie
+  cloud: aws
+  environment: FOUNDATIONAL
+  tier: group
+  complexity: advanced
+  deployment_time: 10-20 minutes
+  base_cost: $50/month
+  marketplace_group: aws-landing-zone-group
+  is_listed_in_marketplace: true
+  features:
+  - Full MALZ Landing Zone (6-OU hierarchy)
+  - Service Control Policies (4 built-in)
+  - Organization CloudTrail + Config
+  - SecurityHub + GuardDuty
+  - IAM Identity Center (SSO)
+  tags:
+  - landing-zone
+  - governance
+  - organizations
+  - enterprise
+  - compliance
+  - security
+  use_cases:
+  - Enterprise Cloud Foundation
+  - Multi-Account Governance
+  - Compliance-Ready Infrastructure
+  - Centralized Security Operations
+group_configuration:
+  sections:
+  - title: Landing Zone
+    layout: grid
+    templates:
+    - aws-landing-zone
