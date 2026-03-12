@@ -1,0 +1,9 @@
+{
+  "use_cases": [
+    "Multi-tier application architecture",
+    "Hybrid cloud connectivity",
+    "Service isolation",
+    "Microservice networking"
+  ],
+  "estimated_cost": "$0 — $100/mo"
+}
