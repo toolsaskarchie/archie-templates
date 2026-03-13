@@ -9,6 +9,7 @@ from typing import Any, Dict, List, Optional
 import tempfile
 import os
 from pathlib import Path
+import boto3
 import pulumi
 
 from provisioner.templates.base import template_registry, InfrastructureTemplate
@@ -45,46 +46,36 @@ class GCPStaticWebsiteTemplate(InfrastructureTemplate):
         self.SOURCE_FILES = ["index.html", "styles.css", "archie-logo.png"]
 
     def _download_source_files(self, bucket_name: str = None, stack_name: str = None) -> List[Dict[str, Any]]:
-        """Download files from source bucket and customize"""
+        """Download branded files from Archie S3 source bucket (worker runs in AWS Lambda)."""
         self.temp_dir = tempfile.TemporaryDirectory()
         temp_path = Path(self.temp_dir.name)
-        
+
         try:
-            from google.cloud import storage
-            storage_client = storage.Client(project=self.SOURCE_PROJECT)
-            bucket = storage_client.bucket(self.SOURCE_BUCKET)
-        except Exception as e:
-            print(f"[GCP-STATIC-WEBSITE] Fallback to embedded content: {e}")
-            return self._get_embedded_files(bucket_name, stack_name)
-        
-        downloaded_files = []
-        for file_key in self.SOURCE_FILES:
-            try:
+            s3 = boto3.client("s3", region_name="us-east-1")
+            downloaded: List[Dict[str, Any]] = []
+            for file_key in self.SOURCE_FILES:
                 local_path = temp_path / file_key
-                blob = bucket.blob(file_key)
-                blob.download_to_filename(str(local_path))
-                
+                s3.download_file(self.SOURCE_BUCKET, file_key, str(local_path))
+
                 if file_key == "index.html":
                     self._customize_html(local_path, bucket_name=bucket_name, stack_name=stack_name)
-                
+
                 if file_key.endswith(('.png', '.jpg', '.jpeg', '.gif')):
                     with open(local_path, 'rb') as f:
                         file_content = f.read()
                 else:
                     with open(local_path, 'r', encoding='utf-8') as f:
                         file_content = f.read()
-                
-                downloaded_files.append({
+
+                downloaded.append({
                     "content": file_content,
                     "key": file_key,
                     "content_type": self._get_content_type(file_key)
                 })
-            except Exception as e:
-                print(f"[GCP-STATIC-WEBSITE] Failed to download {file_key}: {e}")
-                if file_key == "index.html":
-                    return self._get_embedded_files(bucket_name, stack_name)
-        
-        return downloaded_files
+            return downloaded
+        except Exception as e:
+            print(f"[GCP-STATIC-WEBSITE] Fallback to embedded content: {e}")
+            return self._get_embedded_files(bucket_name, stack_name)
 
     def _get_embedded_files(self, bucket_name: str = None, stack_name: str = None) -> List[Dict[str, Any]]:
         """Default content if source bucket is unavailable"""

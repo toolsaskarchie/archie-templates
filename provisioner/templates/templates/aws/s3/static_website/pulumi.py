@@ -58,7 +58,70 @@ class S3StaticWebsiteTemplate(InfrastructureTemplate):
         self.SOURCE_REGION = "us-east-1"
         self.SOURCE_FILES = ["index.html", "styles.css", "archie-logo.png"]
     
-    # ... (keeping _download_source_files and _customize_html as they are logic-specific) ...
+    def _download_source_files(self, bucket_name: str = None, stack_name: str = None) -> List[Dict[str, Any]]:
+        """Download branded files from Archie source S3 bucket, fallback to embedded."""
+        self.temp_dir = tempfile.TemporaryDirectory()
+        temp_path = Path(self.temp_dir.name)
+
+        try:
+            s3 = boto3.client("s3", region_name=self.SOURCE_REGION)
+            downloaded: List[Dict[str, Any]] = []
+            for file_key in self.SOURCE_FILES:
+                local_path = temp_path / file_key
+                s3.download_file(self.SOURCE_BUCKET, file_key, str(local_path))
+
+                if file_key == "index.html":
+                    self._customize_html(local_path, bucket_name=bucket_name, stack_name=stack_name)
+
+                if file_key.endswith(('.png', '.jpg', '.jpeg', '.gif')):
+                    with open(local_path, 'rb') as f:
+                        content = f.read()
+                else:
+                    with open(local_path, 'r', encoding='utf-8') as f:
+                        content = f.read()
+
+                downloaded.append({"content": content, "key": file_key, "content_type": self._get_content_type(file_key)})
+            return downloaded
+        except Exception as e:
+            print(f"[AWS-STATIC-WEBSITE] Fallback to embedded content: {e}")
+            return self._get_embedded_files(bucket_name, stack_name)
+
+    def _get_embedded_files(self, bucket_name: str = None, stack_name: str = None) -> List[Dict[str, Any]]:
+        """Default content if source bucket is unavailable."""
+        import datetime
+        ts = datetime.datetime.now().strftime("%B %d, %Y at %I:%M %p UTC")
+        html = f"""<!DOCTYPE html>
+<html lang="en"><head><meta charset="UTF-8"><title>Deployment Success</title>
+<link rel="stylesheet" href="styles.css"></head><body>
+<div style="font-family:sans-serif;text-align:center;padding:50px;">
+<h1>🎉 Deployment Successful!</h1><p>Your AWS Static Website is live.</p>
+<div style="background:#f4f4f4;padding:20px;border-radius:8px;display:inline-block;text-align:left;">
+<p><strong>Bucket:</strong> {bucket_name}</p><p><strong>Stack:</strong> {stack_name}</p>
+<p><strong>Time:</strong> {ts}</p></div></div></body></html>"""
+        css = "body { background: #fafafa; color: #333; }"
+        return [
+            {"content": html, "key": "index.html", "content_type": "text/html"},
+            {"content": css, "key": "styles.css", "content_type": "text/css"},
+        ]
+
+    def _get_content_type(self, file_key: str) -> str:
+        ext_map = {".html": "text/html", ".css": "text/css", ".png": "image/png", ".jpg": "image/jpeg"}
+        return ext_map.get(Path(file_key).suffix, "text/plain")
+
+    def _customize_html(self, html_path: Path, bucket_name: str = None, stack_name: str = None) -> None:
+        import datetime
+        with open(html_path, 'r', encoding='utf-8') as f:
+            content = f.read()
+        replacements = {
+            '{{DEPLOYMENT_NAME}}': stack_name or self.name,
+            '{{BUCKET_NAME}}': bucket_name or "unknown",
+            '{{TIMESTAMP}}': datetime.datetime.now().strftime("%B %d, %Y at %I:%M %p UTC"),
+            '{{LOGO_URL}}': "archie-logo.png",
+        }
+        for k, v in replacements.items():
+            content = content.replace(k, str(v))
+        with open(html_path, 'w', encoding='utf-8') as f:
+            f.write(content)
 
     def create_infrastructure(self) -> Dict[str, Any]:
         """Deploy static website using factory pattern (implements abstract method)"""
