@@ -230,5 +230,5 @@ class AzureStaticWebsiteTemplate(InfrastructureTemplate):
                     "default": "eastus"
                 }
             },
-            "required": ["websiteName", "resourceGroup"]
+            "required": []
         }
