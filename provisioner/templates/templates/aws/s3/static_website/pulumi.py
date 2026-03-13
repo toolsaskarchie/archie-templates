@@ -56,7 +56,7 @@ class S3StaticWebsiteTemplate(InfrastructureTemplate):
         environment = os.getenv("ENVIRONMENT", "sandbox")
         self.SOURCE_BUCKET = f"archie-static-website-source-{environment}"
         self.SOURCE_REGION = "us-east-1"
-        self.SOURCE_FILES = ["index.html", "styles.css", "archie-logo.png"]
+        self.SOURCE_FILES = ["index-aws.html", "styles.css"]
     
     def _download_source_files(self, bucket_name: str = None, stack_name: str = None) -> List[Dict[str, Any]]:
         """Download branded files from Archie source S3 bucket, fallback to embedded."""
@@ -70,7 +70,10 @@ class S3StaticWebsiteTemplate(InfrastructureTemplate):
                 local_path = temp_path / file_key
                 s3.download_file(self.SOURCE_BUCKET, file_key, str(local_path))
 
-                if file_key == "index.html":
+                # Rename cloud-specific index back to index.html for deployment
+                deploy_key = "index.html" if file_key.startswith("index-") else file_key
+
+                if file_key.startswith("index-"):
                     self._customize_html(local_path, bucket_name=bucket_name, stack_name=stack_name)
 
                 if file_key.endswith(('.png', '.jpg', '.jpeg', '.gif')):
@@ -80,7 +83,7 @@ class S3StaticWebsiteTemplate(InfrastructureTemplate):
                     with open(local_path, 'r', encoding='utf-8') as f:
                         content = f.read()
 
-                downloaded.append({"content": content, "key": file_key, "content_type": self._get_content_type(file_key)})
+                downloaded.append({"content": content, "key": deploy_key, "content_type": self._get_content_type(deploy_key)})
             return downloaded
         except Exception as e:
             print(f"[AWS-STATIC-WEBSITE] Fallback to embedded content: {e}")
@@ -112,11 +115,23 @@ class S3StaticWebsiteTemplate(InfrastructureTemplate):
         import datetime
         with open(html_path, 'r', encoding='utf-8') as f:
             content = f.read()
+
+        project_name = (
+            self.config.get('parameters', {}).get('aws', {}).get('projectName') or
+            self.config.get('projectName') or
+            self.name or 'your-project'
+        )
+        environment = self.cfg.environment or 'nonprod'
+        region = self.cfg.region
+
         replacements = {
             '{{DEPLOYMENT_NAME}}': stack_name or self.name,
+            '{{PROJECT_NAME}}': project_name,
+            '{{ENVIRONMENT}}': environment,
+            '{{REGION}}': region,
+            '{{STACK_NAME}}': stack_name or self.name,
             '{{BUCKET_NAME}}': bucket_name or "unknown",
             '{{TIMESTAMP}}': datetime.datetime.now().strftime("%B %d, %Y at %I:%M %p UTC"),
-            '{{LOGO_URL}}': "archie-logo.png",
         }
         for k, v in replacements.items():
             content = content.replace(k, str(v))

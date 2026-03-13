@@ -32,7 +32,7 @@ class AzureStaticWebsiteTemplate(InfrastructureTemplate):
         """Initialize Azure static website template"""
         raw_config = config or kwargs or {}
         if name is None:
-            name = raw_config.get('websiteName', 'azure-static-website')
+            name = raw_config.get('websiteName', raw_config.get('projectName', 'azure-static-website'))
         super().__init__(name, raw_config)
         self.cfg = AzureStaticWebsiteConfig(raw_config)
         self.resource_group = None
@@ -41,7 +41,7 @@ class AzureStaticWebsiteTemplate(InfrastructureTemplate):
 
         environment = os.getenv("ENVIRONMENT", "sandbox")
         self.SOURCE_BUCKET = f"archie-static-website-source-{environment}"
-        self.SOURCE_FILES = ["index.html", "styles.css", "archie-logo.png"]
+        self.SOURCE_FILES = ["index-azure.html", "styles.css"]
 
     def _download_source_files(self, site_name: str = None, stack_name: str = None) -> List[Dict[str, Any]]:
         """Download branded files from Archie S3 source bucket."""
@@ -53,7 +53,11 @@ class AzureStaticWebsiteTemplate(InfrastructureTemplate):
             for file_key in self.SOURCE_FILES:
                 local_path = temp_path / file_key
                 s3.download_file(self.SOURCE_BUCKET, file_key, str(local_path))
-                if file_key == "index.html":
+
+                # Rename cloud-specific index back to index.html for deployment
+                deploy_key = "index.html" if file_key.startswith("index-") else file_key
+
+                if file_key.startswith("index-"):
                     self._customize_html(local_path, site_name=site_name, stack_name=stack_name)
                 if file_key.endswith(('.png', '.jpg', '.jpeg', '.gif')):
                     with open(local_path, 'rb') as f:
@@ -61,7 +65,7 @@ class AzureStaticWebsiteTemplate(InfrastructureTemplate):
                 else:
                     with open(local_path, 'r', encoding='utf-8') as f:
                         content = f.read()
-                downloaded.append({"content": content, "key": file_key, "content_type": self._get_content_type(file_key)})
+                downloaded.append({"content": content, "key": deploy_key, "content_type": self._get_content_type(deploy_key)})
             return downloaded
         except Exception as e:
             print(f"[AZURE-STATIC-WEBSITE] Fallback to embedded content: {e}")
@@ -92,11 +96,24 @@ class AzureStaticWebsiteTemplate(InfrastructureTemplate):
         import datetime
         with open(html_path, 'r', encoding='utf-8') as f:
             content = f.read()
+
+        project_name = (
+            self.config.get('parameters', {}).get('azure', {}).get('websiteName') or
+            self.config.get('parameters', {}).get('azure', {}).get('projectName') or
+            self.config.get('projectName') or
+            self.name or 'your-project'
+        )
+        environment = 'nonprod'
+        region = self.cfg.location
+
         for k, v in {
             '{{DEPLOYMENT_NAME}}': stack_name or self.name,
+            '{{PROJECT_NAME}}': project_name,
+            '{{ENVIRONMENT}}': environment,
+            '{{REGION}}': region,
+            '{{STACK_NAME}}': stack_name or self.name,
             '{{BUCKET_NAME}}': site_name or "unknown",
             '{{TIMESTAMP}}': datetime.datetime.now().strftime("%B %d, %Y at %I:%M %p UTC"),
-            '{{LOGO_URL}}': "archie-logo.png",
         }.items():
             content = content.replace(k, str(v))
         with open(html_path, 'w', encoding='utf-8') as f:
