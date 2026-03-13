@@ -47,7 +47,8 @@ class GCPStaticWebsiteTemplate(InfrastructureTemplate):
 
     def _download_source_files(self, bucket_name: str = None, stack_name: str = None) -> List[Dict[str, Any]]:
         """Download branded files from Archie S3 source bucket (worker runs in AWS Lambda)."""
-        self.temp_dir = tempfile.TemporaryDirectory()
+        if not self.temp_dir:
+            self.temp_dir = tempfile.TemporaryDirectory()
         temp_path = Path(self.temp_dir.name)
 
         try:
@@ -171,24 +172,28 @@ class GCPStaticWebsiteTemplate(InfrastructureTemplate):
             members=["allUsers"]
         )
         
-        # 4. Upload Content
+        # 4. Upload Content — always use FileAsset (content prop unreliable in GCP provider)
         files = self._download_source_files(bucket_name=bucket_name, stack_name=self.name)
         for f in files:
             file_key = f["key"]
-            props = {
-                "bucket": self.bucket.name,
-                "name": file_key,
-                "content_type": f["content_type"]
-            }
-            
-            if isinstance(f["content"], bytes):
-                # Binary files require FileAsset
-                temp_file = Path(self.temp_dir.name) / file_key
-                props["source"] = pulumi.FileAsset(str(temp_file))
-            else:
-                props["content"] = f["content"]
-                
-            factory.create("gcp:storage:BucketObject", f"{self.name}-{file_key.replace('.', '-')}", **props)
+            # Write all files to disk (text files may have been customized in memory)
+            temp_file = Path(self.temp_dir.name) / file_key
+            if not temp_file.exists():
+                if isinstance(f["content"], bytes):
+                    with open(temp_file, 'wb') as fh:
+                        fh.write(f["content"])
+                else:
+                    with open(temp_file, 'w', encoding='utf-8') as fh:
+                        fh.write(f["content"])
+
+            factory.create(
+                "gcp:storage:BucketObject",
+                f"{self.name}-{file_key.replace('.', '-')}",
+                bucket=self.bucket.name,
+                name=file_key,
+                content_type=f["content_type"],
+                source=pulumi.FileAsset(str(temp_file)),
+            )
 
         website_url = pulumi.Output.concat("https://storage.googleapis.com/", self.bucket.name, "/index.html")
         pulumi.export("website_url", website_url)
