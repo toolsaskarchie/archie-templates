@@ -132,7 +132,7 @@ class AzureStaticWebsiteTemplate(InfrastructureTemplate):
             tags={"ManagedBy": "Archie", "Template": "azure-static-website"}
         )
         
-        # 2. Storage Account
+        # 2. Storage Account (Azure can be very slow — 10 min timeout)
         sa_name = f"st{self.name.replace('-', '')[:14]}{random_suffix}"[:24].lower()
         self.storage_account = factory.create(
             "azure-native:storage:StorageAccount",
@@ -143,7 +143,10 @@ class AzureStaticWebsiteTemplate(InfrastructureTemplate):
             sku={"name": "Standard_LRS"},
             kind="StorageV2",
             enable_https_traffic_only=True,
-            tags={"ManagedBy": "Archie"}
+            tags={"ManagedBy": "Archie"},
+            opts=pulumi.ResourceOptions(
+                custom_timeouts=pulumi.CustomTimeouts(create="10m", update="10m", delete="5m")
+            )
         )
         
         # 3. Static Website Enablement
