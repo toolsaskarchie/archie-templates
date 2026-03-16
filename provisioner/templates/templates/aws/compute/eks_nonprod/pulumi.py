@@ -101,7 +101,7 @@ class EKSNonProdTemplate(InfrastructureTemplate):
         # STEP 2: IAM ROLES
         # ========================================
         # Cluster Role
-        cluster_role_name = namer.iam_role(purpose="cluster")
+        cluster_role_name = namer.iam_role("eks", purpose="cluster")
         self.cluster_role = factory.create(
             "aws:iam:Role",
             cluster_role_name,
@@ -122,7 +122,7 @@ class EKSNonProdTemplate(InfrastructureTemplate):
         )
 
         # Node Role
-        node_role_name = namer.iam_role(purpose="nodes")
+        node_role_name = namer.iam_role("eks", purpose="nodes")
         self.node_role = factory.create(
             "aws:iam:Role",
             node_role_name,

@@ -645,12 +645,13 @@ class ResourceNamer:
         """Generate IAM instance profile name: profile-service-project-env-region[-purpose]"""
         return get_resource_name("profile", service, self.project, self.environment, self.region_short, purpose)
 
-    def s3_bucket(self, purpose: str) -> str:
+    def s3_bucket(self, purpose: str, suffix: str = "") -> str:
         """Generate a safe S3 bucket name (<= 63 chars) using pattern: s3-purpose-project-env-region"""
+        full_purpose = f"{purpose}-{suffix}" if suffix else purpose
         return get_safe_s3_bucket_name(
             self.project,
             self.environment,
-            purpose,
+            full_purpose,
             self.region_short # Use shortcode from namer context
         )
 
