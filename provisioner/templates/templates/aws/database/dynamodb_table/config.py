@@ -44,6 +44,9 @@ class DynamoDBTableConfig:
         self.server_side_encryption = self.parameters.get('server_side_encryption') or self.parameters.get('serverSideEncryption')
         self.ttl = self.parameters.get('ttl')
 
+        # Tags
+        self.tags = raw_config.get('tags', {})
+
         # Collect any extra args passed through
         excluded_keys = [
             'table_name', 'tableName', 'project_name', 'projectName', 'environment', 

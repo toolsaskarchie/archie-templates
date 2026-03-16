@@ -105,7 +105,6 @@ class EKSNonProdTemplate(InfrastructureTemplate):
         self.cluster_role = factory.create(
             "aws:iam:Role",
             cluster_role_name,
-            name=cluster_role_name,
             assume_role_policy=json.dumps({
                 "Version": "2012-10-17",
                 "Statement": [{
@@ -126,7 +125,6 @@ class EKSNonProdTemplate(InfrastructureTemplate):
         self.node_role = factory.create(
             "aws:iam:Role",
             node_role_name,
-            name=node_role_name,
             assume_role_policy=json.dumps({
                 "Version": "2012-10-17",
                 "Statement": [{
@@ -144,11 +142,10 @@ class EKSNonProdTemplate(InfrastructureTemplate):
         )
 
         # Instance Profile
-        profile_name = namer.resource("instance-profile", "nodes")
+        profile_name = f"instance-profile-nodes-{namer.project}-nonprod-{namer.region_short}"
         self.instance_profile = factory.create(
             "aws:iam:InstanceProfile",
             profile_name,
-            name=profile_name,
             role=self.node_role.name,
             tags=tags
         )
@@ -159,7 +156,6 @@ class EKSNonProdTemplate(InfrastructureTemplate):
         self.cluster = factory.create(
             "aws:eks:Cluster",
             self.cfg.cluster_name,
-            name=self.cfg.cluster_name,
             role_arn=self.cluster_role.arn,
             version=self.cfg.kubernetes_version,
             vpc_config={

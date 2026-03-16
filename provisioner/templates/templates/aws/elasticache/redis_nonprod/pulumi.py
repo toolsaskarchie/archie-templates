@@ -67,21 +67,21 @@ class RedisNonProdTemplate(InfrastructureTemplate):
         # Initialize namer
         environment = self.cfg.environment or 'nonprod'
         namer = ResourceNamer(
-            project=self.cfg.project_name,
+            project=self.cfg.project,
             environment=environment,
             region=self.cfg.region,
             template="aws-redis-nonprod"
         )
-        
+
         cluster_name = self.cfg.cluster_name
-        
+
         # Tags
         tags = get_standard_tags(
-            project=self.cfg.project_name,
+            project=self.cfg.project,
             environment=environment,
             template="aws-redis-nonprod"
         )
-        tags.update(self.cfg.tags)
+        tags.update(self.cfg.resource_tags)
 
         # 1. SECURITY GROUP
         self.security_group = factory.create(

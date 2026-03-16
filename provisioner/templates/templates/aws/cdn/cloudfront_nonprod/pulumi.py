@@ -65,10 +65,15 @@ class CloudFrontNonProdTemplate(InfrastructureTemplate):
         # ========================================
         # STEP 1: CALL S3 STATIC WEBSITE TEMPLATE
         # ========================================
+        # Truncate project name to avoid S3 bucket name exceeding 63 chars
+        # S3 naming adds prefixes/suffixes: "archie-guest-s3-website-{project}-{env}-{region}"
+        origin_project = f"{self.cfg.project_name}-origin"
+        if len(origin_project) > 24:
+            origin_project = origin_project[:24].rstrip('-')
         s3_config = {
             "parameters": {
                 "aws": {
-                    "projectName": f"{self.cfg.project_name}-origin",
+                    "projectName": origin_project,
                     "environment": environment
                 }
             }

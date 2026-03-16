@@ -171,7 +171,7 @@ class RDSPostgresTemplate(InfrastructureTemplate):
         # ========================================
         db_subnet_group_name = None
         if subnet_ids and len(subnet_ids) >= 2:
-            sng_name = namer.resource("sng", "db", config="main")
+            sng_name = f"sng-db-{namer.project}-main-nonprod-{namer.region_short}"
             self.db_subnet_group = factory.create(
                 "aws:rds:SubnetGroup",
                 sng_name,
@@ -186,7 +186,7 @@ class RDSPostgresTemplate(InfrastructureTemplate):
         # ========================================
         self.db_password_secret = aws.secretsmanager.Secret(
             f"{self.name}-password",
-            name=namer.resource("secret", "db", config="password"),
+            name=f"secret-db-{namer.project}-password-nonprod-{namer.region_short}",
             description=f"Master password for {db_identifier}",
             recovery_window_in_days=7,
             tags=tags
