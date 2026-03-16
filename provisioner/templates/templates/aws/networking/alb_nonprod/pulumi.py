@@ -212,11 +212,10 @@ class ALBNonProdTemplate(InfrastructureTemplate):
         # ========================================
         # STEP 5: TARGET GROUP
         # ========================================
-        tg_name = f"tg-web-{namer.project}-nonprod-{namer.region_short}"
+        tg_name = sanitize_name(f"tg-web-{namer.project}-nonprod-{namer.region_short}", 32)
         self.target_group = factory.create(
             "aws:lb:TargetGroup",
             tg_name,
-            name=sanitize_name(tg_name, 32),
             port=self.cfg.target_port,
             protocol=self.cfg.target_protocol,
             vpc_id=vpc_id,
