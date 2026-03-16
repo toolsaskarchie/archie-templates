@@ -211,7 +211,7 @@ class ALBNonProdTemplate(InfrastructureTemplate):
         # ========================================
         # STEP 5: TARGET GROUP
         # ========================================
-        tg_name = namer.resource("tg", "web", config="main")
+        tg_name = f"tg-web-{namer.project}-nonprod-{namer.region_short}"
         self.target_group = factory.create(
             "aws:lb:TargetGroup",
             tg_name,

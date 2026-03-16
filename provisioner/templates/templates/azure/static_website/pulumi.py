@@ -8,10 +8,9 @@ Uses PulumiAtomicFactory for resource creation and standardized metadata.
 from typing import Any, Dict, List, Optional
 import random
 import string
-import os
 import tempfile
+import os
 from pathlib import Path
-import boto3
 import pulumi
 from provisioner.templates.base import template_registry, InfrastructureTemplate
 from .config import AzureStaticWebsiteConfig
@@ -22,12 +21,13 @@ from provisioner.templates.atomic_factory import PulumiAtomicFactory as factory
 class AzureStaticWebsiteTemplate(InfrastructureTemplate):
     """
     Azure Static Website Template
-    
+
     Creates:
     - Azure Resource Group
     - Azure Storage Account with static website hosting
+    - Blob uploads to $web container (index.html, styles.css)
     """
-    
+
     def __init__(self, name: str = None, config: Dict[str, Any] = None, **kwargs):
         """Initialize Azure static website template"""
         raw_config = config or kwargs or {}
@@ -39,99 +39,129 @@ class AzureStaticWebsiteTemplate(InfrastructureTemplate):
         self.storage_account = None
         self.temp_dir: Optional[tempfile.TemporaryDirectory] = None
 
+        # Environment settings for source files (stored in AWS S3)
         environment = os.getenv("ENVIRONMENT", "sandbox")
         self.SOURCE_BUCKET = f"archie-static-website-source-{environment}"
+        self.SOURCE_REGION = "us-east-1"
         self.SOURCE_FILES = ["index-azure.html", "styles.css"]
 
-    def _download_source_files(self, site_name: str = None, stack_name: str = None) -> List[Dict[str, Any]]:
-        """Download branded files from Archie S3 source bucket."""
+    def _download_source_files(self, stack_name: str = None) -> List[Dict[str, str]]:
+        """Download HTML/CSS files from Archie's source bucket and customize with deployment info"""
         self.temp_dir = tempfile.TemporaryDirectory()
         temp_path = Path(self.temp_dir.name)
+
         try:
-            s3 = boto3.client("s3", region_name="us-east-1")
-            downloaded: List[Dict[str, Any]] = []
-            for file_key in self.SOURCE_FILES:
+            import boto3
+            s3_client = boto3.client("s3", region_name=self.SOURCE_REGION)
+        except Exception as e:
+            print(f"[TEMPLATE ERROR] Failed to create S3 client for source files: {e}")
+            return self._get_embedded_files(stack_name)
+
+        downloaded_files = []
+        for file_key in self.SOURCE_FILES:
+            try:
                 local_path = temp_path / file_key
-                s3.download_file(self.SOURCE_BUCKET, file_key, str(local_path))
+                s3_client.download_file(self.SOURCE_BUCKET, file_key, str(local_path))
 
                 # Rename cloud-specific index back to index.html for deployment
                 deploy_key = "index.html" if file_key.startswith("index-") else file_key
 
                 if file_key.startswith("index-"):
-                    self._customize_html(local_path, site_name=site_name, stack_name=stack_name)
-                if file_key.endswith(('.png', '.jpg', '.jpeg', '.gif')):
-                    with open(local_path, 'rb') as f:
-                        content = f.read()
-                else:
-                    with open(local_path, 'r', encoding='utf-8') as f:
-                        content = f.read()
-                downloaded.append({"content": content, "key": deploy_key, "content_type": self._get_content_type(deploy_key)})
-            return downloaded
-        except Exception as e:
-            print(f"[AZURE-STATIC-WEBSITE] Fallback to embedded content: {e}")
-            return self._get_embedded_files(site_name, stack_name)
+                    self._customize_html(local_path, stack_name=stack_name)
 
-    def _get_embedded_files(self, site_name: str = None, stack_name: str = None) -> List[Dict[str, Any]]:
+                with open(local_path, 'r', encoding='utf-8') as f:
+                    file_content = f.read()
+
+                content_type_map = {
+                    ".html": "text/html", ".css": "text/css",
+                    ".png": "image/png", ".svg": "image/svg+xml",
+                }
+                ext = os.path.splitext(deploy_key)[1]
+                content_type = content_type_map.get(ext, "text/plain")
+
+                downloaded_files.append({"content": file_content, "key": deploy_key, "content_type": content_type})
+            except Exception as e:
+                print(f"[TEMPLATE ERROR] Failed to download {file_key}: {e}")
+                if file_key.startswith("index-"):
+                    return self._get_embedded_files(stack_name)
+
+        return downloaded_files
+
+    def _get_embedded_files(self, stack_name: str = None) -> List[Dict[str, Any]]:
+        """Default content if source bucket is unavailable"""
         import datetime
-        ts = datetime.datetime.now().strftime("%B %d, %Y at %I:%M %p UTC")
-        html = f"""<!DOCTYPE html>
-<html lang="en"><head><meta charset="UTF-8"><title>Deployment Success</title>
-<link rel="stylesheet" href="styles.css"></head><body>
-<div style="font-family:sans-serif;text-align:center;padding:50px;">
-<h1>🎉 Deployment Successful!</h1><p>Your Azure Static Website is live.</p>
-<div style="background:#f4f4f4;padding:20px;border-radius:8px;display:inline-block;text-align:left;">
-<p><strong>Site:</strong> {site_name}</p><p><strong>Stack:</strong> {stack_name}</p>
-<p><strong>Time:</strong> {ts}</p></div></div></body></html>"""
-        css = "body { background: #fafafa; color: #333; }"
+        timestamp = datetime.datetime.now().strftime("%B %d, %Y at %I:%M %p UTC")
+
+        html_content = f"""<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Deployment Success</title>
+</head>
+<body style="font-family: sans-serif; text-align: center; padding: 50px; background: #0f1117; color: #e0e0e0;">
+    <h1>Deployment Successful!</h1>
+    <p>Your Azure Static Website is live.</p>
+    <div style="background: #1a1d27; padding: 20px; border-radius: 8px; display: inline-block; text-align: left;">
+        <p><strong>Stack:</strong> {stack_name or self.name}</p>
+        <p><strong>Region:</strong> {self.cfg.location}</p>
+        <p><strong>Time:</strong> {timestamp}</p>
+    </div>
+</body>
+</html>"""
+
         return [
-            {"content": html, "key": "index.html", "content_type": "text/html"},
-            {"content": css, "key": "styles.css", "content_type": "text/css"},
+            {"content": html_content, "key": "index.html", "content_type": "text/html"},
         ]
 
-    def _get_content_type(self, file_key: str) -> str:
-        ext_map = {".html": "text/html", ".css": "text/css", ".png": "image/png", ".jpg": "image/jpeg"}
-        return ext_map.get(Path(file_key).suffix, "text/plain")
-
-    def _customize_html(self, html_path: Path, site_name: str = None, stack_name: str = None) -> None:
+    def _customize_html(self, html_path: Path, stack_name: str = None) -> None:
+        """Inject deployment-specific information into the HTML"""
         import datetime
+
         with open(html_path, 'r', encoding='utf-8') as f:
-            content = f.read()
+            html_content = f.read()
 
         project_name = (
-            self.config.get('parameters', {}).get('azure', {}).get('websiteName') or
             self.config.get('parameters', {}).get('azure', {}).get('projectName') or
             self.config.get('projectName') or
+            self.config.get('project_name') or
             self.name or 'your-project'
         )
-        environment = 'nonprod'
+        environment = self.config.get('environment', 'nonprod')
         region = self.cfg.location
+        timestamp = datetime.datetime.now().strftime("%B %d, %Y at %I:%M %p UTC")
 
-        for k, v in {
-            '{{DEPLOYMENT_NAME}}': stack_name or self.name,
-            '{{PROJECT_NAME}}': project_name,
-            '{{ENVIRONMENT}}': environment,
-            '{{REGION}}': region,
-            '{{STACK_NAME}}': stack_name or self.name,
-            '{{BUCKET_NAME}}': site_name or "unknown",
-            '{{TIMESTAMP}}': datetime.datetime.now().strftime("%B %d, %Y at %I:%M %p UTC"),
-        }.items():
-            content = content.replace(k, str(v))
+        if not stack_name:
+            stack_name = self.config.get('name', self.name)
+
+        logo_url = f"https://{self.SOURCE_BUCKET}.s3.{self.SOURCE_REGION}.amazonaws.com/archie-logo.png"
+
+        replacements = {
+            '{{DEPLOYMENT_NAME}}': stack_name, '{{PROJECT_NAME}}': project_name,
+            '{{ENVIRONMENT}}': environment, '{{REGION}}': region,
+            '{{TIMESTAMP}}': timestamp, '{{STACK_NAME}}': stack_name,
+            '{{BUCKET_NAME}}': stack_name, '{{LOGO_URL}}': logo_url,
+        }
+
+        for placeholder, value in replacements.items():
+            html_content = html_content.replace(placeholder, value)
+
         with open(html_path, 'w', encoding='utf-8') as f:
-            f.write(content)
+            f.write(html_content)
 
     def create_infrastructure(self) -> Dict[str, Any]:
         """Deploy infrastructure using factory pattern"""
         random_suffix = ''.join(random.choices(string.ascii_lowercase + string.digits, k=8))
-        
-        # 1. Resource Group
+
+        # 1. Resource Group — use user-provided name or generate unique one
+        rg_name = self.cfg.resourceGroup or f"rg-{self.name}-{random_suffix}"[:63]
         self.resource_group = factory.create(
             "azure-native:resources:ResourceGroup",
             f"{self.name}-rg",
-            resource_group_name=self.cfg.resourceGroup or f"rg-{self.name}-{random_suffix}",
+            resource_group_name=rg_name,
             location=self.cfg.location,
             tags={"ManagedBy": "Archie", "Template": "azure-static-website"}
         )
-        
+
         # 2. Storage Account (Azure can be very slow — 10 min timeout)
         sa_name = f"st{self.name.replace('-', '')[:14]}{random_suffix}"[:24].lower()
         self.storage_account = factory.create(
@@ -148,9 +178,9 @@ class AzureStaticWebsiteTemplate(InfrastructureTemplate):
                 custom_timeouts=pulumi.CustomTimeouts(create="10m", update="10m", delete="5m")
             )
         )
-        
+
         # 3. Static Website Enablement
-        factory.create(
+        static_website = factory.create(
             "azure-native:storage:StorageAccountStaticWebsite",
             f"{self.name}-static",
             account_name=self.storage_account.name,
@@ -158,36 +188,37 @@ class AzureStaticWebsiteTemplate(InfrastructureTemplate):
             index_document="index.html",
             error404_document="index.html"
         )
-        
-        # 4. Upload website files
-        files = self._download_source_files(site_name=sa_name, stack_name=self.name)
-        for f in files:
-            file_key = f["key"]
-            props = {
-                "account_name": self.storage_account.name,
-                "resource_group_name": self.resource_group.name,
-                "container_name": "$web",
-                "blob_name": file_key,
-                "content_type": f["content_type"],
-                "type": "Block",
-            }
-            if isinstance(f["content"], bytes):
-                temp_file = Path(self.temp_dir.name) / file_key
-                props["source"] = pulumi.FileAsset(str(temp_file))
-            else:
-                props["source"] = pulumi.StringAsset(f["content"])
-            factory.create("azure-native:storage:Blob", f"{self.name}-{file_key.replace('.', '-')}", **props)
+
+        # 4. Download source files and upload to $web container
+        files = self._download_source_files(stack_name=self.name)
+        for file_info in files:
+            file_key = file_info["key"]
+            file_content = file_info["content"]
+            content_type = file_info["content_type"]
+
+            factory.create(
+                "azure-native:storage:Blob",
+                f"{self.name}-{file_key.replace('.', '-')}",
+                account_name=self.storage_account.name,
+                resource_group_name=self.resource_group.name,
+                container_name="$web",
+                blob_name=file_key,
+                source=pulumi.StringAsset(file_content),
+                content_type=content_type,
+                type="Block",
+                opts=pulumi.ResourceOptions(depends_on=[static_website])
+            )
 
         # 5. Construct URL
         website_url = self.storage_account.primary_endpoints.apply(
             lambda e: e.web if e and hasattr(e, 'web') else "pending"
         )
-        
+
         pulumi.export("website_name", self.name)
         pulumi.export("resource_group", self.resource_group.name)
         pulumi.export("storage_account_name", self.storage_account.name)
         pulumi.export("website_url", website_url)
-        
+
         return {
             "template_name": "azure-static-website",
             "outputs": {
@@ -197,7 +228,7 @@ class AzureStaticWebsiteTemplate(InfrastructureTemplate):
                 "website_url": website_url
             }
         }
-    
+
     def get_outputs(self) -> Dict[str, Any]:
         """Get template outputs"""
         if not self.storage_account: return {}
@@ -210,7 +241,12 @@ class AzureStaticWebsiteTemplate(InfrastructureTemplate):
             "storage_account_name": self.storage_account.name,
             "website_url": website_url
         }
-    
+
+    def cleanup(self) -> None:
+        """Clean up temporary files"""
+        if self.temp_dir:
+            self.temp_dir.cleanup()
+
     @classmethod
     def get_metadata(cls) -> Dict[str, Any]:
         """Template metadata (Pattern B)"""
@@ -228,7 +264,7 @@ class AzureStaticWebsiteTemplate(InfrastructureTemplate):
             "deployment_time": "3-5 minutes",
             "marketplace_group": "WEBSITES"
         }
-    
+
     @classmethod
     def get_config_schema(cls) -> Dict[str, Any]:
         """Get configuration schema"""
@@ -242,7 +278,8 @@ class AzureStaticWebsiteTemplate(InfrastructureTemplate):
                 },
                 "resourceGroup": {
                     "type": "string",
-                    "title": "Resource Group"
+                    "title": "Resource Group",
+                    "description": "Optional — auto-generated if not provided"
                 },
                 "location": {
                     "type": "string",
@@ -250,5 +287,5 @@ class AzureStaticWebsiteTemplate(InfrastructureTemplate):
                     "default": "eastus"
                 }
             },
-            "required": []
+            "required": ["websiteName"]
         }
