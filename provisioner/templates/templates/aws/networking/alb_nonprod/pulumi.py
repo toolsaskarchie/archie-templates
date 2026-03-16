@@ -199,14 +199,14 @@ class ALBNonProdTemplate(InfrastructureTemplate):
         # STEP 4: LOAD BALANCER
         # ========================================
         alb_aws_name = sanitize_name(self.name, 32)
-        self.alb = factory.create(
-            "aws:lb:LoadBalancer",
+        self.alb = aws.lb.LoadBalancer(
             alb_aws_name,
+            name=alb_aws_name,
             load_balancer_type="application",
             subnets=public_subnet_ids,
             security_groups=[alb_sg_id],
             internal=self.cfg.internal,
-            tags={**tags, "Name": alb_aws_name}
+            tags={**tags, "Name": alb_aws_name},
         )
 
         # ========================================
