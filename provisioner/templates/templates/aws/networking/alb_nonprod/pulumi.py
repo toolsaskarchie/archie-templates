@@ -201,7 +201,6 @@ class ALBNonProdTemplate(InfrastructureTemplate):
         self.alb = factory.create(
             "aws:lb:LoadBalancer",
             self.name,
-            name=self.name,
             load_balancer_type="application",
             subnets=public_subnet_ids,
             security_groups=[alb_sg_id],
