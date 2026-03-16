@@ -173,15 +173,19 @@ class ALBNonProdTemplate(InfrastructureTemplate):
         for i in range(self.cfg.ec2_instance_count):
             subnet_id = private_subnet_ids[i % len(private_subnet_ids)] if private_subnet_ids else None
             ec2_config = {
-                "project_name": f"{self.name}-web-{i+1}",
-                "environment": self.cfg.environment,
-                "vpc_id": vpc_id,
-                "subnet_id": subnet_id,
-                "vpc_mode": "existing",
-                "instance_type": self.cfg.ec2_instance_type,
-                "security_group_ids": [target_sg_id],
-                "config_preset": "alb-backend",
-                "ssh_access_ip": self.cfg.ssh_access_ip or ''
+                "parameters": {
+                    "aws": {
+                        "project_name": f"{self.name}-web-{i+1}",
+                        "environment": self.cfg.environment,
+                        "vpcId": vpc_id,
+                        "subnetId": subnet_id,
+                        "vpcMode": "existing",
+                        "instanceType": self.cfg.ec2_instance_type,
+                        "securityGroupIds": [target_sg_id],
+                        "configPreset": "alb-backend",
+                        "ssh_access_ip": self.cfg.ssh_access_ip or '',
+                    }
+                }
             }
             ec2_template = EC2NonProdTemplate(name=f"{self.name}-web-{i+1}", config=ec2_config)
             ec2_template.create_infrastructure()
