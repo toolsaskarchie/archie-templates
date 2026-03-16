@@ -170,12 +170,15 @@ class ALBNonProdTemplate(InfrastructureTemplate):
         # STEP 3: COMPUTE (BACKEND INSTANCES)
         # ========================================
         instance_ids = []
+        # Letter suffixes avoid _clean_project_name stripping numeric tokens
+        _az_labels = ["alpha", "bravo", "charlie", "delta", "echo", "foxtrot"]
         for i in range(self.cfg.ec2_instance_count):
             subnet_id = private_subnet_ids[i % len(private_subnet_ids)] if private_subnet_ids else None
+            label = _az_labels[i] if i < len(_az_labels) else f"node{i}"
             ec2_config = {
                 "parameters": {
                     "aws": {
-                        "project_name": f"{self.name}-web-{i+1}",
+                        "project_name": f"{self.name}-{label}",
                         "environment": self.cfg.environment,
                         "vpcId": vpc_id,
                         "subnetId": subnet_id,
@@ -187,7 +190,7 @@ class ALBNonProdTemplate(InfrastructureTemplate):
                     }
                 }
             }
-            ec2_template = EC2NonProdTemplate(name=f"{self.name}-web-{i+1}", config=ec2_config)
+            ec2_template = EC2NonProdTemplate(name=f"{self.name}-{label}", config=ec2_config)
             ec2_template.create_infrastructure()
             self.ec2_templates.append(ec2_template)
             instance_ids.append(ec2_template.get_outputs().get('instance_id'))
