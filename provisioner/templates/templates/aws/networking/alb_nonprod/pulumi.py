@@ -199,9 +199,9 @@ class ALBNonProdTemplate(InfrastructureTemplate):
         # STEP 4: LOAD BALANCER
         # ========================================
         alb_aws_name = sanitize_name(self.name, 32)
-        self.alb = aws.lb.LoadBalancer(
+        self.alb = factory.create(
+            "aws:lb:LoadBalancer",
             alb_aws_name,
-            name=alb_aws_name,
             load_balancer_type="application",
             subnets=public_subnet_ids,
             security_groups=[alb_sg_id],
@@ -213,21 +213,21 @@ class ALBNonProdTemplate(InfrastructureTemplate):
         # STEP 5: TARGET GROUP
         # ========================================
         tg_name = sanitize_name(f"tg-web-{namer.project}-nonprod-{namer.region_short}", 32)
-        self.target_group = aws.lb.TargetGroup(
+        self.target_group = factory.create(
+            "aws:lb:TargetGroup",
             tg_name,
-            name=tg_name,
             port=self.cfg.target_port,
             protocol=self.cfg.target_protocol,
             vpc_id=vpc_id,
             target_type="instance",
-            health_check=aws.lb.TargetGroupHealthCheckArgs(
-                enabled=True,
-                path="/",
-                interval=30,
-                timeout=5,
-                healthy_threshold=2,
-                unhealthy_threshold=2,
-            ),
+            health_check={
+                "enabled": True,
+                "path": "/",
+                "interval": 30,
+                "timeout": 5,
+                "healthy_threshold": 2,
+                "unhealthy_threshold": 2,
+            },
             tags={**tags, "Name": tg_name},
         )
 

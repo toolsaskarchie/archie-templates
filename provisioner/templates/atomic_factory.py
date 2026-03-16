@@ -223,7 +223,12 @@ class PulumiAtomicFactory:
                     else:
                         converted_rules.append(rule)
                 props["rules"] = converted_rules
-        
+
+        # TargetGroup health_check
+        elif resource_type == "aws:lb:TargetGroup":
+            if "health_check" in props and isinstance(props["health_check"], dict):
+                props["health_check"] = aws.lb.TargetGroupHealthCheckArgs(**props["health_check"])
+
         return props
     
     @classmethod
