@@ -198,7 +198,7 @@ class ALBNonProdTemplate(InfrastructureTemplate):
         # ========================================
         # STEP 4: LOAD BALANCER
         # ========================================
-        alb_aws_name = sanitize_name(self.name, 32)
+        alb_aws_name = sanitize_name(self.name, 24)
         self.alb = factory.create(
             "aws:lb:LoadBalancer",
             alb_aws_name,
@@ -212,7 +212,7 @@ class ALBNonProdTemplate(InfrastructureTemplate):
         # ========================================
         # STEP 5: TARGET GROUP
         # ========================================
-        tg_name = sanitize_name(f"tg-web-{namer.project}-nonprod-{namer.region_short}", 32)
+        tg_name = sanitize_name(f"tg-{namer.project}-nonprod", 24)
         self.target_group = factory.create(
             "aws:lb:TargetGroup",
             tg_name,
