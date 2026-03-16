@@ -87,7 +87,6 @@ class RedisNonProdTemplate(InfrastructureTemplate):
         self.security_group = factory.create(
             "aws:ec2:SecurityGroup",
             f"{self.name}-sg",
-            name=f"{cluster_name}-redis-sg",
             description=f'Security group for {cluster_name} Redis cluster',
             vpc_id=self.cfg.vpc_id,
             ingress=[
@@ -115,7 +114,6 @@ class RedisNonProdTemplate(InfrastructureTemplate):
         self.subnet_group = factory.create(
             "aws:elasticache:SubnetGroup",
             f"{self.name}-subnet-group",
-            name=f"{cluster_name}-subnet-group",
             description=f'Subnet group for {cluster_name} Redis cluster',
             subnet_ids=self.cfg.subnet_ids,
             tags=tags

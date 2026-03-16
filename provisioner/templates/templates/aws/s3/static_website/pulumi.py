@@ -169,6 +169,9 @@ class S3StaticWebsiteTemplate(InfrastructureTemplate):
         # Ensure it starts with archie-guest if required by role (as per original code comment)
         if not bucket_name.startswith("archie-guest"):
              bucket_name = f"archie-guest-{bucket_name}"
+        # S3 bucket names must be <= 63 characters
+        if len(bucket_name) > 63:
+            bucket_name = bucket_name[:63].rstrip('-')
         
         # Standard tags
         tags = get_standard_tags(

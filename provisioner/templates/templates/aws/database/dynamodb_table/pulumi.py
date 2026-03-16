@@ -68,7 +68,6 @@ class DynamoDBTableTemplate(InfrastructureTemplate):
         self.table = factory.create(
             "aws:dynamodb:Table",
             self.name,
-            name=table_name,
             attributes=self.cfg.attributes,
             hash_key=self.cfg.hash_key,
             range_key=self.cfg.range_key,
