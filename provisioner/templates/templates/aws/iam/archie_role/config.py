@@ -24,6 +24,7 @@ class ArchieRoleConfig:
             self.raw_config.get('project_name', 'archie-role')
         )
         self.environment = self.raw_config.get('environment', 'nonprod')
+        self.region = self.raw_config.get('region', 'us-east-1')
     
     def get_parameter(self, key: str, default: Any = None) -> Any:
         """Get a parameter from the configuration."""
