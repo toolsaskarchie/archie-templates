@@ -158,11 +158,10 @@ class GCPStaticWebsiteTemplate(InfrastructureTemplate):
         safe_name = self.name.lower().replace('_', '-').replace(' ', '-')
         bucket_name = f"archie-gcp-{safe_name}-{random_suffix}"[:63].strip('-')
         
-        # 2. Create Bucket
+        # 2. Create Bucket — use bucket_name as Pulumi logical name (also becomes GCP name)
         self.bucket = factory.create(
             "gcp:storage:Bucket",
-            self.name,
-            name=bucket_name,
+            bucket_name,
             location=self.cfg.location,
             project=self.cfg.project,
             website={
@@ -204,7 +203,6 @@ class GCPStaticWebsiteTemplate(InfrastructureTemplate):
                 "gcp:storage:BucketObject",
                 f"{self.name}-{file_key.replace('.', '-')}",
                 bucket=self.bucket.name,
-                name=file_key,
                 content_type=f["content_type"],
                 source=pulumi.FileAsset(str(temp_file)),
             )
