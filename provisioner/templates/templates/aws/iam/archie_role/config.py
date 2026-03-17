@@ -12,11 +12,15 @@ class ArchieRoleConfig:
     
     def __init__(self, raw_config: Dict[str, Any]):
         self.raw_config = raw_config
-        self.parameters = self.raw_config.get('parameters', {}).get('aws', {})
-        
+        # Check parameters.aws first, fall back to parameters directly
+        params = self.raw_config.get('parameters', {})
+        self.parameters = params.get('aws', {}) or params
+
         # Core attributes
         self.project_name = (
-            self.raw_config.get('projectName') or 
+            self.get_parameter('project_name') or
+            self.get_parameter('projectName') or
+            self.raw_config.get('projectName') or
             self.raw_config.get('project_name', 'archie-role')
         )
         self.environment = self.raw_config.get('environment', 'nonprod')

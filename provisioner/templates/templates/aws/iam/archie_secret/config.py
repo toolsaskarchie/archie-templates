@@ -13,7 +13,8 @@ class ArchieSecretConfig:
     
     def __init__(self, raw_config: Dict[str, Any]):
         self.raw_config = raw_config
-        self.parameters = self.raw_config.get('parameters', {}).get('aws', {})
+        params = self.raw_config.get('parameters', {})
+        self.parameters = params.get('aws', {}) or params
         
         # Load defaults from YAML
         template_dir = Path(__file__).parent
