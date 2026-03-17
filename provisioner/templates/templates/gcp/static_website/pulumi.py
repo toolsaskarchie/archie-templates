@@ -11,6 +11,7 @@ import os
 from pathlib import Path
 import boto3
 import pulumi
+import pulumi_gcp as gcp
 
 from provisioner.templates.base import template_registry, InfrastructureTemplate
 from .config import GCPStaticWebsiteConfig
@@ -199,10 +200,10 @@ class GCPStaticWebsiteTemplate(InfrastructureTemplate):
                     with open(temp_file, 'w', encoding='utf-8') as fh:
                         fh.write(f["content"])
 
-            factory.create(
-                "gcp:storage:BucketObject",
+            gcp.storage.BucketObject(
                 f"{self.name}-{file_key.replace('.', '-')}",
                 bucket=self.bucket.name,
+                name=file_key,
                 content_type=f["content_type"],
                 source=pulumi.FileAsset(str(temp_file)),
             )
