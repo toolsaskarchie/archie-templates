@@ -24,6 +24,8 @@ class ArchieSecretConfig:
         # Metadata
         self.environment = self.raw_config.get('environment', 'nonprod')
         self.region = self.raw_config.get('region', 'us-east-1')
+        self.tags = self.raw_config.get('tags', {})
+        self.region = self.raw_config.get('region', 'us-east-1')
         
         # Project Name
         self.project_name = (
