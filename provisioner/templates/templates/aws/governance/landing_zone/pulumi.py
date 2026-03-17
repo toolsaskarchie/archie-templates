@@ -98,7 +98,8 @@ class AWSLandingZoneTemplate(InfrastructureTemplate):
         # =================================================================
         print("[LANDING ZONE] Creating AWS Organization...")
 
-        self.organization = aws.organizations.Organization(
+        self.organization = factory.create(
+            "aws:organizations:Organization",
             f"org-{project_name}",
             feature_set="ALL",
             aws_service_access_principals=[
@@ -133,7 +134,8 @@ class AWSLandingZoneTemplate(InfrastructureTemplate):
         ]
 
         for ou_key, ou_name in ou_definitions:
-            self.org_units[ou_key] = aws.organizations.OrganizationalUnit(
+            self.org_units[ou_key] = factory.create(
+                "aws:organizations:OrganizationalUnit",
                 f"ou-{ou_key}-{project_name}",
                 name=ou_name,
                 parent_id=org_root_id,
@@ -146,7 +148,8 @@ class AWSLandingZoneTemplate(InfrastructureTemplate):
         print("[LANDING ZONE] Creating Service Control Policies...")
 
         # SCP 1: Deny Root Access
-        self.scps["deny-root"] = aws.organizations.Policy(
+        self.scps["deny-root"] = factory.create(
+            "aws:organizations:Policy",
             f"scp-deny-root-{project_name}",
             name="DenyRootAccess",
             type="SERVICE_CONTROL_POLICY",
@@ -167,7 +170,8 @@ class AWSLandingZoneTemplate(InfrastructureTemplate):
         )
 
         # SCP 2: Enforce Encryption
-        self.scps["enforce-encryption"] = aws.organizations.Policy(
+        self.scps["enforce-encryption"] = factory.create(
+            "aws:organizations:Policy",
             f"scp-enforce-encryption-{project_name}",
             name="EnforceEncryption",
             type="SERVICE_CONTROL_POLICY",
@@ -198,7 +202,8 @@ class AWSLandingZoneTemplate(InfrastructureTemplate):
         )
 
         # SCP 3: Region Restriction
-        self.scps["region-lock"] = aws.organizations.Policy(
+        self.scps["region-lock"] = factory.create(
+            "aws:organizations:Policy",
             f"scp-region-lock-{project_name}",
             name="RegionRestriction",
             type="SERVICE_CONTROL_POLICY",
@@ -224,7 +229,8 @@ class AWSLandingZoneTemplate(InfrastructureTemplate):
         )
 
         # SCP 4: Protect Guardrails
-        self.scps["protect-guardrails"] = aws.organizations.Policy(
+        self.scps["protect-guardrails"] = factory.create(
+            "aws:organizations:Policy",
             f"scp-protect-guardrails-{project_name}",
             name="ProtectGuardrails",
             type="SERVICE_CONTROL_POLICY",
@@ -263,7 +269,8 @@ class AWSLandingZoneTemplate(InfrastructureTemplate):
 
         # Attach all SCPs to org root
         for scp_key, scp in self.scps.items():
-            aws.organizations.PolicyAttachment(
+            factory.create(
+                "aws:organizations:PolicyAttachment",
                 f"scp-attach-{scp_key}-{project_name}",
                 policy_id=scp.id,
                 target_id=org_root_id,
@@ -276,7 +283,8 @@ class AWSLandingZoneTemplate(InfrastructureTemplate):
 
         bucket_name = f"archie-logs-{project_name}-{region_short}"
 
-        self.logging_bucket = aws.s3.BucketV2(
+        self.logging_bucket = factory.create(
+            "aws:s3:BucketV2",
             f"s3-logging-{project_name}-{region_short}",
             bucket=bucket_name,
             force_destroy=False,
@@ -284,16 +292,16 @@ class AWSLandingZoneTemplate(InfrastructureTemplate):
         )
 
         # Versioning
-        aws.s3.BucketVersioningV2(
+        factory.create(
+            "aws:s3:BucketVersioningV2",
             f"s3-logging-versioning-{project_name}",
             bucket=self.logging_bucket.id,
-            versioning_configuration=aws.s3.BucketVersioningV2VersioningConfigurationArgs(
-                status="Enabled",
-            ),
+            versioning_configuration={"status": "Enabled"},
         )
 
         # Encryption
-        aws.s3.BucketServerSideEncryptionConfigurationV2(
+        factory.create(
+            "aws:s3:BucketServerSideEncryptionConfigurationV2",
             f"s3-logging-encryption-{project_name}",
             bucket=self.logging_bucket.id,
             rules=[aws.s3.BucketServerSideEncryptionConfigurationV2RuleArgs(
@@ -305,7 +313,8 @@ class AWSLandingZoneTemplate(InfrastructureTemplate):
 
         # Lifecycle
         retention_days = self.cfg.get('log_retention_days', 365)
-        aws.s3.BucketLifecycleConfigurationV2(
+        factory.create(
+            "aws:s3:BucketLifecycleConfigurationV2",
             f"s3-logging-lifecycle-{project_name}",
             bucket=self.logging_bucket.id,
             rules=[aws.s3.BucketLifecycleConfigurationV2RuleArgs(
@@ -322,7 +331,8 @@ class AWSLandingZoneTemplate(InfrastructureTemplate):
         )
 
         # Block public access
-        aws.s3.BucketPublicAccessBlock(
+        factory.create(
+            "aws:s3:BucketPublicAccessBlock",
             f"s3-logging-public-access-{project_name}",
             bucket=self.logging_bucket.id,
             block_public_acls=True,
@@ -333,7 +343,8 @@ class AWSLandingZoneTemplate(InfrastructureTemplate):
 
         # S3 bucket policy for CloudTrail + Config delivery
         account_id = aws.get_caller_identity().account_id
-        aws.s3.BucketPolicy(
+        factory.create(
+            "aws:s3:BucketPolicy",
             f"s3-logging-policy-{project_name}",
             bucket=self.logging_bucket.id,
             policy=self.logging_bucket.arn.apply(lambda arn: json.dumps({
@@ -379,7 +390,8 @@ class AWSLandingZoneTemplate(InfrastructureTemplate):
         print("[LANDING ZONE] Creating Organization CloudTrail...")
 
         trail_name = f"archie-trail-{project_name}-{region_short}"
-        self.trail = aws.cloudtrail.Trail(
+        self.trail = factory.create(
+            "aws:cloudtrail:Trail",
             f"trail-org-{project_name}-{region_short}",
             name=trail_name,
             is_organization_trail=True,
@@ -398,7 +410,8 @@ class AWSLandingZoneTemplate(InfrastructureTemplate):
         print("[LANDING ZONE] Creating AWS Config Aggregator...")
 
         # Config IAM role
-        config_role = aws.iam.Role(
+        config_role = factory.create(
+            "aws:iam:Role",
             f"role-config-{project_name}",
             name=f"archie-config-{project_name}",
             assume_role_policy=json.dumps({
@@ -412,14 +425,16 @@ class AWSLandingZoneTemplate(InfrastructureTemplate):
             tags=tags,
         )
 
-        aws.iam.RolePolicyAttachment(
+        factory.create(
+            "aws:iam:RolePolicyAttachment",
             f"role-config-policy-{project_name}",
             role=config_role.name,
             policy_arn="arn:aws:iam::aws:policy/service-role/AWS_ConfigRole",
         )
 
         aggregator_name = f"archie-aggregator-{project_name}"
-        aws.cfg.ConfigurationAggregator(
+        factory.create(
+            "aws:cfg:ConfigurationAggregator",
             f"config-aggregator-{project_name}",
             name=aggregator_name,
             organization_aggregation_source=aws.cfg.ConfigurationAggregatorOrganizationAggregationSourceArgs(
@@ -435,23 +450,29 @@ class AWSLandingZoneTemplate(InfrastructureTemplate):
         if self.cfg.get('enable_securityhub', True):
             print("[LANDING ZONE] Enabling SecurityHub with CIS + AWS Foundational standards...")
 
-            hub = aws.securityhub.Account(f"securityhub-{project_name}")
+            hub = factory.create(
+                "aws:securityhub:Account",
+                f"securityhub-{project_name}",
+            )
 
-            aws.securityhub.OrganizationConfiguration(
+            factory.create(
+                "aws:securityhub:OrganizationConfiguration",
                 f"securityhub-org-{project_name}",
                 auto_enable=True,
                 opts=pulumi.ResourceOptions(depends_on=[hub]),
             )
 
             # CIS Benchmark
-            aws.securityhub.StandardsSubscription(
+            factory.create(
+                "aws:securityhub:StandardsSubscription",
                 f"securityhub-cis-{project_name}",
                 standards_arn="arn:aws:securityhub:::ruleset/cis-aws-foundations-benchmark/v/1.4.0",
                 opts=pulumi.ResourceOptions(depends_on=[hub]),
             )
 
             # AWS Foundational Best Practices
-            aws.securityhub.StandardsSubscription(
+            factory.create(
+                "aws:securityhub:StandardsSubscription",
                 f"securityhub-aws-foundational-{project_name}",
                 standards_arn="arn:aws:securityhub:::standards/aws-foundational-security-best-practices/v/1.0.0",
                 opts=pulumi.ResourceOptions(depends_on=[hub]),
@@ -466,7 +487,8 @@ class AWSLandingZoneTemplate(InfrastructureTemplate):
         if self.cfg.get('enable_guardduty', True):
             print("[LANDING ZONE] Enabling GuardDuty with S3 + K8s + Malware protection...")
 
-            self.guardduty_detector = aws.guardduty.Detector(
+            self.guardduty_detector = factory.create(
+                "aws:guardduty:Detector",
                 f"guardduty-detector-{project_name}",
                 enable=True,
                 finding_publishing_frequency="FIFTEEN_MINUTES",
@@ -483,7 +505,8 @@ class AWSLandingZoneTemplate(InfrastructureTemplate):
                 ),
             )
 
-            aws.guardduty.OrganizationConfiguration(
+            factory.create(
+                "aws:guardduty:OrganizationConfiguration",
                 f"guardduty-org-{project_name}",
                 detector_id=self.guardduty_detector.id,
                 auto_enable_organization_members="ALL",
@@ -504,7 +527,8 @@ class AWSLandingZoneTemplate(InfrastructureTemplate):
             if sso_instances.arns:
                 sso_instance_arn = sso_instances.arns[0]
 
-                admin_ps = aws.ssoadmin.PermissionSet(
+                admin_ps = factory.create(
+                    "aws:ssoadmin:PermissionSet",
                     f"sso-admin-ps-{project_name}",
                     name="AdministratorAccess",
                     description="Full administrator access for platform engineers",
@@ -513,14 +537,16 @@ class AWSLandingZoneTemplate(InfrastructureTemplate):
                     relay_state="https://console.aws.amazon.com/",
                 )
 
-                aws.ssoadmin.ManagedPolicyAttachment(
+                factory.create(
+                    "aws:ssoadmin:ManagedPolicyAttachment",
                     f"sso-admin-policy-{project_name}",
                     instance_arn=sso_instance_arn,
                     permission_set_arn=admin_ps.arn,
                     managed_policy_arn="arn:aws:iam::aws:policy/AdministratorAccess",
                 )
 
-                readonly_ps = aws.ssoadmin.PermissionSet(
+                readonly_ps = factory.create(
+                    "aws:ssoadmin:PermissionSet",
                     f"sso-readonly-ps-{project_name}",
                     name="ReadOnlyAccess",
                     description="Read-only access for developers and auditors",
@@ -528,7 +554,8 @@ class AWSLandingZoneTemplate(InfrastructureTemplate):
                     session_duration="PT8H",
                 )
 
-                aws.ssoadmin.ManagedPolicyAttachment(
+                factory.create(
+                    "aws:ssoadmin:ManagedPolicyAttachment",
                     f"sso-readonly-policy-{project_name}",
                     instance_arn=sso_instance_arn,
                     permission_set_arn=readonly_ps.arn,
@@ -547,7 +574,8 @@ class AWSLandingZoneTemplate(InfrastructureTemplate):
             monthly_budget = str(self.cfg.get('monthly_budget', 10000))
             print(f"[LANDING ZONE] Creating budget alert (${monthly_budget}/month)...")
 
-            aws.budgets.Budget(
+            factory.create(
+                "aws:budgets:Budget",
                 f"budget-org-{project_name}",
                 name=f"archie-budget-{project_name}",
                 budget_type="COST",

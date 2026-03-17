@@ -168,7 +168,8 @@ class RDSPostgresNonProdTemplate(InfrastructureTemplate):
             sg_id = fallback_sg.id
         
         # Add ingress rule
-        self.postgres_ingress_rule = aws.ec2.SecurityGroupRule(
+        self.postgres_ingress_rule = factory.create(
+            "aws:ec2:SecurityGroupRule",
             f"{self.name}-postgres-ingress",
             type="ingress",
             security_group_id=sg_id,
@@ -197,7 +198,8 @@ class RDSPostgresNonProdTemplate(InfrastructureTemplate):
         # ========================================
         # STEP 5: SECRETS MANAGER
         # ========================================
-        self.db_password_secret = aws.secretsmanager.Secret(
+        self.db_password_secret = factory.create(
+            "aws:secretsmanager:Secret",
             f"{self.name}-password",
             name=f"secret-db-{namer.project}-password-nonprod-{namer.region_short}",
             description=f"Master password for {db_identifier}",
@@ -205,7 +207,8 @@ class RDSPostgresNonProdTemplate(InfrastructureTemplate):
             tags=tags
         )
 
-        self.db_password_version = aws.secretsmanager.SecretVersion(
+        self.db_password_version = factory.create(
+            "aws:secretsmanager:SecretVersion",
             f"{self.name}-password-version",
             secret_id=self.db_password_secret.id,
             secret_string=pulumi.Output.secret(db_password)

@@ -135,7 +135,8 @@ class ALBNonProdTemplate(InfrastructureTemplate):
             target_sg_id = vpc_outputs.get('app_security_group_id')
             
             # Allow traffic from ALB to Target SG
-            aws.ec2.SecurityGroupRule(
+            factory.create(
+                "aws:ec2:SecurityGroupRule",
                 f"{self.name}-alb-to-target",
                 type="ingress",
                 security_group_id=target_sg_id,
@@ -266,7 +267,8 @@ class ALBNonProdTemplate(InfrastructureTemplate):
         # STEP 7: ATTACHMENTS
         # ========================================
         for i, instance_id in enumerate(instance_ids):
-            attachment = aws.lb.TargetGroupAttachment(
+            attachment = factory.create(
+                "aws:lb:TargetGroupAttachment",
                 f"{self.name}-attachment-{i+1}",
                 target_group_arn=self.target_group.arn,
                 target_id=instance_id,
