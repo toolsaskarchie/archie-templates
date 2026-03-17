@@ -2,6 +2,10 @@
 Archie Secret Template
 Stores cloud credentials in AWS Secrets Manager for Archie's onboarding.
 """
+from typing import Any, Dict, Optional
+import pulumi
+import json
+
 # Import Archie utils for consistent patterns
 from provisioner.utils.aws import (
     ResourceNamer,
