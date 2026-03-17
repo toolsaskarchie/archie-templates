@@ -121,31 +121,45 @@ class PulumiAtomicFactory:
     }
     
     @classmethod
-    def create(cls, resource_type: str, name: str, **props) -> Any:
+    def create(cls, resource_type: str, resource_name: str, *, name: str = None, **props) -> Any:
+        """
+        Create a Pulumi resource via the Archie factory.
+
+        Args:
+            resource_type: Pulumi resource type (e.g. "aws:iam:Role")
+            resource_name: Pulumi logical name (unique identifier in the stack)
+            name: Optional cloud resource name (e.g. AWS resource Name property).
+                  If provided, passed as the 'name' prop to the resource constructor.
+            **props: All other resource properties
+        """
         # Try to get from static map first
         resource_class = cls.RESOURCE_MAP.get(resource_type)
-        
+
         # If not in map, try dynamic lookup from provider modules
         if resource_class is None:
             resource_class = cls._dynamic_lookup(resource_type)
-        
+
         if resource_class is None:
             raise ValueError(f"Unsupported resource type: {resource_type}. Available types: {list(cls.RESOURCE_MAP.keys())}")
-        
+
+        # Pass cloud resource name as prop if provided
+        if name is not None:
+            props['name'] = name
+
         # Extract opts if provided
         opts = props.pop('opts', None)
-        
+
         # Apply smart defaults for common patterns
-        props = cls._apply_smart_defaults(resource_type, name, props)
-        
+        props = cls._apply_smart_defaults(resource_type, resource_name, props)
+
         # Convert dict arguments to proper Pulumi Args objects
         props = cls._convert_args(resource_type, props, resource_class)
-        
+
         # Create and return the resource
         if opts:
-            return resource_class(name, opts=opts, **props)
+            return resource_class(resource_name, opts=opts, **props)
         else:
-            return resource_class(name, **props)
+            return resource_class(resource_name, **props)
     
     @classmethod
     def _dynamic_lookup(cls, resource_type: str) -> Optional[Any]:

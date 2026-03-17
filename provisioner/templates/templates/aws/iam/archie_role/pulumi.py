@@ -120,7 +120,8 @@ class ArchieRoleTemplate(InfrastructureTemplate):
         }
         
         # 1. Create Policy
-        self.policy = aws.iam.Policy(
+        self.policy = factory.create(
+            "aws:iam:Policy",
             f"{self.name}-policy",
             name=f"pol-archierole-{self.cfg.project_name}-{environment}-{region}",
             description="Restricted ReadOnly policy for Archie connection",
@@ -129,7 +130,8 @@ class ArchieRoleTemplate(InfrastructureTemplate):
         )
 
         # 2. Create Role
-        self.role = aws.iam.Role(
+        self.role = factory.create(
+            "aws:iam:Role",
             self.name,
             name=f"role-archie-{self.cfg.project_name}-{environment}-{region}",
             assume_role_policy=json.dumps(trust_policy),

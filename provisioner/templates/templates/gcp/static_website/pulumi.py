@@ -200,10 +200,11 @@ class GCPStaticWebsiteTemplate(InfrastructureTemplate):
                     with open(temp_file, 'w', encoding='utf-8') as fh:
                         fh.write(f["content"])
 
-            gcp.storage.BucketObject(
+            factory.create(
+                "gcp:storage:BucketObject",
                 f"{self.name}-{file_key.replace('.', '-')}",
-                bucket=self.bucket.name,
                 name=file_key,
+                bucket=self.bucket.name,
                 content_type=f["content_type"],
                 source=pulumi.FileAsset(str(temp_file)),
             )
