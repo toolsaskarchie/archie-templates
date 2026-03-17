@@ -64,21 +64,29 @@ class ArchieSecretConfig:
                     "description": "Unique identifier for this project (e.g., 'myapp')",
                     "order": 1
                 },
+                "creds_header": {
+                    "type": "separator",
+                    "title": "Keys to Store in Secrets Manager",
+                    "description": "These credentials will be securely stored. They can be different from the deploy credentials below.",
+                    "group": "Essentials",
+                    "isEssential": True,
+                    "order": 2
+                },
                 "access_key": {
                     "type": "string",
-                    "title": "AWS Access Key ID",
-                    "description": "The Access Key ID for Archie's service user",
+                    "title": "Access Key ID to Store",
+                    "description": "The Access Key ID that Archie will use for deployments (stored in Secrets Manager)",
                     "placeholder": "AKIA...",
                     "is_secret": True,
-                    "order": 2
+                    "order": 3
                 },
                 "secret_key": {
                     "type": "string",
-                    "title": "AWS Secret Access Key",
-                    "description": "The Secret Access Key for Archie's service user",
+                    "title": "Secret Access Key to Store",
+                    "description": "The Secret Access Key that Archie will use for deployments (stored in Secrets Manager)",
                     "placeholder": "wJalr...",
                     "is_secret": True,
-                    "order": 3
+                    "order": 4
                 }
             },
             "required": ["projectName", "access_key", "secret_key"]
