@@ -105,7 +105,7 @@ resources:
     description: Security group for {cluster_name} Redis cluster
     smart_defaults:
       description: Security group for {cluster_name} Redis cluster
-      vpc_id: '{config_vpc_id}'
+      vpc_id: <vpc_id>
       ingress:
       - description: Redis access
         from_port: '{port}'
@@ -127,7 +127,7 @@ resources:
     description: SubnetGroup resource
     smart_defaults:
       description: Subnet group for {cluster_name} Redis cluster
-      subnet_ids: '{config_subnet_ids}'
+      subnet_ids: <subnet_ids>
       tags: '{tags}'
   '{project_name}-cluster':
     type: aws:elasticache:Cluster
@@ -135,12 +135,12 @@ resources:
     always_created: true
     description: Cluster resource
     smart_defaults:
-      cluster_id: '{config_cluster_name}'
+      cluster_id: redis-nonprod
       engine: redis
-      engine_version: '{config_engine_version}'
-      node_type: '{config_node_type}'
-      num_cache_nodes: '{config_num_cache_nodes}'
-      port: '{config_port}'
+      engine_version: '7.0'
+      node_type: cache.t3.micro
+      num_cache_nodes: 1
+      port: 6379
       subnet_group_name: '{config_name}'
       security_group_ids:
       - '{id}'
@@ -163,6 +163,67 @@ configuration:
       description: Get AZ mode based on multi-AZ setting
       group: Network Configuration
       order: 2
+    project_name:
+      type: string
+      title: Project Name
+      description: Unique name for this deployment
+      group: Essentials
+      isEssential: true
+      order: 1
+    region:
+      type: string
+      title: AWS Region
+      default: us-east-1
+      group: Essentials
+      isEssential: true
+      order: 2
+    vpc_id:
+      type: string
+      title: VPC ID
+      description: VPC for the Redis cluster
+      group: Networking
+      order: 10
+    subnet_ids:
+      type: array
+      title: Subnet IDs
+      description: Subnets for the ElastiCache subnet group
+      group: Networking
+      order: 11
+    cluster_name:
+      type: string
+      title: Cluster Name
+      description: Name for the Redis cluster
+      default: redis-nonprod
+      pattern: ^[a-zA-Z][a-zA-Z0-9-]{0,39}$
+      group: Redis Settings
+    engine_version:
+      type: string
+      title: Engine Version
+      description: Redis version
+      default: '7.0'
+      group: Redis Settings
+    node_type:
+      type: string
+      title: Node Type
+      description: Cache node instance type
+      default: cache.t3.micro
+      group: Redis Settings
+    num_cache_nodes:
+      type: number
+      title: Number of Nodes
+      description: Number of cache nodes in the cluster
+      default: 1
+      minimum: 1
+      group: Redis Settings
+    port:
+      type: number
+      title: Port
+      description: Redis connection port
+      default: 6379
+      group: Network Settings
+  required:
+  - project_name
+  - cluster_name
 outputs:
 - name: cluster_id
   description: 'Output: cluster_id'

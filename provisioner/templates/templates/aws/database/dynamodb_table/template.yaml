@@ -5,6 +5,7 @@ metadata:
   category: database
   version: latest
   author: InnovativeApps
+  cloud: aws
   tags:
   - dynamodb
   - nosql
@@ -20,6 +21,66 @@ metadata:
   complexity: intermediate
   deployment_time: 2-4 minutes
   marketplace_group: DATABASES
+  pillars:
+  - title: Operational Excellence
+    score: excellent
+    score_color: '#10b981'
+    description: Fully managed serverless database with zero operational overhead.
+    practices:
+    - AWS-managed infrastructure eliminates patching and maintenance
+    - Infrastructure as Code with Pulumi for repeatable deployments
+    - Standard tagging for cost allocation and resource tracking
+    - On-demand capacity mode auto-scales without manual intervention
+    - TTL automates data lifecycle management
+  - title: Security
+    score: excellent
+    score_color: '#10b981'
+    description: Encrypted at rest with KMS and fine-grained IAM access control.
+    practices:
+    - Server-side encryption at rest with AWS KMS
+    - IAM-based access control for fine-grained permissions
+    - VPC endpoint support for private network access
+    - CloudTrail integration for API-level audit logging
+    - Encryption in transit via TLS for all connections
+  - title: Reliability
+    score: excellent
+    score_color: '#10b981'
+    description: 99.99% SLA with automatic multi-AZ replication.
+    practices:
+    - Automatic data replication across three availability zones
+    - Point-in-time recovery for continuous backups
+    - On-demand backup and restore for disaster recovery
+    - 99.99% availability SLA for single-region tables
+    - Global tables option for multi-region resilience
+  - title: Performance Efficiency
+    score: excellent
+    score_color: '#10b981'
+    description: Single-digit millisecond latency at any scale.
+    practices:
+    - Consistent single-digit millisecond read and write latency
+    - Global Secondary Indexes for flexible query patterns
+    - On-demand mode scales instantly to handle traffic spikes
+    - DAX caching option for microsecond read latency
+    - Partition-level throughput for predictable performance
+  - title: Cost Optimization
+    score: excellent
+    score_color: '#10b981'
+    description: Pay-per-request pricing with no minimum commitments.
+    practices:
+    - On-demand billing charges only for actual reads and writes
+    - No idle costs when table is not being accessed
+    - TTL automatically deletes expired data to reduce storage costs
+    - Reserved capacity option for predictable workloads
+    - Free tier includes 25 GB storage and 25 WCU/RCU
+  - title: Sustainability
+    score: excellent
+    score_color: '#10b981'
+    description: Serverless architecture eliminates idle resource waste.
+    practices:
+    - Serverless model shares infrastructure across customers
+    - On-demand scaling eliminates over-provisioned capacity
+    - TTL reduces unnecessary data storage over time
+    - AWS commitment to 100% renewable energy by 2025
   cost_tier: low
   use_cases:
   - User sessions & profiles
@@ -36,7 +97,6 @@ metadata:
     summary: DynamoDB Table Template
   action_name: aws-dynamodb-table
   environment: prod
-  cloud: aws
   tier: template
 resources:
   '{project_name}':
@@ -57,135 +117,85 @@ resources:
       tags: '{tags}'
 configuration:
   properties:
-    project_name:
-      type: string
-      title: Project Name
-      description: Project Name
-      help_text: Name of your project for resource tagging and tracking
-      placeholder: my-project
+    essentials_header:
+      type: separator
+      title: Template Essentials
       group: Essentials
       isEssential: true
       order: 0
-    region:
+    project_name:
       type: string
-      title: AWS Region
-      description: AWS Region
-      default: us-east-1
-      enum:
-      - us-east-1
-      - us-east-2
-      - us-west-1
-      - us-west-2
-      - eu-west-1
-      - eu-central-1
+      title: Project Name
+      description: Unique name for this deployment (lowercase, no spaces)
+      default: archie-db
       group: Essentials
       isEssential: true
       order: 1
-    db_header:
+    region:
+      type: string
+      title: AWS Region
+      description: Region to deploy the table
+      default: us-east-1
+      group: Essentials
+      isEssential: true
+      order: 2
+    table_header:
       type: separator
-      title: Database Configuration
-      group: Database Settings
+      title: Table Settings
+      group: Table Settings
       isEssential: true
-      order: 80
-    dbName:
+      order: 10
+    tableName:
       type: string
-      title: Database Name
-      description: Primary database name
-      default: mydb
-      group: Database Settings
+      title: Table Name
+      description: Name of the DynamoDB table
+      group: Table Settings
       isEssential: true
-      order: 81
-    dbUsername:
+      order: 11
+    hashKey:
       type: string
-      title: Master Username
-      description: Database administrator username
-      default: admin
-      group: Database Settings
+      title: Partition Key (Hash Key)
+      description: Primary key attribute name
+      default: id
+      group: Table Settings
       isEssential: true
-      order: 82
-    engineVersion:
+      order: 12
+    rangeKey:
       type: string
-      title: Engine Version
-      description: Version of dynamodb
-      default: '8.0'
-      group: Database Settings
-      order: 83
-    instanceClass:
+      title: Sort Key (Range Key)
+      description: Optional sort key attribute name
+      group: Table Settings
+      order: 13
+    billingMode:
       type: string
-      title: Instance Class
-      description: Compute and memory capacity
-      default: db.t3.micro
+      title: Billing Mode
+      description: Capacity billing model
+      default: PAY_PER_REQUEST
       enum:
-      - db.t3.micro
-      - db.t3.small
-      - db.t3.medium
-      - db.t3.large
-      - db.m5.large
-      group: Database Settings
+      - PAY_PER_REQUEST
+      - PROVISIONED
+      group: Table Settings
       isEssential: true
-      order: 84
-    allocatedStorage:
+      order: 14
+    readCapacity:
       type: number
-      title: Allocated Storage (GB)
-      description: Initial storage capacity
-      default: 20
-      group: Database Settings
-      order: 85
-    maxAllocatedStorage:
+      title: Read Capacity Units
+      description: Provisioned read throughput (only if billing mode is PROVISIONED)
+      default: 5
+      group: Table Settings
+      order: 15
+    writeCapacity:
       type: number
-      title: Max Storage (GB)
-      description: Auto-scaling storage limit
-      default: 100
-      group: Database Settings
-      order: 86
-    backupRetentionDays:
-      type: number
-      title: Backup Retention (Days)
-      description: Number of days to keep backups
-      default: 3
-      group: Database Settings
-      order: 87
-    flow_logs_header:
-      type: separator
-      title: Flow Logs Configuration
-      group: Observability
-      isEssential: true
-      order: 200
-    enable_flow_logs:
-      type: boolean
-      title: Enable Flow Logs
-      description: Capture IP traffic information
-      default: true
-      group: Observability
-      isEssential: true
-      order: 201
-    log_destination_type:
-      type: select
-      title: Flow Log Destination
-      description: Where to store flow logs
-      default: cloud-watch-logs
-      options:
-      - label: CloudWatch Logs
-        value: cloud-watch-logs
-      - label: S3 Bucket
-        value: s3
-      group: Observability
-      visibleIf:
-        enable_flow_logs: true
-      order: 202
-    flow_log_retention:
-      type: number
-      title: Log Retention (Days)
-      description: How long to keep flow logs
-      default: 7
-      group: Observability
-      visibleIf:
-        enable_flow_logs: true
-      order: 203
+      title: Write Capacity Units
+      description: Provisioned write throughput (only if billing mode is PROVISIONED)
+      default: 5
+      group: Table Settings
+      order: 16
   required:
   - project_name
   - region
-  - table_name
+  - tableName
+  - hashKey
 outputs:
 - name: table_name
   description: 'Output: table_name'

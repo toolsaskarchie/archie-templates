@@ -100,10 +100,10 @@ resources:
     smart_defaults:
       origins: '{origins}'
       default_cache_behavior: '{default_cache_behavior}'
-      enabled: <cloudfront_enabled>
+      enabled: true
       comment: <cloudfront_comment>
-      price_class: <cloudfront_price_class>
-      default_root_object: <cloudfront_default_root_object>
+      price_class: PriceClass_100
+      default_root_object: index.html
       custom_error_responses:
       - error_code: 404
         response_code: 404
@@ -189,10 +189,12 @@ configuration:
   properties:
     cloudfront_enabled:
       type: boolean
-      title: Cloudfront Enabled
-      description: Get CloudFront enabled status from defaults.yaml.
-      group: General Settings
-      order: 1
+      title: Distribution Enabled
+      description: Whether the CloudFront distribution is enabled
+      default: true
+      group: CDN Settings
+      isEssential: true
+      order: 10
     cloudfront_comment:
       type: string
       title: Cloudfront Comment
@@ -200,17 +202,28 @@ configuration:
       group: General Settings
       order: 2
     cloudfront_price_class:
-      type: string
-      title: Cloudfront Price Class
-      description: Get CloudFront price class from defaults.yaml.
-      group: General Settings
-      order: 3
+      type: select
+      title: Price Class
+      description: CloudFront price class determining global edge locations
+      default: PriceClass_100
+      options:
+      - label: PriceClass_100 (US, Canada, Europe)
+        value: PriceClass_100
+      - label: PriceClass_200 (+ Asia, Africa)
+        value: PriceClass_200
+      - label: PriceClass_All (All Edge Locations)
+        value: PriceClass_All
+      group: CDN Settings
+      isEssential: true
+      order: 11
     cloudfront_default_root_object:
       type: string
-      title: Cloudfront Default Root Object
-      description: Get CloudFront default root object from defaults.yaml.
-      group: General Settings
-      order: 4
+      title: Default Root Object
+      description: Default file to serve for root requests
+      default: index.html
+      group: CDN Settings
+      isEssential: true
+      order: 12
     storage_files:
       type: string
       title: Storage Files
@@ -219,28 +232,36 @@ configuration:
       order: 5
     bucket_versioning:
       type: boolean
-      title: Bucket Versioning
-      description: Get S3 bucket versioning from defaults.yaml.
-      group: General Settings
-      order: 6
+      title: Versioning Enabled
+      description: Enable S3 bucket versioning
+      default: true
+      group: Origin Bucket
+      isEssential: true
+      order: 20
     bucket_force_destroy:
       type: boolean
-      title: Bucket Force Destroy
-      description: Get S3 bucket force destroy setting from defaults.yaml.
-      group: General Settings
-      order: 7
+      title: Force Destroy
+      description: Allow bucket deletion even if not empty
+      default: true
+      group: Origin Bucket
+      isEssential: true
+      order: 21
     website_index_document:
       type: string
-      title: Website Index Document
-      description: Get website index document from defaults.yaml.
-      group: General Settings
-      order: 8
+      title: Index Document
+      description: Default file for directory requests
+      default: index.html
+      group: Origin Bucket
+      isEssential: true
+      order: 22
     website_error_document:
       type: string
-      title: Website Error Document
-      description: Get website error document from defaults.yaml.
-      group: General Settings
-      order: 9
+      title: Error Document
+      description: Error page for 404 responses
+      default: error.html
+      group: Origin Bucket
+      isEssential: true
+      order: 23
     public_access_config:
       type: string
       title: Public Access Config
@@ -271,143 +292,6 @@ configuration:
       group: Essentials
       isEssential: true
       order: 1
-    cdn_header:
-      type: separator
-      title: Content Delivery Configuration
-      group: Networking & Connectivity
-      isEssential: true
-      order: 10
-    cloudfront:
-      type: object
-      title: CloudFront Distribution
-      order: 11
-      properties:
-        enabled:
-          type: boolean
-          title: Distribution Enabled
-          description: Whether the CloudFront distribution is enabled
-          default: true
-        price_class:
-          type: string
-          title: Price Class
-          description: CloudFront price class determining global edge locations
-          enum:
-          - PriceClass_100
-          - PriceClass_200
-          - PriceClass_All
-          default: PriceClass_100
-        default_root_object:
-          type: string
-          title: Default Root Object
-          description: Default file to serve for root requests
-          default: index.html
-    storage_header:
-      type: separator
-      title: Storage Configuration
-      group: Networking & Connectivity
-      isEssential: true
-      order: 20
-    storage_objects:
-      type: object
-      title: Static Files
-      description: Configuration for static files uploaded to storage
-      order: 21
-      properties:
-        files:
-          type: array
-          title: Static Files
-          description: List of static files to upload
-          items:
-            type: object
-            properties:
-              name:
-                type: string
-                title: File Name
-              source:
-                type: string
-                title: Source Path
-              content_type:
-                type: string
-                title: Content Type
-              description:
-                type: string
-                title: Description
-          default:
-          - name: index.html
-            source: index.html
-            content_type: text/html
-            description: Main page
-          - name: styles.css
-            source: styles.css
-            content_type: text/css
-            description: Stylesheet
-    bucket:
-      type: object
-      title: Storage Bucket
-      order: 22
-      properties:
-        versioning:
-          type: boolean
-          title: Versioning Enabled
-          description: Enable storage bucket versioning
-          default: false
-        force_destroy:
-          type: boolean
-          title: Force Destroy
-          description: Allow bucket deletion even if not empty
-          default: true
-    website:
-      type: object
-      title: Website Hosting
-      order: 23
-      properties:
-        index_document:
-          type: string
-          title: Index Document
-          description: Default file for directory requests
-          default: index.html
-        error_document:
-          type: string
-          title: Error Document
-          description: Error page for 404 responses
-          default: error.html
-    flow_logs_header:
-      type: separator
-      title: Flow Logs Configuration
-      group: Observability
-      isEssential: true
-      order: 200
-    enable_flow_logs:
-      type: boolean
-      title: Enable Flow Logs
-      description: Capture IP traffic information
-      default: true
-      group: Observability
-      isEssential: true
-      order: 201
-    log_destination_type:
-      type: select
-      title: Flow Log Destination
-      description: Where to store flow logs
-      default: cloud-watch-logs
-      options:
-      - label: CloudWatch Logs
-        value: cloud-watch-logs
-      - label: S3 Bucket
-        value: s3
-      group: Observability
-      visibleIf:
-        enable_flow_logs: true
-      order: 202
-    flow_log_retention:
-      type: number
-      title: Log Retention (Days)
-      description: How long to keep flow logs
-      default: 7
-      group: Observability
-      visibleIf:
-        enable_flow_logs: true
-      order: 203
   required:
   - project_name
   - region

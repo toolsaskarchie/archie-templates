@@ -1,6 +1,6 @@
 metadata:
   name: aws-ec2-prod
-  title: EC2 Instance (Production)
+  title: EC2 Instance
   description: Production-ready EC2 infrastructure featuring a high-availability VPC across 3 AZs, enhanced CloudWatch monitoring with automated alarms, and encrypted EBS storage. Optimized for mission-critical workloads.
   category: compute
   version: latest
@@ -104,6 +104,7 @@ resources:
       vpc_security_group_ids: '{base_security_groups}'
       iam_instance_profile: '{config_name}'
       key_name: ''
+      user_data: ''
       tags:
         Name: '{instance_name}'
       monitoring: true
@@ -727,6 +728,13 @@ resources:
         AZ: '{az}'
 configuration:
   properties:
+    user_data:
+      type: string
+      default: ''
+      title: User Data
+      description: Cloud-init script to run on first boot
+      order: 40
+      group: Advanced Settings
     instance_name:
       type: string
       default: prod-app-server
@@ -824,13 +832,6 @@ configuration:
       description: List of IP CIDRs allowed to SSH (e.g. 1.2.3.4/32)
       order: 32
       group: Security Settings
-    user_data:
-      type: string
-      default: ''
-      title: User Data
-      description: Cloud-init script to run on first boot
-      order: 40
-      group: Advanced Settings
 outputs:
 - name: instance_id
   description: 'Output: instance_id'
