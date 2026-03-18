@@ -564,7 +564,7 @@ class EC2NonProdTemplate(InfrastructureTemplate):
             "is_listed_in_marketplace": True,
             "pillars": [
                 {
-                    "pillar_name": "Operational Excellence",
+                    "title": "Operational Excellence",
                     "score": 75,
                     "score_color": "#f59e0b",
                     "practices": [
@@ -576,7 +576,7 @@ class EC2NonProdTemplate(InfrastructureTemplate):
                     ]
                 },
                 {
-                    "pillar_name": "Security",
+                    "title": "Security",
                     "score": 80,
                     "score_color": "#10b981",
                     "practices": [
@@ -589,7 +589,7 @@ class EC2NonProdTemplate(InfrastructureTemplate):
                     ]
                 },
                 {
-                    "pillar_name": "Reliability",
+                    "title": "Reliability",
                     "score": 65,
                     "score_color": "#f59e0b",
                     "practices": [
@@ -601,7 +601,7 @@ class EC2NonProdTemplate(InfrastructureTemplate):
                     ]
                 },
                 {
-                    "pillar_name": "Performance Efficiency",
+                    "title": "Performance Efficiency",
                     "score": 70,
                     "score_color": "#f59e0b",
                     "practices": [
@@ -613,7 +613,7 @@ class EC2NonProdTemplate(InfrastructureTemplate):
                     ]
                 },
                 {
-                    "pillar_name": "Cost Optimization",
+                    "title": "Cost Optimization",
                     "score": 85,
                     "score_color": "#10b981",
                     "practices": [
@@ -626,7 +626,7 @@ class EC2NonProdTemplate(InfrastructureTemplate):
                     ]
                 },
                 {
-                    "pillar_name": "Sustainability",
+                    "title": "Sustainability",
                     "score": 70,
                     "score_color": "#f59e0b",
                     "practices": [

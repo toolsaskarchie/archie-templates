@@ -200,9 +200,16 @@ def check_config_class(template_path: Path) -> Dict[str, Any]:
     source = config_path.read_text()
     issues = []
 
+    # Check for required attrs (support both regular classes and Pydantic models)
+    is_pydantic = "BaseModel" in source or "pydantic" in source
     for attr in ["environment", "region", "tags"]:
-        if f"self.{attr}" not in source:
-            issues.append(f"Missing self.{attr}")
+        if is_pydantic:
+            # Pydantic: check for class field definition
+            if f"{attr}:" not in source and f"{attr} :" not in source:
+                issues.append(f"Missing {attr} field")
+        else:
+            if f"self.{attr}" not in source:
+                issues.append(f"Missing self.{attr}")
 
     # Check params resolution
     if "parameters" in source and "params.get('aws'" not in source and "get('aws'" not in source:
