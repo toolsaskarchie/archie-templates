@@ -20,6 +20,7 @@ All examples reference the VPC NonProd template (`templates/aws/networking/vpc_n
 10. [User Data Scripts](#10-user-data-scripts)
 11. [Pre-Publish Checklist](#11-pre-publish-checklist)
 12. [Common Mistakes](#12-common-mistakes)
+13. [Template Development Workflow](#13-template-development-workflow)
 
 ---
 
