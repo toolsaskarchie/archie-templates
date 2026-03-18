@@ -55,16 +55,17 @@ class GcpComputeNonProdConfig:
         self.assign_external_ip = config.get('assign_external_ip', self.assign_external_ip)
         
         # Firewall
-        self.allowed_ssh_sources = config.get('allowed_ssh_sources', self.allowed_ssh_sources)
-        self.allowed_http_sources = config.get('allowed_http_sources', self.allowed_http_sources)
-        self.enable_http = config.get('enable_http', self.enable_http)
-        self.enable_https = config.get('enable_https', self.enable_https)
+        self.allowed_ssh_sources = config.get('allowed_ssh_sources', ["1.2.3.4/32"])
+        self.allowed_http_sources = config.get('allowed_http_sources', ["0.0.0.0/0"])
+        self.enable_http = config.get('enable_http', True)
+        self.enable_https = config.get('enable_https', False)
         
         # Tags
-        self.environment = config.get('environment', self.environment)
+        self.environment = config.get('environment', 'nonprod')
         self.region = config.get('region', 'us-central1')
         self.tags = config.get('tags', {})
-        self.network_tags = config.get('network_tags', self.network_tags)
+        self.network_tags = config.get('network_tags', [])
+        self.project_name = config.get('project_name', config.get('projectName', self.instance_name))
     
     @property
     def resource_labels(self) -> Dict[str, str]:
