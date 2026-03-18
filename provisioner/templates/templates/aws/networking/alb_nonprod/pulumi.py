@@ -185,7 +185,7 @@ class ALBNonProdTemplate(InfrastructureTemplate):
                         "subnetId": subnet_id,
                         "vpcMode": "existing",
                         "instanceType": self.cfg.ec2_instance_type,
-                        "securityGroupIds": [target_sg_id],
+                        "securityGroupIds": [target_sg_id] if target_sg_id else [],
                         "configPreset": "alb-backend",
                         "ssh_access_ip": self.cfg.ssh_access_ip or '',
                     }

@@ -243,7 +243,7 @@ class EC2NonProdTemplate(InfrastructureTemplate):
         # Create Instances
         for idx in range(1, self.cfg.instance_count + 1):
             name_final = namer.ec2_instance(preset_for_naming, sequence=idx if self.cfg.instance_count > 1 else None)
-            sgs = base_security_groups + (self.cfg.security_group_ids or [])
+            sgs = [s for s in base_security_groups + (self.cfg.security_group_ids or []) if s]
             # Assign the right SG tier based on preset
             preset_sg_map = {"web-server": vpc_web_sg, "alb-backend": vpc_app_sg, "mysql": vpc_db_sg, "wordpress": vpc_web_sg}
             tier_sg = preset_sg_map.get(self.cfg.config_preset, vpc_app_sg)
