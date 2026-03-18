@@ -34,93 +34,110 @@ Archie Base Library (this repo)
 | **Standard** | Production-ready stack | VPC + subnets + NAT + flow logs |
 | **Group** | Multi-template composition | Full compute (VPC + ALB + EC2 + monitoring) |
 
+## Available templates (23)
+
+### AWS (17)
+| Template | Category | Complexity | Est. Cost |
+|----------|----------|------------|-----------|
+| VPC NonProd | Networking | Beginner | $20/mo |
+| VPC Prod | Networking | Intermediate | $40/mo |
+| ALB NonProd | Networking | Intermediate | $45/mo |
+| EC2 NonProd | Compute | Beginner | $10-35/mo |
+| EC2 Prod | Compute | Intermediate | $25/mo |
+| EKS NonProd | Compute | Advanced | $75/mo |
+| RDS PostgreSQL NonProd | Database | Intermediate | $15/mo |
+| RDS PostgreSQL Prod | Database | Advanced | $50/mo |
+| Aurora NonProd | Database | Advanced | $30/mo |
+| DynamoDB Table | Database | Beginner | $1/mo |
+| ElastiCache Redis | Database | Intermediate | $15/mo |
+| Static Website | Website | Beginner | $0/mo |
+| CloudFront CDN | CDN | Intermediate | $5/mo |
+| Archie Cross-Account Role | IAM | Beginner | $0/mo |
+| Archie Credential Secret | Security | Beginner | $0.40/mo |
+| Landing Zone | Governance | Advanced | $10/mo |
+| Serverless API | Serverless | Advanced | $5/mo |
+
+### GCP (3)
+| Template | Category | Est. Cost |
+|----------|----------|-----------|
+| Static Website | Website | $0/mo |
+| VPC Network | Networking | $5/mo |
+| Compute Engine | Compute | $10/mo |
+
+### Azure (2)
+| Template | Category | Est. Cost |
+|----------|----------|-----------|
+| Static Website | Website | $0/mo |
+| Container Web App | Compute | $15/mo |
+
+### Kubernetes (1)
+| Template | Category | Est. Cost |
+|----------|----------|-----------|
+| Web App | Compute | Varies |
+
 ## Repository structure
 
 ```
-provisioner/templates/
-  atomic/           # Single-resource templates
-    aws/
-      compute/      # ec2_atomic, eks_atomic
-      database/     # rds_atomic, aurora_cluster_atomic, dynamodb_atomic
-      networking/   # vpc_atomic, subnet_atomic, alb_atomic, ...
-      iam/          # iam_role_atomic, iam_policy_atomic
-      s3/           # basic_bucket
-      security/     # secretsmanager_secret_atomic
-      storage/      # s3_bucket_atomic, s3_bucket_policy_atomic
-    gcp/
-      networking/   # vpc_atomic, firewall_atomic, nat_atomic
-    azure/
-      networking/   # vnet_atomic
+provisioner/
+  templates/
+    atomic/           # Single-resource building blocks
+      aws/            # 25 atomics (VPC, Subnet, SG, EC2, RDS, S3, IAM, ...)
+      gcp/            # 8 atomics (VPC, Subnet, Firewall, NAT, Bucket, ...)
+      azure/          # 5 atomics (ResourceGroup, StorageAccount, VNet, ...)
+      kubernetes/     # 4 atomics (Deployment, Service, Ingress, ConfigMap)
 
-  templates/        # Production-ready stacks
-    aws/
-      compute/      # ec2_nonprod, ec2_prod, eks_nonprod
-      database/     # aurora_nonprod, rds_postgres, redis_nonprod
-      networking/   # vpc_nonprod, vpc_prod, alb_nonprod
-      cdn/          # cloudfront_nonprod
-      s3/           # static_website
-    gcp/            # compute_nonprod, vpc_nonprod, static_website
-    azure/          # container_webapp, static_website
-    kubernetes/     # web_app
-
-  groups/           # Multi-template compositions
-    aws/            # compute_group, database_group, vpc_group, ...
+    templates/        # Production-ready stacks (23 templates)
+      aws/
+        cdn/          # cloudfront_nonprod
+        compute/      # ec2_nonprod, ec2_prod, eks_nonprod
+        database/     # aurora_nonprod, dynamodb_table, rds_postgres, rds_postgres_nonprod
+        elasticache/  # redis_nonprod
+        governance/   # landing_zone
+        iam/          # archie_role, archie_secret
+        networking/   # alb_nonprod, vpc_nonprod, vpc_prod
+        s3/           # static_website
+        serverless/   # aws-serverless-api-prod
+      azure/          # container_webapp, static_website
+      gcp/            # compute/compute_nonprod, networking/vpc_nonprod, static_website
+      kubernetes/     # web_app
 ```
 
-## Template anatomy
+## Building templates
 
-Every template consists of:
+**Read [TEMPLATE_FRAMEWORK.md](TEMPLATE_FRAMEWORK.md)** — the definitive guide for writing Archie templates.
 
-- **`config.py`** — Declares configurable parameters (instance type, CIDR block, environment, etc.)
-- **`pulumi.py`** — Infrastructure definition using the Archie framework (`@template_registry`, `InfrastructureTemplate`)
-- **`marketplace-config.json`** (optional) — Metadata for the AskArchie marketplace (description, features, pillars, cost estimates)
+Key rules:
+1. **ALL resources through `factory.create()`** — never use direct Pulumi calls
+2. **Config class must have**: `self.environment`, `self.region`, `self.tags`, `self.project_name`
+3. **All 6 Well-Architected pillars** in `get_metadata()` with `score`, `score_color`, `description`, `practices`
+4. **`pulumi.export()`** for all user-relevant outputs
+5. **`ResourceNamer`** for all resource naming
+6. **Security group tiers**: web (80/443) → app (3000/8080) → db (3306/5432)
 
-Templates use the Archie framework, not raw Pulumi:
+## Tools
 
-```python
-from provisioner.templates.base.template import InfrastructureTemplate
-from provisioner.templates.shared.registry import template_registry
-
-@template_registry.register("aws-ec2-nonprod")
-class Ec2NonProd(InfrastructureTemplate):
-    def create_resources(self):
-        # VPC, subnets, security groups, EC2 instance, ...
-```
-
-## Using templates with AskArchie
-
-1. **Browse** — Explore the template library in the AskArchie catalog
-2. **Fork** — Clone a template to your company's blueprint library
-3. **Govern** — Lock fields (e.g., encryption = AES-256), set allowed values, add policy reasons
-4. **Publish** — Make it available to your developers as a governed blueprint
-5. **Deploy** — Developers fill a clean form, run preview, and deploy — guardrails enforced
-6. **Monitor** — AskArchie detects drift, tracks compliance, and manages upgrades
-
-## Building your own templates
-
-You can create templates following the same patterns:
-
-1. Pick a tier (atomic, standard, or group)
-2. Create a folder under the appropriate cloud/category
-3. Implement `config.py` with your parameters
-4. Implement `pulumi.py` extending `InfrastructureTemplate`
-5. Register with `@template_registry.register("your-template-name")`
-6. Publish to AskArchie via Studio (AI-assisted, code editor, or import from Terraform/CloudFormation)
+| Script | Purpose |
+|--------|---------|
+| `validate-templates.py` | Validate all templates against the framework |
+| `seed-marketplace.py` | Seed DynamoDB marketplace from template.yaml files |
+| `pulumi-extractor.py` (backend) | Generate template.yaml from Python source |
 
 ## Well-Architected alignment
 
-Every template is continuously audited against AWS Well-Architected Framework pillars:
+Every template includes all 6 AWS Well-Architected Framework pillars:
 
-- **Security** — Encryption, IAM least-privilege, network isolation
-- **Reliability** — Multi-AZ, health checks, automated backups
-- **Performance Efficiency** — Right-sized resources, monitoring, auto-scaling
-- **Cost Optimization** — Environment-aware sizing, lifecycle policies
-- **Operational Excellence** — Tagging, logging, Infrastructure as Code
+- **Operational Excellence** — IaC, monitoring, logging, automated deployments
+- **Security** — Encryption, IAM least-privilege, network isolation, SG tiers
+- **Reliability** — Multi-AZ, health checks, automated backups, failover
+- **Performance Efficiency** — Right-sized resources, caching, auto-scaling
+- **Cost Optimization** — Environment-aware sizing, lifecycle policies, reserved capacity
+- **Sustainability** — Managed services, right-sizing, efficient resource utilization
 
 ## Links
 
 - **Platform**: [app.askarchie.io](https://app.askarchie.io)
-- **Sandbox**: [sandbox.askarchie.io](https://sandbox.askarchie.io)
+- **Landing**: [askarchie.io](https://askarchie.io)
+- **Framework Guide**: [TEMPLATE_FRAMEWORK.md](TEMPLATE_FRAMEWORK.md)
 
 ## License
 

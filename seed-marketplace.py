@@ -192,16 +192,18 @@ def parse_template(template_path: Path) -> dict | None:
                     "name": field_name,
                     "type": ftype,
                     "label": field_def.get("title", field_name.replace("_", " ").title()),
-                    "required": field_name in required_fields,
                     "group": field_def.get("group", "General"),
                     "helpText": field_def.get("description", ""),
                 }
-                # Only include default if meaningful
+                # Only include required if True
+                if field_name in required_fields:
+                    field["required"] = True
+
+                # Only include default if meaningful and displayable
                 default = field_def.get("default")
-                if default is not None and default != "":
-                    # Convert boolean defaults properly
-                    if ftype == "boolean":
-                        field["default"] = bool(default)
+                if default is not None and default != "" and default != 0 and default is not False:
+                    if isinstance(default, str) and len(default) > 40:
+                        pass  # Skip long defaults (resolve-ssm:..., JSON, etc)
                     else:
                         field["default"] = default
 
