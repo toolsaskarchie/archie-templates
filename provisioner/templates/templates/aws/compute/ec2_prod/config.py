@@ -61,14 +61,31 @@ class EC2ProdConfig:
             get_security_connectivity_schema,
             get_observability_schema
         )
+        schema = {
+            **get_project_env_schema(order_offset=0),
+            **get_networking_schema(allow_new=True, allow_existing=True, is_prod=True, order_offset=10),
+            **get_compute_selection_schema(order_offset=70),
+            **get_security_connectivity_schema(include_rdp=False, order_offset=130),
+            **get_observability_schema(order_offset=200),
+        }
+        # Override config_preset with prod-appropriate options (no alb-backend or custom)
+        schema["config_preset"] = {
+            "type": "select",
+            "title": "Platform Preset",
+            "description": "Preconfigured software stack",
+            "default": "web-server",
+            "options": [
+                {"label": "Web Server (PHP/HTML)", "value": "web-server"},
+                {"label": "WordPress Stack", "value": "wordpress"},
+                {"label": "MySQL Database", "value": "mysql"},
+                {"label": "Node.js App", "value": "nodejs"}
+            ],
+            "group": "Compute Settings",
+            "isEssential": True,
+            "order": 75
+        }
         return {
             "type": "object",
-            "properties": {
-                **get_project_env_schema(order_offset=0),
-                **get_networking_schema(allow_new=True, allow_existing=True, is_prod=True, order_offset=10),
-                **get_compute_selection_schema(order_offset=70),
-                **get_security_connectivity_schema(include_rdp=False, order_offset=130),
-                **get_observability_schema(order_offset=200),
-            },
+            "properties": schema,
             "required": ["project_name", "region"]
         }

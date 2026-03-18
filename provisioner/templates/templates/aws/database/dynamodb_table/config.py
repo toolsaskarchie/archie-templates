@@ -69,17 +69,91 @@ class DynamoDBTableConfig:
     @staticmethod
     def get_config_schema() -> Dict[str, Any]:
         """Get JSON schema for UI configuration."""
-        from provisioner.templates.shared.aws_schema import (
-            get_project_env_schema,
-            get_database_selection_schema,
-            get_observability_schema
-        )
         return {
             "type": "object",
             "properties": {
-                **get_project_env_schema(order_offset=0),
-                **get_database_selection_schema(engine="dynamodb", order_offset=80),
-                **get_observability_schema(order_offset=200),
+                "essentials_header": {
+                    "type": "separator",
+                    "title": "Template Essentials",
+                    "group": "Essentials",
+                    "isEssential": True,
+                    "order": 0
+                },
+                "project_name": {
+                    "type": "string",
+                    "title": "Project Name",
+                    "description": "Unique name for this deployment (lowercase, no spaces)",
+                    "default": "archie-db",
+                    "group": "Essentials",
+                    "isEssential": True,
+                    "order": 1
+                },
+                "region": {
+                    "type": "string",
+                    "title": "AWS Region",
+                    "description": "Region to deploy the table",
+                    "default": "us-east-1",
+                    "group": "Essentials",
+                    "isEssential": True,
+                    "order": 2
+                },
+                "table_header": {
+                    "type": "separator",
+                    "title": "Table Settings",
+                    "group": "Table Settings",
+                    "isEssential": True,
+                    "order": 10
+                },
+                "tableName": {
+                    "type": "string",
+                    "title": "Table Name",
+                    "description": "Name of the DynamoDB table",
+                    "group": "Table Settings",
+                    "isEssential": True,
+                    "order": 11
+                },
+                "hashKey": {
+                    "type": "string",
+                    "title": "Partition Key (Hash Key)",
+                    "description": "Primary key attribute name",
+                    "default": "id",
+                    "group": "Table Settings",
+                    "isEssential": True,
+                    "order": 12
+                },
+                "rangeKey": {
+                    "type": "string",
+                    "title": "Sort Key (Range Key)",
+                    "description": "Optional sort key attribute name",
+                    "group": "Table Settings",
+                    "order": 13
+                },
+                "billingMode": {
+                    "type": "string",
+                    "title": "Billing Mode",
+                    "description": "Capacity billing model",
+                    "default": "PAY_PER_REQUEST",
+                    "enum": ["PAY_PER_REQUEST", "PROVISIONED"],
+                    "group": "Table Settings",
+                    "isEssential": True,
+                    "order": 14
+                },
+                "readCapacity": {
+                    "type": "number",
+                    "title": "Read Capacity Units",
+                    "description": "Provisioned read throughput (only if billing mode is PROVISIONED)",
+                    "default": 5,
+                    "group": "Table Settings",
+                    "order": 15
+                },
+                "writeCapacity": {
+                    "type": "number",
+                    "title": "Write Capacity Units",
+                    "description": "Provisioned write throughput (only if billing mode is PROVISIONED)",
+                    "default": 5,
+                    "group": "Table Settings",
+                    "order": 16
+                }
             },
-            "required": ["project_name", "region", "table_name"]
+            "required": ["project_name", "region", "tableName", "hashKey"]
         }

@@ -84,3 +84,87 @@ class GcpComputeNonProdConfig:
         if self.enable_https:
             tags.append('https-server')
         return tags
+
+    @staticmethod
+    def get_config_schema() -> Dict[str, Any]:
+        """Get JSON schema for UI configuration."""
+        return {
+            "type": "object",
+            "properties": {
+                "essentials_header": {
+                    "type": "separator",
+                    "title": "Template Essentials",
+                    "group": "Essentials",
+                    "isEssential": True,
+                    "order": 0
+                },
+                "project_name": {
+                    "type": "string",
+                    "title": "Project Name",
+                    "description": "Unique name for this deployment (lowercase, no spaces)",
+                    "default": "compute-nonprod",
+                    "group": "Essentials",
+                    "isEssential": True,
+                    "order": 1
+                },
+                "region": {
+                    "type": "string",
+                    "title": "GCP Region",
+                    "description": "Region to deploy the instance",
+                    "default": "us-central1",
+                    "group": "Essentials",
+                    "isEssential": True,
+                    "order": 2
+                },
+                "compute_header": {
+                    "type": "separator",
+                    "title": "Compute Settings",
+                    "group": "Compute Settings",
+                    "isEssential": True,
+                    "order": 10
+                },
+                "machine_type": {
+                    "type": "string",
+                    "title": "Machine Type",
+                    "description": "GCP machine type for the instance",
+                    "default": "e2-micro",
+                    "group": "Compute Settings",
+                    "isEssential": True,
+                    "order": 11
+                },
+                "zone": {
+                    "type": "string",
+                    "title": "Zone",
+                    "description": "GCP zone for the instance",
+                    "default": "us-central1-a",
+                    "group": "Compute Settings",
+                    "isEssential": True,
+                    "order": 12
+                },
+                "disk_size_gb": {
+                    "type": "number",
+                    "title": "Disk Size (GB)",
+                    "description": "Boot disk size in gigabytes",
+                    "default": 20,
+                    "group": "Compute Settings",
+                    "order": 13
+                },
+                "image": {
+                    "type": "string",
+                    "title": "OS Image",
+                    "description": "Boot disk image (e.g., debian-cloud/debian-11)",
+                    "default": "debian-cloud/debian-11",
+                    "group": "Compute Settings",
+                    "order": 14
+                },
+                "network_tags": {
+                    "type": "array",
+                    "title": "Network Tags",
+                    "description": "Optional network tags for firewall rules",
+                    "items": {"type": "string"},
+                    "group": "Compute Settings",
+                    "order": 15
+                }
+            },
+            "required": ["project_name", "region", "machine_type", "zone"]
+        }

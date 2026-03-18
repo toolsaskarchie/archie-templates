@@ -58,19 +58,28 @@ class ArchieSecretConfig:
         return {
             "type": "object",
             "properties": {
+                "essentials_header": {
+                    "type": "separator",
+                    "title": "Template Essentials",
+                    "group": "Essentials",
+                    "isEssential": True,
+                    "order": 0
+                },
                 "projectName": {
                     "type": "string",
                     "title": "Project Name",
                     "description": "Unique identifier for this project (e.g., 'myapp')",
-                    "order": 1
-                },
-                "creds_header": {
-                    "type": "separator",
-                    "title": "Keys to Store in Secrets Manager",
-                    "description": "These credentials will be securely stored. They can be different from the deploy credentials below.",
                     "group": "Essentials",
                     "isEssential": True,
-                    "order": 2
+                    "order": 1
+                },
+                "keys_header": {
+                    "type": "separator",
+                    "title": "Keys to Store",
+                    "description": "These credentials will be securely stored in AWS Secrets Manager.",
+                    "group": "Keys to Store",
+                    "isEssential": True,
+                    "order": 10
                 },
                 "access_key": {
                     "type": "string",
@@ -78,7 +87,9 @@ class ArchieSecretConfig:
                     "description": "The Access Key ID that Archie will use for deployments (stored in Secrets Manager)",
                     "placeholder": "AKIA...",
                     "is_secret": True,
-                    "order": 3
+                    "group": "Keys to Store",
+                    "isEssential": True,
+                    "order": 11
                 },
                 "secret_key": {
                     "type": "string",
@@ -86,7 +97,9 @@ class ArchieSecretConfig:
                     "description": "The Secret Access Key that Archie will use for deployments (stored in Secrets Manager)",
                     "placeholder": "wJalr...",
                     "is_secret": True,
-                    "order": 4
+                    "group": "Keys to Store",
+                    "isEssential": True,
+                    "order": 12
                 }
             },
             "required": ["projectName", "access_key", "secret_key"]

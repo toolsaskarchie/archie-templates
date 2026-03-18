@@ -75,21 +75,104 @@ class RedisNonProdConfig:
     @staticmethod
     def get_config_schema() -> Dict[str, Any]:
         """Get JSON schema for UI configuration."""
-        from provisioner.templates.shared.aws_schema import (
-            get_project_env_schema,
-            get_networking_schema,
-            get_cache_selection_schema,
-            get_security_connectivity_schema,
-            get_observability_schema
-        )
         return {
             "type": "object",
             "properties": {
-                **get_project_env_schema(order_offset=0),
-                **get_networking_schema(allow_new=True, allow_existing=True, order_offset=10),
-                **get_cache_selection_schema(engine="redis", order_offset=80),
-                **get_security_connectivity_schema(include_rdp=False, order_offset=150),
-                **get_observability_schema(order_offset=200),
+                "essentials_header": {
+                    "type": "separator",
+                    "title": "Template Essentials",
+                    "group": "Essentials",
+                    "isEssential": True,
+                    "order": 0
+                },
+                "project_name": {
+                    "type": "string",
+                    "title": "Project Name",
+                    "description": "Unique name for this deployment (lowercase, no spaces)",
+                    "default": "redis-nonprod",
+                    "group": "Essentials",
+                    "isEssential": True,
+                    "order": 1
+                },
+                "region": {
+                    "type": "string",
+                    "title": "AWS Region",
+                    "description": "Region to deploy the cluster",
+                    "default": "us-east-1",
+                    "group": "Essentials",
+                    "isEssential": True,
+                    "order": 2
+                },
+                "cache_header": {
+                    "type": "separator",
+                    "title": "Cache Settings",
+                    "group": "Cache Settings",
+                    "isEssential": True,
+                    "order": 10
+                },
+                "cluster_name": {
+                    "type": "string",
+                    "title": "Cluster Name",
+                    "description": "Name for the Redis cluster",
+                    "group": "Cache Settings",
+                    "isEssential": True,
+                    "order": 11
+                },
+                "node_type": {
+                    "type": "string",
+                    "title": "Node Type",
+                    "description": "ElastiCache node instance type",
+                    "default": "cache.t3.micro",
+                    "group": "Cache Settings",
+                    "isEssential": True,
+                    "order": 12
+                },
+                "num_cache_nodes": {
+                    "type": "number",
+                    "title": "Number of Cache Nodes",
+                    "description": "Number of cache nodes in the cluster",
+                    "default": 1,
+                    "group": "Cache Settings",
+                    "order": 13
+                },
+                "port": {
+                    "type": "number",
+                    "title": "Port",
+                    "description": "Port number for Redis connections",
+                    "default": 6379,
+                    "group": "Cache Settings",
+                    "order": 14
+                },
+                "engine_version": {
+                    "type": "string",
+                    "title": "Engine Version",
+                    "description": "Redis engine version",
+                    "default": "7.0",
+                    "group": "Cache Settings",
+                    "order": 15
+                },
+                "network_header": {
+                    "type": "separator",
+                    "title": "Networking",
+                    "group": "Networking",
+                    "order": 20
+                },
+                "vpc_id": {
+                    "type": "string",
+                    "title": "VPC ID",
+                    "description": "VPC to deploy the cluster into",
+                    "group": "Networking",
+                    "isEssential": True,
+                    "order": 21
+                },
+                "subnet_ids": {
+                    "type": "array",
+                    "title": "Subnet IDs",
+                    "description": "Subnets for the cache subnet group",
+                    "items": {"type": "string"},
+                    "group": "Networking",
+                    "order": 22
+                }
             },
             "required": ["project_name", "region", "cluster_name"]
         }
