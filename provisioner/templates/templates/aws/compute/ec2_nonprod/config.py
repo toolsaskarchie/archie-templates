@@ -4,14 +4,6 @@ Configuration parser for EC2 Non-Prod Template
 
 import datetime
 from typing import Dict, Any, Optional, List
-from provisioner.templates.shared.aws_schema import (
-    get_project_env_schema,
-    get_compute_selection_schema,
-    get_networking_schema,
-    get_security_connectivity_schema,
-    get_observability_schema,
-    get_multi_instance_compute_schema
-)
 
 class EC2NonProdConfig:
     """Parsed and validated configuration for EC2 Non-Prod Template"""
@@ -483,29 +475,152 @@ class EC2NonProdConfig:
     @classmethod
     def get_config_schema(cls) -> Dict[str, Any]:
         """Get configuration schema for the UI"""
-        from provisioner.templates.shared.aws_schema import (
-            get_project_env_schema,
-            get_vpc_selection_schema,
-        )
-
         return {
             "type": "object",
             "properties": {
                 # --- Essentials ---
-                # --- Essentials (Modular) ---
-                **get_project_env_schema(order_offset=0),
-
-                # --- Networking & Connectivity (Modular) ---
-                **get_networking_schema(allow_new=True, allow_existing=True, order_offset=10),
-
-                # --- Compute Selection (Modular) ---
-                **get_multi_instance_compute_schema(order_offset=70),
-
-                # --- Security & Connectivity (Modular) ---
-                **get_security_connectivity_schema(include_rdp=True, order_offset=130),
-
-                # --- Observability (Modular) ---
-                **get_observability_schema(order_offset=200),
+                "project_name": {
+                    "type": "string",
+                    "title": "Project Name",
+                    "description": "Unique name for this project (used in resource naming)",
+                    "group": "Essentials",
+                    "isEssential": True,
+                    "order": 1
+                },
+                "region": {
+                    "type": "string",
+                    "title": "AWS Region",
+                    "description": "AWS region to deploy into",
+                    "default": "us-east-1",
+                    "enum": ["us-east-1", "us-east-2", "us-west-1", "us-west-2", "eu-west-1", "eu-central-1", "ap-southeast-1"],
+                    "group": "Essentials",
+                    "isEssential": True,
+                    "order": 2
+                },
+                # --- Compute ---
+                "config_preset": {
+                    "type": "string",
+                    "title": "Configuration Preset",
+                    "description": "Pre-configured setup for common workloads",
+                    "default": "web-server",
+                    "enum": ["web-server", "wordpress", "mysql", "nodejs", "alb-backend"],
+                    "group": "Compute",
+                    "isEssential": True,
+                    "order": 10
+                },
+                "instance_type": {
+                    "type": "string",
+                    "title": "Instance Type",
+                    "description": "EC2 instance size",
+                    "default": "t3.micro",
+                    "enum": ["t3.micro", "t3.small", "t3.medium", "t3.large", "t3.xlarge"],
+                    "group": "Compute",
+                    "isEssential": True,
+                    "order": 11
+                },
+                "ami_os": {
+                    "type": "string",
+                    "title": "Operating System",
+                    "description": "AMI operating system",
+                    "default": "amazon-linux-2",
+                    "enum": ["amazon-linux-2", "ubuntu-22.04", "windows-2022"],
+                    "group": "Compute",
+                    "isEssential": True,
+                    "order": 12
+                },
+                "instance_count": {
+                    "type": "number",
+                    "title": "Instance Count",
+                    "description": "Number of EC2 instances to launch",
+                    "default": 1,
+                    "minimum": 1,
+                    "maximum": 10,
+                    "group": "Compute",
+                    "order": 13
+                },
+                # --- Networking ---
+                "vpc_mode": {
+                    "type": "string",
+                    "title": "VPC Mode",
+                    "description": "Create a new VPC or use an existing one",
+                    "default": "new",
+                    "enum": ["new", "existing"],
+                    "group": "Networking",
+                    "isEssential": True,
+                    "order": 20
+                },
+                "vpc_id": {
+                    "type": "string",
+                    "title": "Existing VPC ID",
+                    "description": "ID of an existing VPC to deploy into",
+                    "placeholder": "vpc-0abc123def456",
+                    "visibleIf": {"vpc_mode": "existing"},
+                    "group": "Networking",
+                    "order": 21
+                },
+                "subnet_id": {
+                    "type": "string",
+                    "title": "Existing Subnet ID",
+                    "description": "Subnet to launch the instance in",
+                    "placeholder": "subnet-0abc123def456",
+                    "visibleIf": {"vpc_mode": "existing"},
+                    "group": "Networking",
+                    "order": 22
+                },
+                "cidr_block": {
+                    "type": "string",
+                    "title": "VPC CIDR Block",
+                    "description": "CIDR block for the new VPC (leave empty for auto-generated)",
+                    "placeholder": "10.0.0.0/16",
+                    "visibleIf": {"vpc_mode": "new"},
+                    "group": "Networking",
+                    "order": 23
+                },
+                # --- Security ---
+                "enable_ssm": {
+                    "type": "boolean",
+                    "title": "Enable SSM Access",
+                    "description": "Enable AWS Systems Manager for remote management (no SSH needed)",
+                    "default": True,
+                    "group": "Security",
+                    "isEssential": True,
+                    "order": 30
+                },
+                "enable_ssh_access": {
+                    "type": "boolean",
+                    "title": "Enable SSH Access",
+                    "description": "Open port 22 for SSH connections",
+                    "default": False,
+                    "group": "Security",
+                    "order": 31
+                },
+                "ssh_access_ip": {
+                    "type": "string",
+                    "title": "SSH Access IP",
+                    "description": "IP address allowed for SSH (e.g. 203.0.113.0/32)",
+                    "placeholder": "0.0.0.0/0",
+                    "visibleIf": {"enable_ssh_access": True},
+                    "group": "Security",
+                    "order": 32
+                },
+                "key_name": {
+                    "type": "string",
+                    "title": "Key Pair Name",
+                    "description": "EC2 key pair for SSH authentication",
+                    "placeholder": "my-keypair",
+                    "visibleIf": {"enable_ssh_access": True},
+                    "group": "Security",
+                    "order": 33
+                },
+                # --- Advanced ---
+                "user_data": {
+                    "type": "string",
+                    "title": "User Data Script",
+                    "description": "Custom startup script (overrides preset script)",
+                    "format": "textarea",
+                    "group": "Advanced",
+                    "order": 40
+                },
             },
             "required": ["project_name"]
         }

@@ -66,52 +66,109 @@ class EKSNonProdConfig:
     @staticmethod
     def get_config_schema() -> Dict[str, Any]:
         """Get JSON schema for UI configuration."""
-        from provisioner.templates.templates.aws.networking.vpc_nonprod.pulumi import VPCSimpleNonprodTemplate
-        from provisioner.templates.templates.aws.compute.ec2_nonprod.config import EC2NonProdConfig
-        
-        # Pull base schemas
-        vpc_schema = VPCSimpleNonprodTemplate.get_config_schema()
-        ec2_schema = EC2NonProdConfig.get_config_schema()
-        
-        # Merge logic: EKS specific fields + VPC base + EC2 base
-        properties = {
-            # Shared essentials from VPC
-            **vpc_schema.get("properties", {}),
-            # Merge EC2 compute/security fields
-            **ec2_schema.get("properties", {}),
-        }
-        
-        # EKS Specific additions
-        properties.update({
-            "eks_header": {
-                "type": "separator",
-                "title": "EKS Cluster Settings",
-                "group": "Compute Selection",
-                "isEssential": True,
-                "order": 65
-            },
-            "cluster_name": {
-                "type": "string",
-                "title": "Cluster Name",
-                "description": "Unique name for the EKS cluster",
-                "placeholder": "eks-nonprod",
-                "group": "Compute Selection",
-                "isEssential": True,
-                "order": 66
-            },
-            "kubernetes_version": {
-                "type": "string",
-                "title": "K8s Version",
-                "description": "Kubernetes control plane version",
-                "default": "1.28",
-                "enum": ["1.27", "1.28", "1.29"],
-                "group": "Compute Selection",
-                "order": 67
-            }
-        })
-        
         return {
             "type": "object",
-            "properties": properties,
-            "required": list(set(vpc_schema.get("required", []) + ec2_schema.get("required", []) + ["cluster_name"]))
+            "properties": {
+                # --- Essentials ---
+                "project_name": {
+                    "type": "string",
+                    "title": "Project Name",
+                    "description": "Unique name for this project (used in resource naming)",
+                    "group": "Essentials",
+                    "isEssential": True,
+                    "order": 1
+                },
+                "region": {
+                    "type": "string",
+                    "title": "AWS Region",
+                    "description": "AWS region to deploy into",
+                    "default": "us-east-1",
+                    "enum": ["us-east-1", "us-east-2", "us-west-1", "us-west-2", "eu-west-1", "eu-central-1", "ap-southeast-1"],
+                    "group": "Essentials",
+                    "isEssential": True,
+                    "order": 2
+                },
+                # --- Cluster ---
+                "cluster_name": {
+                    "type": "string",
+                    "title": "Cluster Name",
+                    "description": "Unique name for the EKS cluster",
+                    "placeholder": "eks-nonprod",
+                    "group": "Cluster",
+                    "isEssential": True,
+                    "order": 10
+                },
+                "kubernetes_version": {
+                    "type": "string",
+                    "title": "Kubernetes Version",
+                    "description": "Kubernetes control plane version",
+                    "default": "1.28",
+                    "enum": ["1.27", "1.28", "1.29", "1.30"],
+                    "group": "Cluster",
+                    "isEssential": True,
+                    "order": 11
+                },
+                # --- Nodes ---
+                "node_instance_type": {
+                    "type": "string",
+                    "title": "Node Instance Type",
+                    "description": "EC2 instance type for worker nodes",
+                    "default": "t3.medium",
+                    "enum": ["t3.small", "t3.medium", "t3.large", "t3.xlarge", "m5.large", "m5.xlarge"],
+                    "group": "Nodes",
+                    "isEssential": True,
+                    "order": 20
+                },
+                "min_nodes": {
+                    "type": "number",
+                    "title": "Min Nodes",
+                    "description": "Minimum number of worker nodes",
+                    "default": 1,
+                    "minimum": 1,
+                    "maximum": 10,
+                    "group": "Nodes",
+                    "order": 21
+                },
+                "max_nodes": {
+                    "type": "number",
+                    "title": "Max Nodes",
+                    "description": "Maximum number of worker nodes (for autoscaling)",
+                    "default": 3,
+                    "minimum": 1,
+                    "maximum": 20,
+                    "group": "Nodes",
+                    "order": 22
+                },
+                "desired_nodes": {
+                    "type": "number",
+                    "title": "Desired Nodes",
+                    "description": "Initial number of worker nodes",
+                    "default": 2,
+                    "minimum": 1,
+                    "maximum": 10,
+                    "group": "Nodes",
+                    "order": 23
+                },
+                # --- Networking ---
+                "vpc_mode": {
+                    "type": "string",
+                    "title": "VPC Mode",
+                    "description": "Create a new VPC or use an existing one",
+                    "default": "new",
+                    "enum": ["new", "existing"],
+                    "group": "Networking",
+                    "isEssential": True,
+                    "order": 30
+                },
+                "vpc_id": {
+                    "type": "string",
+                    "title": "Existing VPC ID",
+                    "description": "ID of an existing VPC to deploy into",
+                    "placeholder": "vpc-0abc123def456",
+                    "visibleIf": {"vpc_mode": "existing"},
+                    "group": "Networking",
+                    "order": 31
+                },
+            },
+            "required": ["project_name", "cluster_name"]
         }

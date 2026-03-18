@@ -179,28 +179,116 @@ class RDSPostgresNonProdConfig:
     @staticmethod
     def get_config_schema() -> Dict[str, Any]:
         """Get JSON schema for UI configuration."""
-        from provisioner.templates.shared.aws_schema import (
-            get_project_env_schema,
-            get_networking_schema,
-            get_database_selection_schema,
-            get_security_connectivity_schema,
-            get_observability_schema
-        )
-        schema = {
-            **get_project_env_schema(order_offset=0),
-            **get_networking_schema(allow_new=True, allow_existing=True, order_offset=10),
-            **get_database_selection_schema(engine="postgres", order_offset=80),
-            **get_security_connectivity_schema(include_rdp=False, order_offset=150),
-            **get_observability_schema(order_offset=200),
-        }
-        
-        # Remove system fields handled by the Frontend
-        for field in ['project_name', 'region', 'environment']:
-            if field in schema:
-                del schema[field]
-                
         return {
             "type": "object",
-            "properties": schema,
-            "required": ["dbName"]
+            "properties": {
+                # --- Essentials ---
+                "project_name": {
+                    "type": "string",
+                    "title": "Project Name",
+                    "description": "Unique name for this project (used in resource naming)",
+                    "group": "Essentials",
+                    "isEssential": True,
+                    "order": 1
+                },
+                "region": {
+                    "type": "string",
+                    "title": "AWS Region",
+                    "description": "AWS region to deploy into",
+                    "default": "us-east-1",
+                    "enum": ["us-east-1", "us-east-2", "us-west-1", "us-west-2", "eu-west-1", "eu-central-1", "ap-southeast-1"],
+                    "group": "Essentials",
+                    "isEssential": True,
+                    "order": 2
+                },
+                # --- Database ---
+                "db_name": {
+                    "type": "string",
+                    "title": "Database Name",
+                    "description": "Name of the PostgreSQL database to create",
+                    "default": "mydb",
+                    "group": "Database",
+                    "isEssential": True,
+                    "order": 10
+                },
+                "db_username": {
+                    "type": "string",
+                    "title": "Master Username",
+                    "description": "Master username for the database",
+                    "default": "postgres",
+                    "group": "Database",
+                    "isEssential": True,
+                    "order": 11
+                },
+                "engine_version": {
+                    "type": "string",
+                    "title": "PostgreSQL Version",
+                    "description": "PostgreSQL engine version",
+                    "default": "15",
+                    "enum": ["13", "14", "15", "16"],
+                    "group": "Database",
+                    "isEssential": True,
+                    "order": 12
+                },
+                "instance_class": {
+                    "type": "string",
+                    "title": "Instance Class",
+                    "description": "RDS instance size",
+                    "default": "db.t3.micro",
+                    "enum": ["db.t3.micro", "db.t3.small", "db.t3.medium", "db.t3.large", "db.t4g.micro", "db.t4g.small", "db.m5.large"],
+                    "group": "Database",
+                    "isEssential": True,
+                    "order": 13
+                },
+                "allocated_storage": {
+                    "type": "number",
+                    "title": "Storage (GB)",
+                    "description": "Initial allocated storage in gigabytes",
+                    "default": 20,
+                    "minimum": 20,
+                    "maximum": 1000,
+                    "group": "Database",
+                    "order": 14
+                },
+                "backup_retention": {
+                    "type": "number",
+                    "title": "Backup Retention (days)",
+                    "description": "Number of days to retain automated backups",
+                    "default": 7,
+                    "minimum": 0,
+                    "maximum": 35,
+                    "group": "Database",
+                    "order": 15
+                },
+                # --- Networking ---
+                "vpc_mode": {
+                    "type": "string",
+                    "title": "VPC Mode",
+                    "description": "Create a new VPC or use an existing one",
+                    "default": "new",
+                    "enum": ["new", "existing"],
+                    "group": "Networking",
+                    "isEssential": True,
+                    "order": 20
+                },
+                "vpc_id": {
+                    "type": "string",
+                    "title": "Existing VPC ID",
+                    "description": "ID of an existing VPC to deploy into",
+                    "placeholder": "vpc-0abc123def456",
+                    "visibleIf": {"vpc_mode": "existing"},
+                    "group": "Networking",
+                    "order": 21
+                },
+                # --- Security ---
+                "deletion_protection": {
+                    "type": "boolean",
+                    "title": "Deletion Protection",
+                    "description": "Prevent accidental deletion of the database",
+                    "default": False,
+                    "group": "Security",
+                    "order": 30
+                },
+            },
+            "required": ["project_name", "db_name"]
         }

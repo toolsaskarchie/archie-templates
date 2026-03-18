@@ -71,78 +71,139 @@ class ALBNonProdConfig:
     @staticmethod
     def get_config_schema() -> Dict[str, Any]:
         """Get JSON schema for UI configuration."""
-        from provisioner.templates.templates.aws.networking.vpc_nonprod.pulumi import VPCSimpleNonprodTemplate
-        from provisioner.templates.templates.aws.compute.ec2_nonprod.config import EC2NonProdConfig
-        
-        # Pull base schemas
-        vpc_schema = VPCSimpleNonprodTemplate.get_config_schema()
-        ec2_schema = EC2NonProdConfig.get_config_schema()
-        
-        # Merge logic: ALB specific fields + VPC base + EC2 base
-        # We use order_offset to handle prioritization if needed, but here we just merge properties
-        properties = {
-            # Shared essentials (handled by both, so any is fine)
-            **vpc_schema.get("properties", {}),
-            # Merge EC2 compute/security fields
-            **ec2_schema.get("properties", {}),
-        }
-        
-        # ALB Specific overrides/additions
-        properties.update({
-            "alb_header": {
-                "type": "separator",
-                "title": "Load Balancer Settings",
-                "group": "Load Balancer",
-                "isEssential": True,
-                "order": 140
-            },
-            "alb_name": {
-                "type": "string",
-                "title": "ALB Name",
-                "description": "Unique name for the load balancer",
-                "placeholder": "Auto-generated",
-                "group": "Load Balancer",
-                "isEssential": True,
-                "order": 141
-            },
-            "internal": {
-                "type": "boolean",
-                "title": "Internal Load Balancer",
-                "description": "Whether the load balancer is internal-only",
-                "default": False,
-                "group": "Load Balancer",
-                "order": 142
-            },
-            "enable_https": {
-                "type": "boolean",
-                "title": "Enable HTTPS (SSL)",
-                "description": "Enable secure listener on port 443",
-                "default": False,
-                "group": "Load Balancer",
-                "isEssential": True,
-                "order": 143
-            },
-            "certificate_arn": {
-                "type": "string",
-                "title": "ACM Certificate ARN",
-                "description": "ARN of existing ACM certificate",
-                "placeholder": "arn:aws:acm:...",
-                "visibleIf": {"enable_https": True},
-                "group": "Load Balancer",
-                "order": 144
-            },
-            "target_port": {
-                "type": "number",
-                "title": "Backend Port",
-                "description": "Port on the EC2 instances to route traffic to",
-                "default": 80,
-                "group": "Load Balancer",
-                "order": 145
-            }
-        })
-        
         return {
             "type": "object",
-            "properties": properties,
-            "required": list(set(vpc_schema.get("required", []) + ec2_schema.get("required", []) + ["alb_name"]))
+            "properties": {
+                # --- Essentials ---
+                "project_name": {
+                    "type": "string",
+                    "title": "Project Name",
+                    "description": "Unique name for this project (used in resource naming)",
+                    "group": "Essentials",
+                    "isEssential": True,
+                    "order": 1
+                },
+                "region": {
+                    "type": "string",
+                    "title": "AWS Region",
+                    "description": "AWS region to deploy into",
+                    "default": "us-east-1",
+                    "enum": ["us-east-1", "us-east-2", "us-west-1", "us-west-2", "eu-west-1", "eu-central-1", "ap-southeast-1"],
+                    "group": "Essentials",
+                    "isEssential": True,
+                    "order": 2
+                },
+                # --- Load Balancer ---
+                "alb_name": {
+                    "type": "string",
+                    "title": "ALB Name",
+                    "description": "Unique name for the load balancer",
+                    "placeholder": "Auto-generated",
+                    "group": "Load Balancer",
+                    "isEssential": True,
+                    "order": 10
+                },
+                "internal": {
+                    "type": "boolean",
+                    "title": "Internal Load Balancer",
+                    "description": "Whether the load balancer is internal-only (not internet-facing)",
+                    "default": False,
+                    "group": "Load Balancer",
+                    "order": 11
+                },
+                "enable_https": {
+                    "type": "boolean",
+                    "title": "Enable HTTPS (SSL)",
+                    "description": "Enable secure listener on port 443",
+                    "default": False,
+                    "group": "Load Balancer",
+                    "isEssential": True,
+                    "order": 12
+                },
+                "certificate_arn": {
+                    "type": "string",
+                    "title": "ACM Certificate ARN",
+                    "description": "ARN of existing ACM certificate for HTTPS",
+                    "placeholder": "arn:aws:acm:...",
+                    "visibleIf": {"enable_https": True},
+                    "group": "Load Balancer",
+                    "order": 13
+                },
+                "target_port": {
+                    "type": "number",
+                    "title": "Backend Port",
+                    "description": "Port on the EC2 instances to route traffic to",
+                    "default": 80,
+                    "group": "Load Balancer",
+                    "order": 14
+                },
+                # --- Compute ---
+                "ec2_instance_count": {
+                    "type": "number",
+                    "title": "Instance Count",
+                    "description": "Number of backend EC2 instances",
+                    "default": 2,
+                    "minimum": 1,
+                    "maximum": 10,
+                    "group": "Compute",
+                    "isEssential": True,
+                    "order": 20
+                },
+                "ec2_instance_type": {
+                    "type": "string",
+                    "title": "Instance Type",
+                    "description": "EC2 instance size for backend targets",
+                    "default": "t3.micro",
+                    "enum": ["t3.micro", "t3.small", "t3.medium", "t3.large", "t3.xlarge"],
+                    "group": "Compute",
+                    "order": 21
+                },
+                # --- Networking ---
+                "vpc_mode": {
+                    "type": "string",
+                    "title": "VPC Mode",
+                    "description": "Create a new VPC or use an existing one",
+                    "default": "new",
+                    "enum": ["new", "existing"],
+                    "group": "Networking",
+                    "isEssential": True,
+                    "order": 30
+                },
+                "vpc_id": {
+                    "type": "string",
+                    "title": "Existing VPC ID",
+                    "description": "ID of an existing VPC to deploy into",
+                    "placeholder": "vpc-0abc123def456",
+                    "visibleIf": {"vpc_mode": "existing"},
+                    "group": "Networking",
+                    "order": 31
+                },
+                "vpc_cidr": {
+                    "type": "string",
+                    "title": "VPC CIDR Block",
+                    "description": "CIDR block for the new VPC (leave empty for auto-generated)",
+                    "placeholder": "10.0.0.0/16",
+                    "visibleIf": {"vpc_mode": "new"},
+                    "group": "Networking",
+                    "order": 32
+                },
+                # --- Security ---
+                "ssh_access_ip": {
+                    "type": "string",
+                    "title": "SSH Access IP",
+                    "description": "IP address allowed for SSH to backend instances",
+                    "placeholder": "203.0.113.0/32",
+                    "group": "Security",
+                    "order": 40
+                },
+                "allowed_ips": {
+                    "type": "string",
+                    "title": "Allowed IPs",
+                    "description": "Comma-separated IPs allowed to reach the ALB (default: 0.0.0.0/0)",
+                    "placeholder": "0.0.0.0/0",
+                    "group": "Security",
+                    "order": 41
+                },
+            },
+            "required": ["project_name"]
         }
