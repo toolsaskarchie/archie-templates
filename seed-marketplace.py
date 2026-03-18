@@ -183,20 +183,36 @@ def parse_template(template_path: Path) -> dict | None:
         config_fields = []
         for field_name, field_def in properties.items():
             if isinstance(field_def, dict):
-                config_fields.append({
+                # Skip separators and info-only fields
+                ftype = field_def.get("type", "string")
+                if ftype in ("separator", "info", "syntax"):
+                    continue
+
+                field = {
                     "name": field_name,
-                    "type": field_def.get("type", "string"),
-                    "label": field_def.get("title", field_name),
+                    "type": ftype,
+                    "label": field_def.get("title", field_name.replace("_", " ").title()),
                     "required": field_name in required_fields,
-                    "default": field_def.get("default"),
-                    "group": field_def.get("group", ""),
+                    "group": field_def.get("group", "General"),
                     "helpText": field_def.get("description", ""),
-                    "order": field_def.get("order", 999),
-                    "placeholder": field_def.get("placeholder", ""),
-                    "isEssential": field_def.get("isEssential", False),
-                })
-        # Sort by order
-        config_fields.sort(key=lambda f: f.get("order", 999))
+                }
+                # Only include default if meaningful
+                default = field_def.get("default")
+                if default is not None and default != "":
+                    # Convert boolean defaults properly
+                    if ftype == "boolean":
+                        field["default"] = bool(default)
+                    else:
+                        field["default"] = default
+
+                # Optional: options for select fields
+                if "options" in field_def:
+                    field["options"] = field_def["options"]
+
+                config_fields.append(field)
+
+        # Sort by order from source, then drop order from output
+        config_fields.sort(key=lambda f: properties.get(f["name"], {}).get("order", 999))
         item["config_fields"] = config_fields
     elif properties:
         item["config_fields"] = properties
