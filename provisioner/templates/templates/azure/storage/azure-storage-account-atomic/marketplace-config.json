@@ -1,9 +1,0 @@
-{
-  "use_cases": [
-    "Static asset hosting",
-    "Data lake storage",
-    "Backup and archival",
-    "Log aggregation"
-  ],
-  "estimated_cost": "$1 — $50/mo"
-}
