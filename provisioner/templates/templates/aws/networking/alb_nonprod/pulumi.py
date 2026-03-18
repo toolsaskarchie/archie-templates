@@ -21,7 +21,7 @@ from provisioner.templates.template_config import TemplateConfig
 from provisioner.utils.aws import ResourceNamer, get_standard_tags
 from provisioner.utils.aws.naming import sanitize_name
 from provisioner.templates.templates.aws.networking.alb_nonprod.config import ALBNonProdConfig
-from provisioner.templates.templates.aws.networking.vpc_nonprod.pulumi import VPCSimpleNonprodTemplate
+from provisioner.templates.templates.aws.networking.vpc_prod.pulumi import VPCProdTemplate
 from provisioner.templates.templates.aws.compute.ec2_nonprod.pulumi import EC2NonProdTemplate
 
 
@@ -92,9 +92,9 @@ class ALBNonProdTemplate(InfrastructureTemplate):
                 "project_name": f"{self.name}-vpc",
                 "cidr_block": self.cfg.vpc_cidr,
                 "environment": self.cfg.environment,
-                "ssh_access_ip": self.cfg.ssh_access_ip or ''
+                "ssh_access_ip": self.cfg.ssh_access_ip or '',
             }
-            self.vpc_template = VPCSimpleNonprodTemplate(name=f"{self.name}-vpc", config=vpc_config)
+            self.vpc_template = VPCProdTemplate(name=f"{self.name}-vpc", config=vpc_config)
             self.vpc_template.create_infrastructure()
             vpc_outputs = self.vpc_template.get_outputs()
             
