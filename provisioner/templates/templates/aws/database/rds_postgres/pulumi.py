@@ -288,7 +288,7 @@ class RDSPostgresTemplate(InfrastructureTemplate):
         """Pattern B Metadata source of truth"""
         return {
             "name": "aws-rds-postgres",
-            "title": "RDS PostgreSQL (Production)",
+            "title": "RDS PostgreSQL",
             "description": "Enterprise-ready PostgreSQL with Multi-AZ high availability, encryption, and automated backups.",
             "category": "database",
             "version": "1.3.0",
