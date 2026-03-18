@@ -1,7 +1,8 @@
 metadata:
   name: aws-rds-postgres-nonprod
   title: RDS PostgreSQL
-  description: Cost-optimized managed PostgreSQL database for development and staging with automated backups and VPC isolation.
+  description: Cost-optimized managed PostgreSQL database for development and staging
+    with automated backups and VPC isolation.
   category: database
   version: latest
   author: InnovativeApps
@@ -65,7 +66,8 @@ metadata:
   - title: Cost Optimization
     score: good
     score_color: '#f59e0b'
-    description: Cost-optimized defaults with burstable instances and right-sizing options
+    description: Cost-optimized defaults with burstable instances and right-sizing
+      options
     practices:
     - Burstable db.t3 instances for variable workloads
     - Reserved instance pricing available for predictable usage
@@ -199,7 +201,8 @@ resources:
     type: aws:ec2:Vpc
     name: vpc-{project}-{environment}-{region_short}-{network_num}
     always_created: true
-    description: Virtual Private Cloud with CIDR {config_custom_cidr_block}, DNS support enabled
+    description: Virtual Private Cloud with CIDR {config_custom_cidr_block}, DNS support
+      enabled
     smart_defaults:
       cidr_block: '{config_custom_cidr_block}'
       enable_dns_support: '{config_enable_dns_support}'
@@ -490,7 +493,8 @@ resources:
   vpce-ssmmessages-{project}-{environment}-{region_short}-if:
     type: aws:ec2:VpcEndpoint
     name: vpce-ssmmessages-{project}-{environment}-{region_short}-if
-    description: SSMMESSAGES Interface VPC Endpoint for private SSMMESSAGES service access
+    description: SSMMESSAGES Interface VPC Endpoint for private SSMMESSAGES service
+      access
     conditional:
       field: enable_ssm_endpoints
     smart_defaults:
@@ -505,7 +509,8 @@ resources:
   vpce-ec2messages-{project}-{environment}-{region_short}-if:
     type: aws:ec2:VpcEndpoint
     name: vpce-ec2messages-{project}-{environment}-{region_short}-if
-    description: EC2MESSAGES Interface VPC Endpoint for private EC2MESSAGES service access
+    description: EC2MESSAGES Interface VPC Endpoint for private EC2MESSAGES service
+      access
     conditional:
       field: enable_ssm_endpoints
     smart_defaults:
@@ -555,19 +560,8 @@ resources:
       tags:
         Name: '{flow_log_name}'
 configuration:
+  type: object
   properties:
-    resource_prefix:
-      type: string
-      title: Resource Prefix
-      description: Get resource name prefix
-      group: General Settings
-      order: 1
-    deletion_protection_enabled:
-      type: boolean
-      title: Deletion Protection Enabled
-      description: Deletion protection disabled for nonprod
-      group: General Settings
-      order: 2
     project_name:
       type: string
       title: Project Name
@@ -681,6 +675,108 @@ configuration:
       default: false
       group: Security
       order: 30
+    use_custom_cidr:
+      type: boolean
+      title: Use Custom CIDR
+      description: Specify a custom CIDR block instead of auto-generated
+      default: false
+      visibleIf:
+        vpc_mode: new
+      group: VPC Configuration
+      order: 50
+    custom_cidr_block:
+      type: string
+      title: Custom CIDR Block
+      description: Custom VPC CIDR block (e.g. 10.0.0.0/16)
+      placeholder: 10.0.0.0/16
+      visibleIf:
+        use_custom_cidr: true
+        vpc_mode: new
+      group: VPC Configuration
+      order: 51
+    enable_dns_support:
+      type: boolean
+      title: Enable DNS Support
+      description: Enable DNS resolution within the VPC
+      default: true
+      visibleIf:
+        vpc_mode: new
+      group: VPC Configuration
+      order: 52
+    enable_dns_hostnames:
+      type: boolean
+      title: Enable DNS Hostnames
+      description: Enable DNS hostnames for instances in the VPC
+      default: true
+      visibleIf:
+        vpc_mode: new
+      group: VPC Configuration
+      order: 53
+    ssh_access_ip:
+      type: string
+      title: SSH Access IP/CIDR
+      description: IP address or CIDR block allowed for SSH access
+      placeholder: 203.0.113.0/32
+      visibleIf:
+        vpc_mode: new
+      group: VPC Configuration
+      order: 54
+    enable_nat_gateway:
+      type: boolean
+      title: Enable NAT Gateway
+      description: Enable NAT gateway for private subnet internet access
+      default: true
+      cost_impact: $32/mo per gateway
+      visibleIf:
+        vpc_mode: new
+      group: VPC Configuration
+      order: 55
+    enable_ssh_access:
+      type: boolean
+      title: Enable SSH Security Group
+      description: Create a security group allowing SSH access
+      default: false
+      visibleIf:
+        vpc_mode: new
+      group: VPC Configuration
+      order: 56
+    enable_flow_logs:
+      type: boolean
+      title: Enable VPC Flow Logs
+      description: Enable VPC flow logs for network monitoring
+      default: true
+      visibleIf:
+        vpc_mode: new
+      group: VPC Configuration
+      order: 57
+    flow_log_retention:
+      type: number
+      title: Flow Logs Retention (days)
+      description: Number of days to retain VPC flow logs
+      default: 7
+      visibleIf:
+        vpc_mode: new
+      group: VPC Configuration
+      order: 58
+    enable_rds_endpoint:
+      type: boolean
+      title: Enable RDS VPC Endpoint
+      description: Create a VPC endpoint for RDS access
+      default: false
+      visibleIf:
+        vpc_mode: new
+      group: VPC Configuration
+      order: 59
+    enable_ssm_endpoints:
+      type: boolean
+      title: Enable SSM VPC Endpoints
+      description: Create VPC endpoints for AWS Systems Manager
+      default: true
+      cost_impact: $22/mo
+      visibleIf:
+        vpc_mode: new
+      group: VPC Configuration
+      order: 60
   required:
   - project_name
   - db_name
