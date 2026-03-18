@@ -245,7 +245,81 @@ class GCPStaticWebsiteTemplate(InfrastructureTemplate):
             "base_cost": "$0.00/month",
             "complexity": "low",
             "deployment_time": "2-3 minutes",
-            "marketplace_group": "WEBSITES"
+            "marketplace_group": "WEBSITES",
+            "pillars": [
+                {
+                    "title": "Operational Excellence",
+                    "score": "good",
+                    "score_color": "#f59e0b",
+                    "description": "Managed hosting with minimal operational overhead.",
+                    "practices": [
+                        "Infrastructure as Code with Pulumi for repeatable deployments",
+                        "Automated content upload from versioned source bucket",
+                        "Consistent resource labeling for tracking and organization",
+                        "Force-destroy enabled for clean teardown in non-production"
+                    ]
+                },
+                {
+                    "title": "Security",
+                    "score": "good",
+                    "score_color": "#f59e0b",
+                    "description": "Public-read access appropriate for static website hosting.",
+                    "practices": [
+                        "Uniform bucket-level access for simplified IAM management",
+                        "IAM binding scoped to objectViewer role only",
+                        "No server-side code execution surface to attack",
+                        "HTTPS access via Cloud Storage public URL"
+                    ]
+                },
+                {
+                    "title": "Reliability",
+                    "score": "excellent",
+                    "score_color": "#10b981",
+                    "description": "Cloud Storage provides highly durable and available hosting.",
+                    "practices": [
+                        "Google Cloud Storage 99.95% availability SLA",
+                        "11 nines durability for stored objects",
+                        "Automatic replication across zones within region",
+                        "Embedded fallback content if source bucket is unavailable"
+                    ]
+                },
+                {
+                    "title": "Performance Efficiency",
+                    "score": "good",
+                    "score_color": "#f59e0b",
+                    "description": "Serverless static hosting with global Google network.",
+                    "practices": [
+                        "Direct Cloud Storage serving with no compute overhead",
+                        "Google global network edge caching for low latency",
+                        "Lightweight HTML/CSS assets for fast page loads",
+                        "No cold start or server provisioning delays"
+                    ]
+                },
+                {
+                    "title": "Cost Optimization",
+                    "score": "excellent",
+                    "score_color": "#10b981",
+                    "description": "Near-zero cost for static website hosting on Cloud Storage.",
+                    "practices": [
+                        "No compute instances or server costs",
+                        "Pay only for storage and egress bandwidth",
+                        "Free-tier eligible for small sites",
+                        "No idle resources consuming budget"
+                    ]
+                },
+                {
+                    "title": "Sustainability",
+                    "score": "excellent",
+                    "score_color": "#10b981",
+                    "description": "Serverless architecture with minimal resource consumption.",
+                    "practices": [
+                        "No always-on compute instances",
+                        "Google Cloud carbon-neutral infrastructure",
+                        "Efficient object storage with no over-provisioning",
+                        "Minimal resource footprint for static content delivery"
+                    ]
+                }
+            ]
         }
     
     @classmethod

@@ -171,32 +171,109 @@ class RedisNonProdTemplate(InfrastructureTemplate):
         }
 
     @classmethod
-    def get_metadata(cls):
-        """Template metadata for marketplace registration"""
-        from provisioner.templates.base.template import TemplateMetadata, TemplateCategory
-        return TemplateMetadata(
-            name="aws-redis-nonprod",
-            title="Distributed Cache (Redis)",
-            description="Rapidly deploy a managed Redis cluster for development and testing using AWS ElastiCache. Features cost-optimized t3-family nodes, automated snapshot integration, and pre-configured security group isolation. Perfect for application caching and session management.",
-            category=TemplateCategory.DATABASE,
-            version="1.0.0",
-            author="InnovativeApps",
-            supported_regions=["us-east-1", "us-east-2", "us-west-2"],
-            is_listed_in_marketplace=True,
-            marketplace_group="aws-caching-group",
-            tags=["redis", "elasticache", "database", "cache", "nonprod"],
-            features=[
-                "High-Performance Managed Redis Engine",
-                "Cost-Optimized Burstable Node Types (t3 family)",
-                "Integrated Security Group with Redis Port isolation",
-                "Automated Backups & Maintenance Windows",
-                "Multi-AZ Support for testing HA failover",
-                "Intelligent Subnet Group placement for VPCs"
+    def get_metadata(cls) -> Dict[str, Any]:
+        """Pattern B Metadata source of truth"""
+        return {
+            "name": "aws-redis-nonprod",
+            "title": "ElastiCache Redis",
+            "description": "Managed Redis cluster for development and testing with cost-optimized nodes and automated snapshots.",
+            "category": "database",
+            "version": "1.0.0",
+            "author": "InnovativeApps",
+            "cloud": "aws",
+            "environment": "nonprod",
+            "base_cost": "$15/month",
+            "features": [
+                "High-performance managed Redis engine",
+                "Cost-optimized burstable node types (t3 family)",
+                "Integrated security group with Redis port isolation",
+                "Automated backups and maintenance windows",
+                "Multi-AZ support for testing HA failover"
             ],
-            estimated_cost="$12-35/month (depends on node type)",
-            complexity="medium",
-            deployment_time="5-10 minutes"
-        )
+            "tags": ["redis", "elasticache", "database", "cache", "nonprod"],
+            "deployment_time": "5-10 minutes",
+            "complexity": "intermediate",
+            "pillars": [
+                {
+                    "title": "Performance Efficiency",
+                    "score": "excellent",
+                    "score_color": "#10b981",
+                    "description": "In-memory data store delivering sub-millisecond latency for caching and session management",
+                    "practices": [
+                        "In-memory architecture delivers sub-millisecond read/write latency",
+                        "Configurable node types from cache.t3.micro to cache.r6g for workload matching",
+                        "Redis data structures (sorted sets, hashes) optimize application-level operations",
+                        "Multi-node clusters distribute load across cache nodes",
+                        "Dedicated subnet group ensures low-latency VPC placement"
+                    ]
+                },
+                {
+                    "title": "Security",
+                    "score": "good",
+                    "score_color": "#f59e0b",
+                    "description": "VPC isolation with dedicated security groups and encryption options",
+                    "practices": [
+                        "Dedicated security group restricts access to Redis port only",
+                        "VPC subnet group ensures cluster runs in private network",
+                        "Encryption at rest available with AWS-managed keys",
+                        "Encryption in transit available for client connections",
+                        "Configurable CIDR-based access control for ingress rules"
+                    ]
+                },
+                {
+                    "title": "Reliability",
+                    "score": "good",
+                    "score_color": "#f59e0b",
+                    "description": "Automated snapshots and optional Multi-AZ for high availability testing",
+                    "practices": [
+                        "Automated daily snapshots with configurable retention period",
+                        "Multi-AZ replication available for failover testing",
+                        "Automatic node replacement on hardware failure",
+                        "Configurable maintenance windows for controlled patching",
+                        "Snapshot-based restore for rapid recovery scenarios"
+                    ]
+                },
+                {
+                    "title": "Operational Excellence",
+                    "score": "good",
+                    "score_color": "#f59e0b",
+                    "description": "Managed service with automated maintenance and monitoring integration",
+                    "practices": [
+                        "Infrastructure as Code with Pulumi for repeatable deployments",
+                        "CloudWatch metrics for cache hit ratio, memory, and CPU monitoring",
+                        "Automated maintenance windows for engine patching",
+                        "Configurable snapshot windows for backup scheduling",
+                        "Standard tagging for resource identification and cost tracking"
+                    ]
+                },
+                {
+                    "title": "Cost Optimization",
+                    "score": "good",
+                    "score_color": "#f59e0b",
+                    "description": "Burstable node types and right-sizing options minimize nonprod costs",
+                    "practices": [
+                        "Burstable cache.t3 nodes for variable development workloads",
+                        "Single-node default eliminates replication costs for nonprod",
+                        "Reserved node pricing available for predictable usage",
+                        "Right-sizing from micro to xlarge based on cache requirements",
+                        "No storage costs beyond node memory allocation"
+                    ]
+                },
+                {
+                    "title": "Sustainability",
+                    "score": "good",
+                    "score_color": "#f59e0b",
+                    "description": "Efficient in-memory service with right-sized nodes and managed infrastructure",
+                    "practices": [
+                        "Graviton-based cache.r6g nodes available for energy efficiency",
+                        "Burstable instances match resource usage to actual demand",
+                        "In-memory architecture eliminates disk I/O overhead",
+                        "Managed service reduces idle infrastructure waste",
+                        "Regional deployment minimizes data transfer distances"
+                    ]
+                }
+            ]
+        }
 
     @classmethod
     def get_config_schema(cls) -> Dict[str, Any]:

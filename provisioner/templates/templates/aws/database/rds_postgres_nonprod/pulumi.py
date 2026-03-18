@@ -290,30 +290,102 @@ class RDSPostgresNonProdTemplate(InfrastructureTemplate):
         """Pattern B Metadata source of truth"""
         return {
             "name": "aws-rds-postgres-nonprod",
-            "title": "PostgreSQL Database",
-            "description": "Cost-optimized managed PostgreSQL deployment for development and staging.",
+            "title": "RDS PostgreSQL",
+            "description": "Cost-optimized managed PostgreSQL database for development and staging with automated backups and VPC isolation.",
             "category": "database",
             "version": "1.2.0",
             "author": "InnovativeApps",
             "cloud": "aws",
             "environment": "nonprod",
-            "base_cost": "$20/month",
+            "base_cost": "$15/month",
             "features": [
-                "GP3 Storage with Auto-Scaling",
-                "Secrets Manager Password Integration",
-                "Automated Backups",
-                "VPC Isolation",
-                "Performance Insights"
+                "GP3 storage with auto-scaling up to configurable limit",
+                "Secrets Manager password integration",
+                "Automated backups with configurable retention",
+                "Full VPC isolation with security group tiering",
+                "Optional Performance Insights for query analysis"
             ],
             "tags": ["rds", "postgres", "database", "nonprod"],
-            "deployment_time": "10-15 minutes",
-            "complexity": "medium",
+            "deployment_time": "8-12 minutes",
+            "complexity": "intermediate",
             "pillars": [
                 {
-                    "title": "Efficiency",
+                    "title": "Security",
                     "score": "excellent",
                     "score_color": "#10b981",
-                    "description": "GP3 and burstable instances minimize costs."
+                    "description": "Defense-in-depth with encryption, VPC isolation, and IAM authentication",
+                    "practices": [
+                        "Storage encryption at rest with AWS-managed keys",
+                        "VPC isolation with dedicated database security groups",
+                        "Password stored securely in AWS Secrets Manager",
+                        "Private subnet placement prevents public internet exposure",
+                        "IAM authentication support for credential-free access"
+                    ]
+                },
+                {
+                    "title": "Reliability",
+                    "score": "excellent",
+                    "score_color": "#10b981",
+                    "description": "Automated backups and recovery options ensure data durability",
+                    "practices": [
+                        "Multi-AZ deployment option for automatic failover",
+                        "Automated daily backups with configurable retention period",
+                        "Point-in-time recovery within the backup retention window",
+                        "Auto-scaling storage prevents out-of-space failures",
+                        "Automated minor version upgrades for stability patches"
+                    ]
+                },
+                {
+                    "title": "Operational Excellence",
+                    "score": "good",
+                    "score_color": "#f59e0b",
+                    "description": "Managed service with monitoring and automated maintenance",
+                    "practices": [
+                        "Infrastructure as Code with Pulumi for repeatable deployments",
+                        "CloudWatch metrics for CPU, memory, and I/O monitoring",
+                        "Parameter groups for engine-level tuning",
+                        "Automated maintenance windows for patching",
+                        "Performance Insights for query-level diagnostics"
+                    ]
+                },
+                {
+                    "title": "Performance Efficiency",
+                    "score": "good",
+                    "score_color": "#f59e0b",
+                    "description": "Right-sized instances with GP3 storage for consistent performance",
+                    "practices": [
+                        "GP3 storage provides baseline 3,000 IOPS at no extra cost",
+                        "Read replicas available for read-heavy workloads",
+                        "Configurable instance types for workload-specific sizing",
+                        "Auto-scaling storage eliminates manual capacity planning",
+                        "Performance Insights identifies slow queries and bottlenecks"
+                    ]
+                },
+                {
+                    "title": "Cost Optimization",
+                    "score": "good",
+                    "score_color": "#f59e0b",
+                    "description": "Cost-optimized defaults with burstable instances and right-sizing options",
+                    "practices": [
+                        "Burstable db.t3 instances for variable workloads",
+                        "Reserved instance pricing available for predictable usage",
+                        "Auto-scaling storage avoids over-provisioning",
+                        "Short backup retention reduces storage costs for nonprod",
+                        "Single-AZ default saves 50% vs Multi-AZ for dev/test"
+                    ]
+                },
+                {
+                    "title": "Sustainability",
+                    "score": "good",
+                    "score_color": "#f59e0b",
+                    "description": "Managed service with efficient resource utilization and right-sizing",
+                    "practices": [
+                        "Graviton-based instance types available for energy efficiency",
+                        "Auto-scaling storage reduces over-provisioned capacity",
+                        "Burstable instances match resource usage to actual demand",
+                        "Managed service eliminates idle infrastructure overhead",
+                        "Regional deployment minimizes data transfer distances"
+                    ]
                 }
             ]
         }

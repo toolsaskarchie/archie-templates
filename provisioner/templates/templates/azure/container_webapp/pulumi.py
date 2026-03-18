@@ -185,10 +185,85 @@ class AzureContainerWebAppTemplate(InfrastructureTemplate):
             "version": "1.1.0",
             "author": "InnovativeApps",
             "tags": ["azure", "app-service", "container", "docker", "webapp"],
-            "base_cost": "$0.00/month (Free Tier)",
+            "base_cost": "$15/month",
             "complexity": "low",
             "deployment_time": "5-7 minutes",
-            "marketplace_group": "WEBSITES"
+            "marketplace_group": "WEBSITES",
+            "pillars": [
+                {
+                    "title": "Operational Excellence",
+                    "score": "excellent",
+                    "score_color": "#10b981",
+                    "description": "Fully managed platform with automated container orchestration.",
+                    "practices": [
+                        "Infrastructure as Code with Pulumi for repeatable deployments",
+                        "Azure App Service manages OS patching and runtime updates",
+                        "Docker container packaging for consistent deployments",
+                        "Built-in deployment slots for zero-downtime updates",
+                        "Resource Group tagging for organization and tracking"
+                    ]
+                },
+                {
+                    "title": "Security",
+                    "score": "good",
+                    "score_color": "#f59e0b",
+                    "description": "HTTPS-only with managed platform security controls.",
+                    "practices": [
+                        "HTTPS-only enforcement on App Service",
+                        "Azure-managed TLS certificates for custom domains",
+                        "App Service sandbox isolation for container workloads",
+                        "Environment variables for secure configuration injection"
+                    ]
+                },
+                {
+                    "title": "Reliability",
+                    "score": "good",
+                    "score_color": "#f59e0b",
+                    "description": "Managed platform with built-in health monitoring.",
+                    "practices": [
+                        "Azure App Service 99.95% SLA for paid tiers",
+                        "Automatic container restart on failure",
+                        "Built-in health check and diagnostics",
+                        "Deployment slots enable rollback on failed releases"
+                    ]
+                },
+                {
+                    "title": "Performance Efficiency",
+                    "score": "good",
+                    "score_color": "#f59e0b",
+                    "description": "Lightweight nginx container with efficient resource usage.",
+                    "practices": [
+                        "Alpine-based nginx container minimizes resource overhead",
+                        "App Service Plan right-sizing from Free to Premium tiers",
+                        "Built-in auto-scaling for traffic spikes",
+                        "Azure global network for low-latency content delivery"
+                    ]
+                },
+                {
+                    "title": "Cost Optimization",
+                    "score": "good",
+                    "score_color": "#f59e0b",
+                    "description": "Scalable pricing from free tier to production workloads.",
+                    "practices": [
+                        "Free tier App Service Plan available for development",
+                        "Scale up or down based on actual workload requirements",
+                        "No separate container registry costs with Docker Hub images",
+                        "Shared infrastructure reduces per-app hosting costs"
+                    ]
+                },
+                {
+                    "title": "Sustainability",
+                    "score": "good",
+                    "score_color": "#f59e0b",
+                    "description": "Managed platform with efficient resource sharing.",
+                    "practices": [
+                        "Shared App Service infrastructure reduces per-app footprint",
+                        "Azure commitment to 100% renewable energy by 2025",
+                        "Container-based deployment avoids full VM overhead",
+                        "Auto-scaling prevents over-provisioning during low traffic"
+                    ]
+                }
+            ]
         }
     
     @classmethod

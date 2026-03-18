@@ -306,24 +306,104 @@ class AuroraNonProdTemplate(InfrastructureTemplate):
         """Pattern B Metadata source of truth"""
         return {
             "name": "aws-aurora-nonprod",
-            "title": "Aurora Database Cluster",
-            "description": "Cost-optimized managed Aurora PostgreSQL or MySQL-compatible database cluster designed for development and staging.",
+            "title": "Aurora PostgreSQL Cluster",
+            "description": "Cost-optimized Aurora PostgreSQL cluster for development and staging with serverless scaling and automated failover.",
             "category": "database",
             "version": "1.3.0",
             "author": "InnovativeApps",
             "cloud": "aws",
             "environment": "nonprod",
-            "base_cost": "$45/month",
+            "base_cost": "$30/month",
             "features": [
-                "Serverless v2 Scaling Support",
-                "Managed Aurora Cluster with automated failover",
-                "Optional Read Replicas for load distribution",
-                "Secure Identity: Automated password rotation via Secrets Manager",
-                "Automated Backups with 3-day retention for non-prod safety"
+                "Serverless v2 scaling support for variable workloads",
+                "Managed Aurora cluster with automated failover",
+                "Optional read replicas for load distribution",
+                "Automated password rotation via AWS Secrets Manager",
+                "Automated backups with configurable retention"
             ],
             "tags": ["aws", "database", "aurora", "postgresql", "mysql", "nonprod", "cost-optimized"],
             "deployment_time": "15-20 minutes",
-            "complexity": "medium"
+            "complexity": "advanced",
+            "pillars": [
+                {
+                    "title": "Security",
+                    "score": "excellent",
+                    "score_color": "#10b981",
+                    "description": "Enterprise-grade security with encryption, VPC isolation, and secrets management",
+                    "practices": [
+                        "Storage encryption at rest enabled by default",
+                        "VPC isolation with dedicated database-tier security groups",
+                        "Password stored and managed via AWS Secrets Manager",
+                        "Private subnet placement prevents public internet exposure",
+                        "SSL/TLS encryption for all client connections in transit"
+                    ]
+                },
+                {
+                    "title": "Reliability",
+                    "score": "excellent",
+                    "score_color": "#10b981",
+                    "description": "Aurora's distributed storage engine with automated failover and continuous backups",
+                    "practices": [
+                        "Aurora storage replicates data 6 ways across 3 AZs automatically",
+                        "Multi-AZ cluster option with automatic failover under 30 seconds",
+                        "Continuous backups to S3 with point-in-time recovery",
+                        "Global database support for cross-region disaster recovery",
+                        "Automated minor version upgrades for stability patches"
+                    ]
+                },
+                {
+                    "title": "Operational Excellence",
+                    "score": "good",
+                    "score_color": "#f59e0b",
+                    "description": "Fully managed cluster with monitoring and automated maintenance",
+                    "practices": [
+                        "Infrastructure as Code with Pulumi for repeatable deployments",
+                        "CloudWatch metrics for cluster and instance-level monitoring",
+                        "Optional Performance Insights for query-level diagnostics",
+                        "Automated maintenance windows for patching and upgrades",
+                        "Cluster parameter groups for engine-level tuning"
+                    ]
+                },
+                {
+                    "title": "Performance Efficiency",
+                    "score": "excellent",
+                    "score_color": "#10b981",
+                    "description": "Aurora's purpose-built storage engine delivers up to 5x PostgreSQL throughput",
+                    "practices": [
+                        "Aurora storage engine provides up to 5x throughput over standard PostgreSQL",
+                        "Serverless v2 scaling adjusts capacity in fine-grained increments",
+                        "Read replicas share the same storage volume with minimal lag",
+                        "Configurable instance types from db.t3 to db.r6g families",
+                        "Parallel query for complex analytical workloads"
+                    ]
+                },
+                {
+                    "title": "Cost Optimization",
+                    "score": "good",
+                    "score_color": "#f59e0b",
+                    "description": "Cost-optimized for nonprod with serverless scaling and right-sizing options",
+                    "practices": [
+                        "Serverless v2 scales to zero ACUs during idle periods",
+                        "Burstable db.t3 instances for variable development workloads",
+                        "Single-instance default reduces costs for nonprod environments",
+                        "Short backup retention minimizes storage costs",
+                        "Reserved instance pricing available for predictable usage"
+                    ]
+                },
+                {
+                    "title": "Sustainability",
+                    "score": "good",
+                    "score_color": "#f59e0b",
+                    "description": "Efficient managed service with serverless scaling and shared storage architecture",
+                    "practices": [
+                        "Serverless scaling matches resource consumption to actual demand",
+                        "Graviton-based db.r6g instances available for energy efficiency",
+                        "Shared storage volume eliminates per-replica storage duplication",
+                        "Managed service eliminates idle infrastructure overhead",
+                        "Regional deployment minimizes cross-region data transfer"
+                    ]
+                }
+            ]
         }
 
     @classmethod

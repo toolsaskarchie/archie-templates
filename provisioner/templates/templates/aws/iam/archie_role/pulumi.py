@@ -162,62 +162,111 @@ class ArchieRoleTemplate(InfrastructureTemplate):
         }
 
     @classmethod
-    def get_metadata(cls):
+    def get_metadata(cls) -> Dict[str, Any]:
         """Template metadata for marketplace registration"""
-        from provisioner.templates.base.template import TemplateMetadata, TemplateCategory
-        return TemplateMetadata(
-            name="aws-archie-role",
-            title="Archie Connection Role",
-            description="Secure cross-account IAM role that allows Archie to safely discover and manage infrastructure in your AWS account. Uses industry-standard STS External ID and restricted read-only permissions.",
-            category=TemplateCategory.SECURITY,
-            version="1.0.0",
-            author="InnovativeApps",
-            tags=["iam", "role", "security", "connection"],
-            features=[
-                "Secure Cross-Account Trust relationship",
-                "Principle of Least Privilege restricted policies",
-                "Mandatory External ID verification for security",
-                "No long-term credentials required",
-                "Automated policy lifecycle management"
-            ],
-            estimated_cost="$0.00/month",
-            complexity="intermediate",
-            deployment_time="1-2 minutes",
-            marketplace_group="SECURITY"
-        )
-
-    @classmethod
-    def get_config_schema(cls) -> Dict[str, Any]:
-        """Get configuration schema for the UI"""
-        return ArchieRoleConfig.get_config_schema()
-
-    @classmethod
-    def get_config_schema(cls) -> Dict[str, Any]:
-        """Get configuration schema for the UI"""
-        return ArchieRoleConfig.get_config_schema()
-
-    @classmethod
-    def get_metadata(cls):
-        """Get template metadata"""
-        from provisioner.templates.base.template import TemplateMetadata, TemplateCategory
-        return TemplateMetadata(
-            name="aws-archie-role",
-            title="Archie Cross-Account Role",
-            description="Secure, managed IAM role for connecting your AWS account to Archie. Implements the principle of least privilege using restricted read-only permissions and STS External ID verification. The industry-standard approach for cross-account infrastructure management.",
-            category=TemplateCategory.SECURITY,
-            version="1.0.0",
-            author="InnovativeApps",
-            tags=["iam", "role", "security", "connection", "managed"],
-            features=[
+        return {
+            "name": "aws-archie-role",
+            "title": "Archie Cross-Account Role",
+            "description": "Secure, managed IAM role for connecting your AWS account to Archie. Implements the principle of least privilege using restricted read-only permissions and STS External ID verification.",
+            "category": "security",
+            "version": "1.0.0",
+            "author": "InnovativeApps",
+            "cloud": "aws",
+            "environment": "all",
+            "base_cost": "$0.00/month",
+            "tags": ["iam", "role", "security", "connection", "managed"],
+            "features": [
                 "Secure Cross-Account Trust Policy",
                 "Mandatory STS External ID Verification",
                 "Restricted Read-Only permissions for discovery",
                 "Automated Customer Managed Policy creation",
-                "Managed via Pulumi Infrastructure-as-Code",
                 "No long-term credentials or access keys required"
             ],
-            estimated_cost="$0.00/month (IAM is free)",
-            complexity="intermediate",
-            deployment_time="1-2 minutes",
-            marketplace_group="aws-security-group"
-        )
+            "deployment_time": "1-2 minutes",
+            "complexity": "low",
+            "pillars": [
+                {
+                    "title": "Operational Excellence",
+                    "score": "excellent",
+                    "score_color": "#10b981",
+                    "description": "Fully automated IAM provisioning with infrastructure as code",
+                    "practices": [
+                        "Infrastructure as Code for repeatable role deployments",
+                        "Automated policy lifecycle management via Pulumi",
+                        "Standard tagging for governance and resource tracking",
+                        "Consistent naming conventions for cross-account roles",
+                        "One-click deployment eliminates manual IAM configuration"
+                    ]
+                },
+                {
+                    "title": "Security",
+                    "score": "excellent",
+                    "score_color": "#10b981",
+                    "description": "Industry-standard cross-account trust with least privilege",
+                    "practices": [
+                        "STS External ID prevents confused deputy attacks",
+                        "Restricted read-only permissions follow least privilege principle",
+                        "Cross-account trust eliminates long-term access key exposure",
+                        "Customer Managed Policy for granular permission control",
+                        "No root or admin-level permissions granted"
+                    ]
+                },
+                {
+                    "title": "Reliability",
+                    "score": "excellent",
+                    "score_color": "#10b981",
+                    "description": "IAM is a globally resilient AWS service with no downtime",
+                    "practices": [
+                        "IAM is a global service with built-in multi-region redundancy",
+                        "Role assumption is stateless and inherently reliable",
+                        "No infrastructure dependencies that could cause failures",
+                        "Automated deployment reduces human error in configuration",
+                        "External ID validation prevents unauthorized access attempts"
+                    ]
+                },
+                {
+                    "title": "Performance Efficiency",
+                    "score": "excellent",
+                    "score_color": "#10b981",
+                    "description": "Zero-overhead identity federation with instant provisioning",
+                    "practices": [
+                        "IAM role assumption adds no latency to API operations",
+                        "No compute resources required for credential management",
+                        "STS tokens are cached and reused efficiently",
+                        "Read-only scoped permissions minimize API call overhead",
+                        "Deploys in under 2 minutes with no warm-up required"
+                    ]
+                },
+                {
+                    "title": "Cost Optimization",
+                    "score": "excellent",
+                    "score_color": "#10b981",
+                    "description": "IAM roles and policies are completely free",
+                    "practices": [
+                        "IAM roles and policies incur zero AWS charges",
+                        "Eliminates need for bastion hosts or VPN infrastructure",
+                        "No compute or storage costs for credential management",
+                        "STS temporary credentials are free to generate",
+                        "Replaces costly long-term credential rotation processes"
+                    ]
+                },
+                {
+                    "title": "Sustainability",
+                    "score": "excellent",
+                    "score_color": "#10b981",
+                    "description": "Serverless identity service with minimal resource footprint",
+                    "practices": [
+                        "No compute resources provisioned or running",
+                        "Leverages shared AWS IAM infrastructure globally",
+                        "Zero energy consumption for credential storage",
+                        "Eliminates need for dedicated identity management servers",
+                        "Stateless role assumption minimizes resource utilization"
+                    ]
+                }
+            ]
+        }
+
+    @classmethod
+    def get_config_schema(cls) -> Dict[str, Any]:
+        """Get configuration schema for the UI"""
+        return ArchieRoleConfig.get_config_schema()

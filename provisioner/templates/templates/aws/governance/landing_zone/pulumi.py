@@ -637,3 +637,214 @@ class AWSLandingZoneTemplate(InfrastructureTemplate):
             pulumi.export(key, value)
 
         return outputs
+
+    def get_outputs(self) -> Dict[str, Any]:
+        """Get template outputs"""
+        if not self.organization:
+            return {}
+
+        outputs = {
+            "organization_id": self.organization.id,
+            "organization_arn": self.organization.arn,
+            "logging_bucket_name": self.logging_bucket.bucket if self.logging_bucket else None,
+            "logging_bucket_arn": self.logging_bucket.arn if self.logging_bucket else None,
+            "cloudtrail_arn": self.trail.arn if self.trail else None,
+        }
+
+        for ou_key, ou in self.org_units.items():
+            outputs[f"ou_{ou_key.replace('-', '_')}_id"] = ou.id
+
+        for scp_key, scp in self.scps.items():
+            outputs[f"scp_{scp_key.replace('-', '_')}_id"] = scp.id
+
+        if self.guardduty_detector:
+            outputs["guardduty_detector_id"] = self.guardduty_detector.id
+
+        return outputs
+
+    @classmethod
+    def get_metadata(cls) -> Dict[str, Any]:
+        """Template metadata for marketplace registration"""
+        return {
+            "name": "aws-landing-zone",
+            "title": "Multi-Account Landing Zone",
+            "description": "Enterprise-grade multi-account architecture based on AWS MALZ best practices. Provisions Organizations, SCPs, CloudTrail, Config, SecurityHub, GuardDuty, and IAM Identity Center.",
+            "category": "governance",
+            "version": "1.0.0",
+            "author": "InnovativeApps",
+            "cloud": "aws",
+            "environment": "foundation",
+            "base_cost": "$10/month",
+            "tags": ["organizations", "landing-zone", "governance", "security", "compliance"],
+            "features": [
+                "AWS Organizations with 6-OU MALZ hierarchy",
+                "Service Control Policies for guardrail enforcement",
+                "Organization-wide CloudTrail with centralized logging",
+                "GuardDuty threat detection across all accounts",
+                "IAM Identity Center with admin and read-only permission sets"
+            ],
+            "deployment_time": "10-15 minutes",
+            "complexity": "advanced",
+            "pillars": [
+                {
+                    "title": "Operational Excellence",
+                    "score": "excellent",
+                    "score_color": "#10b981",
+                    "description": "Centralized governance with automated multi-account management",
+                    "practices": [
+                        "AWS Organizations provides centralized multi-account management",
+                        "AWS Config Aggregator for organization-wide compliance visibility",
+                        "Automated OU structure follows AWS MALZ best practices",
+                        "Infrastructure as Code for repeatable landing zone deployments",
+                        "Budget alerts for proactive cost governance"
+                    ]
+                },
+                {
+                    "title": "Security",
+                    "score": "excellent",
+                    "score_color": "#10b981",
+                    "description": "Defense-in-depth with SCPs, GuardDuty, and SecurityHub",
+                    "practices": [
+                        "Service Control Policies enforce guardrails across all accounts",
+                        "GuardDuty provides organization-wide threat detection",
+                        "SecurityHub with CIS and AWS Foundational benchmarks",
+                        "CloudTrail logs all API activity with log file validation",
+                        "Encryption enforcement SCP prevents unencrypted S3 and EBS"
+                    ]
+                },
+                {
+                    "title": "Reliability",
+                    "score": "good",
+                    "score_color": "#f59e0b",
+                    "description": "Resilient governance services with centralized logging",
+                    "practices": [
+                        "Multi-region CloudTrail ensures no API calls are missed",
+                        "S3 logging bucket with versioning for data durability",
+                        "Guardrail protection SCP prevents disabling security services",
+                        "AWS-managed services provide built-in high availability",
+                        "Glacier lifecycle policies ensure long-term log retention"
+                    ]
+                },
+                {
+                    "title": "Performance Efficiency",
+                    "score": "good",
+                    "score_color": "#f59e0b",
+                    "description": "Lightweight governance layer with minimal overhead",
+                    "practices": [
+                        "Organizations and SCPs add zero latency to workloads",
+                        "Config Aggregator efficiently collects compliance data",
+                        "GuardDuty uses ML-based analysis with no agent overhead",
+                        "IAM Identity Center provides fast SSO access to accounts",
+                        "Region restriction SCP reduces blast radius and simplifies management"
+                    ]
+                },
+                {
+                    "title": "Cost Optimization",
+                    "score": "good",
+                    "score_color": "#f59e0b",
+                    "description": "Low-cost governance with built-in budget alerting",
+                    "practices": [
+                        "AWS Organizations is free for multi-account management",
+                        "Budget alerts notify at 80% and 100% spend thresholds",
+                        "Glacier lifecycle transitions reduce long-term log storage costs",
+                        "Region restriction prevents accidental resource sprawl",
+                        "IAM Identity Center is included at no additional charge"
+                    ]
+                },
+                {
+                    "title": "Sustainability",
+                    "score": "good",
+                    "score_color": "#f59e0b",
+                    "description": "Serverless governance services minimize resource consumption",
+                    "practices": [
+                        "All governance services are fully managed with no idle compute",
+                        "Region restriction reduces unnecessary infrastructure sprawl",
+                        "Centralized logging eliminates duplicate log storage across accounts",
+                        "S3 Glacier lifecycle minimizes active storage energy usage",
+                        "Shared AWS infrastructure for Organizations and Identity Center"
+                    ]
+                }
+            ]
+        }
+
+    @classmethod
+    def get_config_schema(cls) -> Dict[str, Any]:
+        """Get configuration schema for the UI"""
+        return {
+            "type": "object",
+            "properties": {
+                "project_name": {
+                    "type": "string",
+                    "default": "my-org",
+                    "title": "Organization Name",
+                    "description": "Name for the landing zone organization",
+                    "order": 1,
+                    "group": "Essentials"
+                },
+                "region": {
+                    "type": "string",
+                    "default": "us-east-1",
+                    "title": "Primary Region",
+                    "description": "AWS region for landing zone resources",
+                    "order": 2,
+                    "group": "Essentials"
+                },
+                "allowed_regions": {
+                    "type": "string",
+                    "default": "us-east-1,us-west-2,eu-west-1",
+                    "title": "Allowed Regions",
+                    "description": "Comma-separated list of regions workloads can deploy to",
+                    "order": 10,
+                    "group": "Governance"
+                },
+                "enable_securityhub": {
+                    "type": "boolean",
+                    "default": True,
+                    "title": "Enable SecurityHub",
+                    "description": "Enable AWS SecurityHub with CIS and Foundational benchmarks",
+                    "order": 20,
+                    "group": "Security"
+                },
+                "enable_guardduty": {
+                    "type": "boolean",
+                    "default": True,
+                    "title": "Enable GuardDuty",
+                    "description": "Enable GuardDuty threat detection across all accounts",
+                    "order": 21,
+                    "group": "Security"
+                },
+                "enable_sso": {
+                    "type": "boolean",
+                    "default": True,
+                    "title": "Enable IAM Identity Center",
+                    "description": "Configure SSO permission sets for admin and read-only access",
+                    "order": 22,
+                    "group": "Security"
+                },
+                "enable_budget_alerts": {
+                    "type": "boolean",
+                    "default": True,
+                    "title": "Enable Budget Alerts",
+                    "description": "Create monthly budget with 80% and 100% threshold alerts",
+                    "order": 30,
+                    "group": "Cost Management"
+                },
+                "monthly_budget": {
+                    "type": "number",
+                    "default": 10000,
+                    "title": "Monthly Budget (USD)",
+                    "description": "Monthly spending limit for budget alerts",
+                    "order": 31,
+                    "group": "Cost Management"
+                },
+                "log_retention_days": {
+                    "type": "number",
+                    "default": 365,
+                    "title": "Log Retention (Days)",
+                    "description": "Number of days to retain CloudTrail and Config logs",
+                    "order": 40,
+                    "group": "Logging"
+                }
+            },
+            "required": ["project_name", "region"]
+        }

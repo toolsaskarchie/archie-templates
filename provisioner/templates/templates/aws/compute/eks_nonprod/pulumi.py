@@ -246,14 +246,14 @@ set -ex
         """Pattern B Metadata source of truth"""
         return {
             "name": "aws-eks-nonprod",
-            "title": "Managed Kubernetes Cluster",
+            "title": "EKS Kubernetes Cluster",
             "description": "Enterprise Kubernetes environment with managed control plane and EC2 node groups.",
             "category": "compute",
             "version": "1.4.0",
             "author": "InnovativeApps",
             "cloud": "aws",
             "environment": "nonprod",
-            "base_cost": "$121/month",
+            "base_cost": "$75/month",
             "features": [
                 "AWS-Managed EKS Control Plane",
                 "Automated Node Group orchestration",
@@ -263,7 +263,87 @@ set -ex
             ],
             "tags": ["eks", "kubernetes", "containers", "compute", "nonprod"],
             "deployment_time": "15-20 minutes",
-            "complexity": "advanced"
+            "complexity": "advanced",
+            "pillars": [
+                {
+                    "title": "Operational Excellence",
+                    "score": "good",
+                    "score_color": "#f59e0b",
+                    "description": "Managed control plane with automated upgrades and observability",
+                    "practices": [
+                        "AWS-managed control plane eliminates manual upgrade burden",
+                        "Infrastructure as Code via Pulumi for repeatable cluster deployments",
+                        "Automated node bootstrapping with self-healing user data scripts",
+                        "Integrated IAM roles for auditability and access control",
+                        "Standard tagging for cost allocation and resource tracking"
+                    ]
+                },
+                {
+                    "title": "Security",
+                    "score": "excellent",
+                    "score_color": "#10b981",
+                    "description": "Enterprise-grade Kubernetes security with IAM integration",
+                    "practices": [
+                        "IAM OIDC provider for fine-grained pod-level service accounts",
+                        "Pod security standards enforced via Kubernetes admission control",
+                        "Dedicated IAM roles for cluster and node separation of duties",
+                        "Private subnet placement for worker nodes with public API endpoint",
+                        "EKS-managed security patches for control plane components"
+                    ]
+                },
+                {
+                    "title": "Reliability",
+                    "score": "excellent",
+                    "score_color": "#10b981",
+                    "description": "Highly available managed control plane across multiple AZs",
+                    "practices": [
+                        "Multi-AZ control plane managed by AWS with automatic failover",
+                        "Worker nodes distributed across availability zones for resilience",
+                        "Self-healing node bootstrap logic for automatic recovery",
+                        "Dedicated VPC with private subnets for network isolation",
+                        "EKS-managed etcd with automated backups and replication"
+                    ]
+                },
+                {
+                    "title": "Performance Efficiency",
+                    "score": "excellent",
+                    "score_color": "#10b981",
+                    "description": "Scalable compute with right-sized node groups",
+                    "practices": [
+                        "Horizontal Pod Autoscaler support for workload-driven scaling",
+                        "Cluster autoscaler integration for node-level elasticity",
+                        "Configurable instance types to match workload requirements",
+                        "Multi-AZ subnet distribution for balanced resource placement",
+                        "EBS-optimized nodes for consistent storage performance"
+                    ]
+                },
+                {
+                    "title": "Cost Optimization",
+                    "score": "good",
+                    "score_color": "#f59e0b",
+                    "description": "Cost-aware defaults with scaling flexibility",
+                    "practices": [
+                        "Fargate profile support for serverless pay-per-pod pricing",
+                        "Spot instance compatibility for non-critical workloads",
+                        "Right-sized node groups to avoid over-provisioning",
+                        "Shared VPC infrastructure reduces networking overhead",
+                        "Configurable desired capacity to match actual demand"
+                    ]
+                },
+                {
+                    "title": "Sustainability",
+                    "score": "good",
+                    "score_color": "#f59e0b",
+                    "description": "Efficient container orchestration reduces resource waste",
+                    "practices": [
+                        "Container bin-packing maximizes compute utilization per node",
+                        "Autoscaling eliminates idle capacity during low-demand periods",
+                        "Managed control plane shares AWS infrastructure efficiently",
+                        "Graviton-compatible instance types for better performance per watt",
+                        "Shared networking layer reduces duplicated infrastructure"
+                    ]
+                }
+            ]
         }
 
     @classmethod

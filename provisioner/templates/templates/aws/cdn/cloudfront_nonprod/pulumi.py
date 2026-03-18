@@ -189,29 +189,109 @@ class CloudFrontNonProdTemplate(InfrastructureTemplate):
         }
 
     @classmethod
-    def get_metadata(cls):
+    def get_metadata(cls) -> Dict[str, Any]:
         """Template metadata for marketplace registration"""
-        from provisioner.templates.base.template import TemplateMetadata, TemplateCategory
-        return TemplateMetadata(
-            name="aws-cloudfront-nonprod",
-            title="CloudFront CDN",
-            description="Accelerates static content delivery globally. Chains a high-availability S3 origin with Amazon CloudFront for edge-caching excellence, automatic HTTPS, and low-latency access for users worldwide.",
-            category=TemplateCategory.NETWORKING,
-            version="1.0.0",
-            author="InnovativeApps",
-            tags=["cloudfront", "cdn", "s3", "global", "networking"],
-            features=[
+        return {
+            "name": "aws-cloudfront-nonprod",
+            "title": "CloudFront CDN",
+            "description": "Accelerates static content delivery globally. Chains a high-availability S3 origin with Amazon CloudFront for edge-caching excellence, automatic HTTPS, and low-latency access for users worldwide.",
+            "category": "networking",
+            "version": "1.0.0",
+            "author": "InnovativeApps",
+            "cloud": "aws",
+            "environment": "nonprod",
+            "base_cost": "$5/month",
+            "tags": ["cloudfront", "cdn", "s3", "global", "networking"],
+            "features": [
                 "Global Content Delivery via CloudFront Edge",
                 "Automated SSL/TLS (HTTPS) for security",
                 "Edge Caching Policies for minimized origin load",
                 "Orchestrated S3 Origin Deployment",
                 "Built-in SPA routing support"
             ],
-            estimated_cost="$0 - $2.00/month (traffic dependent)",
-            complexity="intermediate",
-            deployment_time="5-10 minutes",
-            marketplace_group="WEBSITES"
-        )
+            "deployment_time": "5-10 minutes",
+            "complexity": "intermediate",
+            "pillars": [
+                {
+                    "title": "Operational Excellence",
+                    "score": "good",
+                    "score_color": "#f59e0b",
+                    "description": "Automated CDN provisioning with infrastructure as code",
+                    "practices": [
+                        "Infrastructure as Code via Pulumi for repeatable deployments",
+                        "Automated S3 origin provisioning via template composition",
+                        "Standard tagging for cost allocation and resource identification",
+                        "Configurable cache behaviors for operational flexibility",
+                        "Built-in error response handling for SPA routing"
+                    ]
+                },
+                {
+                    "title": "Security",
+                    "score": "excellent",
+                    "score_color": "#10b981",
+                    "description": "HTTPS enforcement with WAF-ready edge security",
+                    "practices": [
+                        "Automatic HTTPS redirect for all viewer connections",
+                        "TLS 1.2 minimum for origin connections",
+                        "Origin Access Identity prevents direct S3 bucket access",
+                        "WAF integration ready for application-layer protection",
+                        "Geo-restriction support for compliance requirements"
+                    ]
+                },
+                {
+                    "title": "Reliability",
+                    "score": "excellent",
+                    "score_color": "#10b981",
+                    "description": "AWS-managed global edge network with built-in redundancy",
+                    "practices": [
+                        "400+ global Points of Presence for high availability",
+                        "Automatic failover across edge locations",
+                        "S3 origin with 11 nines durability for content storage",
+                        "Custom error responses prevent broken user experiences",
+                        "Origin shield reduces load on origin during traffic spikes"
+                    ]
+                },
+                {
+                    "title": "Performance Efficiency",
+                    "score": "excellent",
+                    "score_color": "#10b981",
+                    "description": "Edge caching delivers sub-millisecond latency globally",
+                    "practices": [
+                        "Global edge caching reduces latency for end users worldwide",
+                        "Gzip compression enabled for reduced transfer sizes",
+                        "Configurable TTL policies for optimal cache hit ratios",
+                        "HTTP/2 support for multiplexed connections",
+                        "Price class configuration to target specific edge regions"
+                    ]
+                },
+                {
+                    "title": "Cost Optimization",
+                    "score": "good",
+                    "score_color": "#f59e0b",
+                    "description": "Pay-per-request pricing with price class controls",
+                    "practices": [
+                        "Pay-per-request model eliminates idle infrastructure costs",
+                        "Price class selection limits distribution to cost-effective regions",
+                        "S3 origin eliminates need for always-on compute servers",
+                        "Edge caching reduces origin transfer costs significantly",
+                        "Compression reduces data transfer volume and associated costs"
+                    ]
+                },
+                {
+                    "title": "Sustainability",
+                    "score": "good",
+                    "score_color": "#f59e0b",
+                    "description": "Serverless edge delivery minimizes resource consumption",
+                    "practices": [
+                        "Serverless architecture eliminates idle compute resources",
+                        "Edge caching reduces redundant data transfers from origin",
+                        "Shared AWS edge infrastructure for efficient resource usage",
+                        "Compression reduces bandwidth consumption per request",
+                        "S3 static hosting avoids over-provisioned web servers"
+                    ]
+                }
+            ]
+        }
 
     @classmethod
     def get_config_schema(cls) -> Dict[str, Any]:

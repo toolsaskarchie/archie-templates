@@ -96,62 +96,111 @@ class ArchieSecretTemplate(InfrastructureTemplate):
         }
 
     @classmethod
-    def get_metadata(cls):
+    def get_metadata(cls) -> Dict[str, Any]:
         """Template metadata for marketplace registration"""
-        from provisioner.templates.base.template import TemplateMetadata, TemplateCategory
-        return TemplateMetadata(
-            name="aws-archie-secret",
-            title="Archie Credentials Secret",
-            description="Securely stores AWS Access Keys in AWS Secrets Manager. Encrypted at rest and managed via Archie's standardized security patterns, providing a safe way to handle sensitive onboarding credentials.",
-            category=TemplateCategory.SECURITY,
-            version="1.0.0",
-            author="InnovativeApps",
-            tags=["iam", "secrets", "security", "aws", "onboarding"],
-            features=[
+        return {
+            "name": "aws-archie-secret",
+            "title": "Archie Credential Secret",
+            "description": "Securely stores AWS Access Keys in AWS Secrets Manager. Encrypted at rest and managed via Archie's standardized security patterns, providing a safe way to handle sensitive onboarding credentials.",
+            "category": "security",
+            "version": "1.0.0",
+            "author": "InnovativeApps",
+            "cloud": "aws",
+            "environment": "all",
+            "base_cost": "$0.40/month",
+            "tags": ["iam", "secrets", "security", "aws", "onboarding"],
+            "features": [
                 "Secure, encrypted credential storage",
                 "Automated Secrets Manager lifecycle management",
                 "Direct compatibility with Archie deployment engine",
                 "VPC-integrated access control potential",
                 "Compliance-ready secret management"
             ],
-            estimated_cost="$0.40/month (per AWS pricing)",
-            complexity="beginner",
-            deployment_time="1-2 minutes",
-            marketplace_group="SECURITY"
-        )
+            "deployment_time": "1-2 minutes",
+            "complexity": "low",
+            "pillars": [
+                {
+                    "title": "Operational Excellence",
+                    "score": "good",
+                    "score_color": "#f59e0b",
+                    "description": "Automated secret provisioning with infrastructure as code",
+                    "practices": [
+                        "Infrastructure as Code for repeatable secret deployments",
+                        "Automated secret version management via Pulumi",
+                        "Standard tagging for governance and resource tracking",
+                        "Consistent naming conventions for secret identification",
+                        "One-click deployment eliminates manual Secrets Manager setup"
+                    ]
+                },
+                {
+                    "title": "Security",
+                    "score": "excellent",
+                    "score_color": "#10b981",
+                    "description": "AWS-managed encryption with fine-grained access control",
+                    "practices": [
+                        "Secrets encrypted at rest using AWS KMS by default",
+                        "IAM policies control who can access the secret",
+                        "Secret versioning enables safe credential rotation",
+                        "No plaintext credentials stored in code or config files",
+                        "Audit trail via CloudTrail for all secret access events"
+                    ]
+                },
+                {
+                    "title": "Reliability",
+                    "score": "excellent",
+                    "score_color": "#10b981",
+                    "description": "Secrets Manager is a fully managed regional service",
+                    "practices": [
+                        "AWS-managed service with built-in high availability",
+                        "Automatic replication within the region for durability",
+                        "Secret versioning prevents accidental data loss",
+                        "No infrastructure to maintain or monitor for uptime",
+                        "Automated deployment reduces human error in configuration"
+                    ]
+                },
+                {
+                    "title": "Performance Efficiency",
+                    "score": "excellent",
+                    "score_color": "#10b981",
+                    "description": "Low-latency secret retrieval with caching support",
+                    "practices": [
+                        "Sub-millisecond secret retrieval via AWS SDK",
+                        "Client-side caching eliminates repeated API calls",
+                        "No compute resources required for secret management",
+                        "Deploys in under 2 minutes with no warm-up required",
+                        "Minimal API calls needed for credential access"
+                    ]
+                },
+                {
+                    "title": "Cost Optimization",
+                    "score": "excellent",
+                    "score_color": "#10b981",
+                    "description": "Minimal cost at $0.40/month per secret",
+                    "practices": [
+                        "Fixed $0.40/month per secret with no hidden charges",
+                        "No compute or networking costs for secret storage",
+                        "Eliminates need for self-managed credential vaults",
+                        "API calls included in free tier for typical usage",
+                        "Single secret stores multiple credential key-value pairs"
+                    ]
+                },
+                {
+                    "title": "Sustainability",
+                    "score": "excellent",
+                    "score_color": "#10b981",
+                    "description": "Fully managed service with zero idle resource consumption",
+                    "practices": [
+                        "No compute resources provisioned or running",
+                        "Leverages shared AWS Secrets Manager infrastructure",
+                        "Zero energy consumption beyond the managed service",
+                        "Eliminates need for dedicated credential management servers",
+                        "Serverless architecture minimizes environmental footprint"
+                    ]
+                }
+            ]
+        }
 
     @classmethod
     def get_config_schema(cls) -> Dict[str, Any]:
         """Get configuration schema for the UI"""
         return ArchieSecretConfig.get_config_schema()
-
-    @classmethod
-    def get_config_schema(cls) -> Dict[str, Any]:
-        """Get config schema for UI."""
-        return ArchieSecretConfig.get_config_schema()
-
-    @classmethod
-    def get_metadata(cls):
-        """Get template metadata."""
-        from provisioner.templates.base.template import TemplateMetadata, TemplateCategory
-        return TemplateMetadata(
-            name="aws-archie-secret",
-            title="Archie Onboarding Secret",
-            description="Securely store your AWS Access Keys in AWS Secrets Manager for Archie's 'Secret' deployment method. Ideal for users who want to manage their own sensitive credentials while giving Archie safe access.",
-            category=TemplateCategory.SECURITY,
-            version="1.0.0",
-            author="InnovativeApps",
-            features=[
-                "Secure credential storage (Secrets Manager)",
-                "Principle of Least Privilege support",
-                "Automated Secret ARN generation",
-                "Directly compatible with Archie Onboarding",
-                "Encrypted at rest by default"
-            ],
-            tags=["iam", "secrets", "security", "onboarding", "managed"],
-            estimated_cost="$0.40/month (AWS Secrets Manager cost)",
-            complexity="beginner",
-            deployment_time="1-2 minutes",
-            marketplace_group="aws-security-group",
-            is_listed_in_marketplace=True
-        )

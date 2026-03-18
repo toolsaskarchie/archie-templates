@@ -252,14 +252,14 @@ class EC2ProdTemplate(InfrastructureTemplate):
         """Get template metadata (SOURCE OF TRUTH for extractor)"""
         return {
             "name": "aws-ec2-prod",
-            "title": "Enterprise EC2 Instance",
+            "title": "EC2 Instance (Production)",
             "description": "Production-ready EC2 infrastructure featuring a high-availability VPC across 3 AZs, enhanced CloudWatch monitoring with automated alarms, and encrypted EBS storage. Optimized for mission-critical workloads.",
             "category": "compute",
             "version": "1.0.0",
             "author": "InnovativeApps",
             "cloud": "aws",
             "environment": "prod",
-            "base_cost": "$45-120/month",
+            "base_cost": "$25/month",
             "tags": ["ec2", "compute", "production", "high-availability", "secure"],
             "features": [
                 "Enterprise-Grade VPC (3 Availability Zones)",
@@ -274,7 +274,7 @@ class EC2ProdTemplate(InfrastructureTemplate):
                 "Mission-critical workloads"
             ],
             "deployment_time": "8-12 minutes",
-            "complexity": "advanced",
+            "complexity": "intermediate",
             "pillars": [
                 {
                     "title": "Operational Excellence",
@@ -285,7 +285,8 @@ class EC2ProdTemplate(InfrastructureTemplate):
                         "Infrastructure as Code for repeatable production deployments",
                         "Enhanced CloudWatch monitoring enabled by default",
                         "SSM integration for auditable instance management without SSH keys",
-                        "Automated tagging for cost allocation and resource tracking"
+                        "Automated tagging for cost allocation and resource tracking",
+                        "EBS-optimized instances for predictable storage performance"
                     ]
                 },
                 {
@@ -297,7 +298,8 @@ class EC2ProdTemplate(InfrastructureTemplate):
                         "EBS volumes encrypted by default to protect data at rest",
                         "Strict security groups restricting traffic to necessary ports",
                         "IAM instance profiles with least-privilege permissions",
-                        "Private subnet placement options for isolation from internet"
+                        "Private subnet placement options for isolation from internet",
+                        "Detailed CloudWatch monitoring for anomaly detection"
                     ]
                 },
                 {
@@ -308,7 +310,9 @@ class EC2ProdTemplate(InfrastructureTemplate):
                     "practices": [
                         "Multi-AZ networking foundation when using new VPC mode",
                         "EBS optimized instances for consistent storage performance",
-                        "Recovery alarms configured for instance status checks"
+                        "Recovery alarms configured for instance status checks",
+                        "Automated health monitoring via enhanced CloudWatch metrics",
+                        "GP3 volumes with consistent baseline IOPS for reliability"
                     ]
                 },
                 {
@@ -319,7 +323,9 @@ class EC2ProdTemplate(InfrastructureTemplate):
                     "practices": [
                         "Latest generation instance types (t3/m5) for best price/performance",
                         "GP3 volumes for predictable storage throughput",
-                        "EBS optimization enabled for dedicated storage bandwidth"
+                        "EBS optimization enabled for dedicated storage bandwidth",
+                        "Configurable instance sizing to match workload requirements",
+                        "VPC tier-based security groups for efficient network routing"
                     ]
                 },
                 {
@@ -328,9 +334,11 @@ class EC2ProdTemplate(InfrastructureTemplate):
                     "score_color": "#f59e0b",
                     "description": "Balances performance needs with cost controls",
                     "practices": [
-                        "Right-sized default instance types",
+                        "Right-sized default instance types to avoid over-provisioning",
                         "GP3 volumes offer better value than legacy GP2",
-                        "Detailed cost allocation tagging"
+                        "Detailed cost allocation tagging for chargeback visibility",
+                        "SSM eliminates need for bastion hosts saving compute costs",
+                        "Configurable VPC mode to reuse existing networking infrastructure"
                     ]
                 },
                 {
@@ -341,7 +349,9 @@ class EC2ProdTemplate(InfrastructureTemplate):
                     "practices": [
                         "Modern instance generations provide better performance per watt",
                         "Shared resources (NAT Gateway) reduce infrastructure overhead",
-                        "GP3 volumes eliminate need for over-provisioning for IOPS"
+                        "GP3 volumes eliminate need for over-provisioning for IOPS",
+                        "Right-sizing guidance reduces unnecessary compute waste",
+                        "Encrypted EBS with efficient storage types minimizes footprint"
                     ]
                 }
             ]

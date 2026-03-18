@@ -155,9 +155,84 @@ class GcpComputeNonProdTemplate(InfrastructureTemplate):
             "author": "InnovativeApps",
             "cloud": "gcp",
             "environment": "nonprod",
-            "base_cost": "$30/month",
+            "base_cost": "$10/month",
             "tags": ["gcp", "compute", "vm"],
             "complexity": "low",
             "deployment_time": "2-5 minutes",
-            "marketplace_group": "gcp-compute-group"
+            "marketplace_group": "gcp-compute-group",
+            "pillars": [
+                {
+                    "title": "Operational Excellence",
+                    "score": "good",
+                    "score_color": "#f59e0b",
+                    "description": "Automated VM provisioning with configurable parameters.",
+                    "practices": [
+                        "Infrastructure as Code with Pulumi for repeatable deployments",
+                        "Configurable machine type, disk size, and image selection",
+                        "Allow stopping for update enables live configuration changes",
+                        "Resource labeling for cost tracking and organization",
+                        "SSH command output for immediate instance access"
+                    ]
+                },
+                {
+                    "title": "Security",
+                    "score": "good",
+                    "score_color": "#f59e0b",
+                    "description": "Firewall rules scoped to specific protocols and sources.",
+                    "practices": [
+                        "SSH access restricted to configurable source IP ranges",
+                        "HTTP/HTTPS firewall rules are optional and independently toggled",
+                        "Network tags isolate firewall rules to specific instances",
+                        "Optional external IP assignment for private-only deployments"
+                    ]
+                },
+                {
+                    "title": "Reliability",
+                    "score": "good",
+                    "score_color": "#f59e0b",
+                    "description": "Single-instance deployment suitable for non-production workloads.",
+                    "practices": [
+                        "Configurable boot disk type for performance requirements",
+                        "Zone-level deployment within regional infrastructure",
+                        "Allow stopping for update prevents unexpected termination",
+                        "Configurable disk size for workload-appropriate storage"
+                    ]
+                },
+                {
+                    "title": "Performance Efficiency",
+                    "score": "good",
+                    "score_color": "#f59e0b",
+                    "description": "Right-sized compute with configurable machine types.",
+                    "practices": [
+                        "Configurable machine type from e2-micro to n2-standard-8",
+                        "SSD persistent disk option for I/O-intensive workloads",
+                        "Configurable boot disk size up to 500 GB",
+                        "Network interface with optional external IP for direct access"
+                    ]
+                },
+                {
+                    "title": "Cost Optimization",
+                    "score": "excellent",
+                    "score_color": "#10b981",
+                    "description": "Cost-effective compute for development and testing.",
+                    "practices": [
+                        "Default e2-micro instance type minimizes hourly costs",
+                        "Optional external IP avoids static IP charges when not needed",
+                        "Non-production sizing avoids over-provisioning",
+                        "Single instance deployment with no redundant resources"
+                    ]
+                },
+                {
+                    "title": "Sustainability",
+                    "score": "good",
+                    "score_color": "#f59e0b",
+                    "description": "Right-sized instance with minimal resource waste.",
+                    "practices": [
+                        "E2 machine series uses dynamic resource management",
+                        "Configurable sizing prevents over-provisioning",
+                        "Google Cloud carbon-neutral infrastructure",
+                        "Single instance avoids unnecessary redundancy for non-production"
+                    ]
+                }
+            ]
         }

@@ -262,7 +262,81 @@ class AzureStaticWebsiteTemplate(InfrastructureTemplate):
             "base_cost": "$0.00/month",
             "complexity": "low",
             "deployment_time": "3-5 minutes",
-            "marketplace_group": "WEBSITES"
+            "marketplace_group": "WEBSITES",
+            "pillars": [
+                {
+                    "title": "Operational Excellence",
+                    "score": "good",
+                    "score_color": "#f59e0b",
+                    "description": "Managed static hosting with automated content deployment.",
+                    "practices": [
+                        "Infrastructure as Code with Pulumi for repeatable deployments",
+                        "Automated content upload from versioned source bucket",
+                        "Resource Group tagging for organization and tracking",
+                        "Storage Account static website feature for zero-server hosting"
+                    ]
+                },
+                {
+                    "title": "Security",
+                    "score": "good",
+                    "score_color": "#f59e0b",
+                    "description": "HTTPS-only access with Azure Storage security defaults.",
+                    "practices": [
+                        "HTTPS traffic only enforced on Storage Account",
+                        "Azure Storage encryption at rest by default",
+                        "No server-side code execution surface to attack",
+                        "Resource Group isolation for access control"
+                    ]
+                },
+                {
+                    "title": "Reliability",
+                    "score": "excellent",
+                    "score_color": "#10b981",
+                    "description": "Azure Storage provides highly durable and available hosting.",
+                    "practices": [
+                        "Azure Storage 99.9% availability SLA for LRS",
+                        "Triple replication within the storage stamp",
+                        "Automatic failover within storage infrastructure",
+                        "Embedded fallback content if source bucket is unavailable"
+                    ]
+                },
+                {
+                    "title": "Performance Efficiency",
+                    "score": "good",
+                    "score_color": "#f59e0b",
+                    "description": "Serverless static hosting with Azure global infrastructure.",
+                    "practices": [
+                        "Direct blob serving with no compute overhead",
+                        "Azure global network for low-latency content delivery",
+                        "Lightweight HTML/CSS assets for fast page loads",
+                        "No cold start or server provisioning delays"
+                    ]
+                },
+                {
+                    "title": "Cost Optimization",
+                    "score": "excellent",
+                    "score_color": "#10b981",
+                    "description": "Near-zero cost for static website hosting on Azure Storage.",
+                    "practices": [
+                        "No compute instances or server costs",
+                        "Standard_LRS tier for lowest storage pricing",
+                        "Pay only for storage and egress bandwidth",
+                        "No idle resources consuming budget"
+                    ]
+                },
+                {
+                    "title": "Sustainability",
+                    "score": "excellent",
+                    "score_color": "#10b981",
+                    "description": "Serverless architecture with minimal resource consumption.",
+                    "practices": [
+                        "No always-on compute instances",
+                        "Azure commitment to 100% renewable energy by 2025",
+                        "Efficient object storage with no over-provisioning",
+                        "Minimal resource footprint for static content delivery"
+                    ]
+                }
+            ]
         }
 
     @classmethod

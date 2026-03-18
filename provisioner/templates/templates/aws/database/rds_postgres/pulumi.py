@@ -286,25 +286,104 @@ class RDSPostgresTemplate(InfrastructureTemplate):
     @classmethod
     def get_metadata(cls) -> Dict[str, Any]:
         """Pattern B Metadata source of truth"""
-        # In a real Pattern B app, this might be loaded from template.yaml
         return {
             "name": "aws-rds-postgres",
-            "title": "Enterprise PostgreSQL Database",
-            "description": "Enterprise-ready PostgreSQL deployment featuring high-availability Multi-AZ architecture.",
+            "title": "RDS PostgreSQL (Production)",
+            "description": "Enterprise-ready PostgreSQL with Multi-AZ high availability, encryption, and automated backups.",
             "category": "database",
             "version": "1.3.0",
             "author": "InnovativeApps",
             "cloud": "aws",
             "environment": "prod",
-            "base_cost": "$45/month",
+            "base_cost": "$50/month",
             "features": [
-                "High-Availability Multi-AZ Deployment",
-                "Auto-Scaling gp3 Storage with Encryption at Rest",
-                "Secure Password Management via AWS Secrets Manager",
-                "Full VPC Isolation with Managed Security Groups",
-                "Pre-configured CloudWatch Logs & Monitoring"
+                "High-availability Multi-AZ deployment with automatic failover",
+                "Auto-scaling GP3 storage with encryption at rest",
+                "Secure password management via AWS Secrets Manager",
+                "Full VPC isolation with managed security groups",
+                "Performance Insights and CloudWatch monitoring enabled"
             ],
             "tags": ["database", "postgresql", "rds", "production", "high-availability"],
+            "deployment_time": "15-20 minutes",
             "complexity": "advanced",
-            "deployment_time": "15-20 minutes"
+            "pillars": [
+                {
+                    "title": "Security",
+                    "score": "excellent",
+                    "score_color": "#10b981",
+                    "description": "Enterprise-grade security with encryption, VPC isolation, and IAM authentication",
+                    "practices": [
+                        "Storage encryption at rest with AWS KMS managed keys",
+                        "SSL/TLS encryption enforced for all connections in transit",
+                        "VPC isolation with dedicated database-tier security groups",
+                        "Password stored and rotated via AWS Secrets Manager",
+                        "IAM database authentication for credential-free access"
+                    ]
+                },
+                {
+                    "title": "Reliability",
+                    "score": "excellent",
+                    "score_color": "#10b981",
+                    "description": "Multi-AZ architecture with automated failover and comprehensive backup strategy",
+                    "practices": [
+                        "Multi-AZ deployment with synchronous standby replication",
+                        "Automated daily backups with 30-day retention period",
+                        "Point-in-time recovery to any second within retention window",
+                        "Deletion protection enabled to prevent accidental data loss",
+                        "Final snapshot on deletion ensures data preservation"
+                    ]
+                },
+                {
+                    "title": "Operational Excellence",
+                    "score": "good",
+                    "score_color": "#f59e0b",
+                    "description": "Fully managed service with comprehensive monitoring and automated maintenance",
+                    "practices": [
+                        "Infrastructure as Code with Pulumi for repeatable deployments",
+                        "Performance Insights enabled for query-level diagnostics",
+                        "CloudWatch metrics and alarms for proactive monitoring",
+                        "Automated minor version upgrades and maintenance windows",
+                        "Parameter groups for engine-level performance tuning"
+                    ]
+                },
+                {
+                    "title": "Performance Efficiency",
+                    "score": "good",
+                    "score_color": "#f59e0b",
+                    "description": "Production-grade instances with GP3 storage and read replica support",
+                    "practices": [
+                        "GP3 storage provides baseline 3,000 IOPS with burst capability",
+                        "Read replicas available for horizontal read scaling",
+                        "Configurable instance types from db.m5 to db.r6g families",
+                        "Auto-scaling storage eliminates manual capacity planning",
+                        "Performance Insights identifies slow queries and lock contention"
+                    ]
+                },
+                {
+                    "title": "Cost Optimization",
+                    "score": "good",
+                    "score_color": "#f59e0b",
+                    "description": "Right-sized production instances with reserved capacity options",
+                    "practices": [
+                        "Reserved instance pricing available for 1-year or 3-year terms",
+                        "Auto-scaling storage avoids over-provisioning disk capacity",
+                        "Right-sizing recommendations via Performance Insights",
+                        "GP3 storage eliminates IOPS provisioning costs for most workloads",
+                        "Copy-tags-to-snapshot enables cost allocation tracking"
+                    ]
+                },
+                {
+                    "title": "Sustainability",
+                    "score": "good",
+                    "score_color": "#f59e0b",
+                    "description": "Managed service with Graviton support and efficient resource utilization",
+                    "practices": [
+                        "Graviton-based db.r6g/db.m6g instances for energy efficiency",
+                        "Auto-scaling storage reduces over-provisioned capacity waste",
+                        "Managed service eliminates idle infrastructure overhead",
+                        "Multi-AZ uses synchronous replication minimizing data duplication",
+                        "Regional deployment reduces cross-region data transfer"
+                    ]
+                }
+            ]
         }
