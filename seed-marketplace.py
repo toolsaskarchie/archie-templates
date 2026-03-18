@@ -106,35 +106,112 @@ def parse_template(template_path: Path) -> dict | None:
         "pillars": meta.get("pillars", []),
         "action_name": action_name,
         "template_type": "standard",
-        "tier": "standard",
+        "tier": "standard" if meta.get("tier", "standard") in ("standard", "template") else meta.get("tier", "standard"),
         "scope": "standard",
         "is_listed": True,
+        "environment": meta.get("environment", "NONPROD"),
+        "estimated_cost": meta.get("base_cost", meta.get("estimated_cost", "")),
         "updated_at": datetime.now(timezone.utc).isoformat(),
     }
 
-    # Resources section — convert dict to list format the API expects
+    # Resources section — convert to UI format: [{name, type, description, category, always_created}]
+    RESOURCE_CATEGORY_MAP = {
+        "Vpc": "Networking", "Subnet": "Networking", "InternetGateway": "Networking",
+        "NatGateway": "Networking", "RouteTable": "Networking", "Route": "Networking",
+        "RouteTableAssociation": "Networking", "Eip": "Networking", "VpcEndpoint": "Networking",
+        "SecurityGroup": "Security", "SecurityGroupRule": "Security", "NetworkAcl": "Security",
+        "Instance": "Compute", "LaunchTemplate": "Compute",
+        "Role": "IAM", "Policy": "IAM", "InstanceProfile": "IAM", "RolePolicyAttachment": "IAM",
+        "Cluster": "Compute", "NodeGroup": "Compute",
+        "Bucket": "Storage", "BucketPolicy": "Storage", "BucketObject": "Storage",
+        "BucketPublicAccessBlock": "Storage", "BucketWebsiteConfigurationV2": "Storage",
+        "BucketLifecycleConfigurationV2": "Storage", "BucketServerSideEncryptionConfigurationV2": "Storage",
+        "BucketVersioningV2": "Storage", "BucketV2": "Storage",
+        "SubnetGroup": "Database", "DBSubnetGroup": "Database",
+        "FlowLog": "Observability", "Trail": "Observability",
+        "Table": "Database", "CacheCluster": "Database", "ReplicationGroup": "Database",
+        "Distribution": "CDN", "LoadBalancer": "Load Balancing",
+        "TargetGroup": "Load Balancing", "Listener": "Load Balancing",
+        "TargetGroupAttachment": "Load Balancing",
+        "Secret": "Security", "SecretVersion": "Security",
+        "StorageAccount": "Storage", "StorageAccountStaticWebsite": "Storage", "Blob": "Storage",
+        "ResourceGroup": "Management", "Network": "Networking", "Subnetwork": "Networking",
+        "Router": "Networking", "RouterNat": "Networking", "Firewall": "Security",
+        "Organization": "Governance", "OrganizationalUnit": "Governance",
+        "ConfigurationAggregator": "Governance", "Account": "Security",
+        "Detector": "Security", "Budget": "Cost Management",
+        "PermissionSet": "IAM", "ManagedPolicyAttachment": "IAM",
+    }
+
+    def get_resource_category(resource_type):
+        # Extract the resource class name from type like "aws:ec2:Instance"
+        parts = resource_type.split(":")
+        if len(parts) >= 3:
+            return RESOURCE_CATEGORY_MAP.get(parts[-1], "Infrastructure")
+        return "Infrastructure"
+
+    def clean_resource_name(name):
+        # Clean up template variable names for display
+        name = name.replace("{namer_", "").replace("}", "").replace("{", "")
+        # Truncate overly long names
+        if len(name) > 50:
+            name = name[:47] + "..."
+        return name
+
     resources = data.get("resources")
     if resources and isinstance(resources, dict):
         resource_list = []
         for res_name, res_def in resources.items():
             if isinstance(res_def, dict):
-                resource_list.append({"name": res_name, **res_def})
+                res_type = res_def.get("type", "")
+                resource_list.append({
+                    "name": clean_resource_name(res_name),
+                    "type": res_type,
+                    "description": res_def.get("description", ""),
+                    "always_created": res_def.get("always_created", True),
+                    "category": res_def.get("category") or get_resource_category(res_type),
+                })
         item["resources"] = resource_list
     elif resources:
         item["resources"] = resources
 
-    # Configuration / config_fields — convert dict to list format the API expects
+    # Config fields — convert to UI format: [{name, type, label, required, default, group, helpText}]
     config = data.get("configuration", {})
     properties = config.get("properties") if config else None
+    required_fields = config.get("required", []) if config else []
     if properties and isinstance(properties, dict):
         config_fields = []
         for field_name, field_def in properties.items():
             if isinstance(field_def, dict):
-                field = {"name": field_name, **field_def}
-                config_fields.append(field)
+                config_fields.append({
+                    "name": field_name,
+                    "type": field_def.get("type", "string"),
+                    "label": field_def.get("title", field_name),
+                    "required": field_name in required_fields,
+                    "default": field_def.get("default"),
+                    "group": field_def.get("group", ""),
+                    "helpText": field_def.get("description", ""),
+                    "order": field_def.get("order", 999),
+                    "placeholder": field_def.get("placeholder", ""),
+                    "isEssential": field_def.get("isEssential", False),
+                })
+        # Sort by order
+        config_fields.sort(key=lambda f: f.get("order", 999))
         item["config_fields"] = config_fields
     elif properties:
         item["config_fields"] = properties
+
+    # Pillars — ensure each has description (UI needs {title, description})
+    pillars = item.get("pillars", [])
+    if isinstance(pillars, list):
+        for p in pillars:
+            if isinstance(p, dict) and "description" not in p:
+                # Generate description from practices if available
+                practices = p.get("practices", [])
+                if practices:
+                    p["description"] = practices[0] if isinstance(practices[0], str) else ""
+                else:
+                    p["description"] = ""
 
     # Outputs
     outputs = data.get("outputs")
