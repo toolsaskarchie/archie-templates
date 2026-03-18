@@ -158,8 +158,8 @@ class AuroraNonProdTemplate(InfrastructureTemplate):
                     "protocol": "-1",
                     "from_port": 0,
                     "to_port": 0,
-                    "cidr_blocks": ["0.0.0.0/0"],
-                    "description": "Allow all outbound traffic"
+                    "cidr_blocks": ["10.0.0.0/8"],
+                    "description": "Allow outbound traffic to VPC range"
                 }],
                 tags={**tags, "Name": sg_name}
             )

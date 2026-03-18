@@ -28,7 +28,7 @@ class GcpComputeNonProdConfig:
     assign_external_ip: bool = True
     
     # Firewall settings
-    allowed_ssh_sources: List[str] = field(default_factory=lambda: ["0.0.0.0/0"])
+    allowed_ssh_sources: List[str] = field(default_factory=lambda: ["1.2.3.4/32"])
     allowed_http_sources: List[str] = field(default_factory=lambda: ["0.0.0.0/0"])
     enable_http: bool = True
     enable_https: bool = False
