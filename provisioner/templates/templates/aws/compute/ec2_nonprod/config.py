@@ -621,6 +621,108 @@ class EC2NonProdConfig:
                     "group": "Advanced",
                     "order": 40
                 },
+                # --- VPC Configuration (when vpc_mode=new) ---
+                "use_custom_cidr": {
+                    "type": "boolean",
+                    "title": "Use Custom CIDR",
+                    "description": "Specify a custom CIDR block instead of auto-generated",
+                    "default": False,
+                    "visibleIf": {"vpc_mode": "new"},
+                    "group": "VPC Configuration",
+                    "order": 50
+                },
+                "custom_cidr_block": {
+                    "type": "string",
+                    "title": "Custom CIDR Block",
+                    "description": "Custom VPC CIDR block (e.g. 10.0.0.0/16)",
+                    "placeholder": "10.0.0.0/16",
+                    "visibleIf": {"use_custom_cidr": True, "vpc_mode": "new"},
+                    "group": "VPC Configuration",
+                    "order": 51
+                },
+                "enable_dns_support": {
+                    "type": "boolean",
+                    "title": "Enable DNS Support",
+                    "description": "Enable DNS resolution within the VPC",
+                    "default": True,
+                    "visibleIf": {"vpc_mode": "new"},
+                    "group": "VPC Configuration",
+                    "order": 52
+                },
+                "enable_dns_hostnames": {
+                    "type": "boolean",
+                    "title": "Enable DNS Hostnames",
+                    "description": "Enable DNS hostnames for instances in the VPC",
+                    "default": True,
+                    "visibleIf": {"vpc_mode": "new"},
+                    "group": "VPC Configuration",
+                    "order": 53
+                },
+                "ssh_access_ip_vpc": {
+                    "type": "string",
+                    "title": "SSH Access IP/CIDR",
+                    "description": "IP address or CIDR block allowed for SSH access",
+                    "placeholder": "203.0.113.0/32",
+                    "visibleIf": {"vpc_mode": "new"},
+                    "group": "VPC Configuration",
+                    "order": 54
+                },
+                "enable_nat_gateway": {
+                    "type": "boolean",
+                    "title": "Enable NAT Gateway",
+                    "description": "Enable NAT gateway for private subnet internet access",
+                    "default": True,
+                    "cost_impact": "$32/mo per gateway",
+                    "visibleIf": {"vpc_mode": "new"},
+                    "group": "VPC Configuration",
+                    "order": 55
+                },
+                "enable_ssh_access_vpc": {
+                    "type": "boolean",
+                    "title": "Enable SSH Security Group",
+                    "description": "Create a security group allowing SSH access",
+                    "default": False,
+                    "visibleIf": {"vpc_mode": "new"},
+                    "group": "VPC Configuration",
+                    "order": 56
+                },
+                "enable_flow_logs": {
+                    "type": "boolean",
+                    "title": "Enable VPC Flow Logs",
+                    "description": "Enable VPC flow logs for network monitoring",
+                    "default": True,
+                    "visibleIf": {"vpc_mode": "new"},
+                    "group": "VPC Configuration",
+                    "order": 57
+                },
+                "flow_log_retention": {
+                    "type": "number",
+                    "title": "Flow Logs Retention (days)",
+                    "description": "Number of days to retain VPC flow logs",
+                    "default": 7,
+                    "visibleIf": {"vpc_mode": "new"},
+                    "group": "VPC Configuration",
+                    "order": 58
+                },
+                "enable_rds_endpoint": {
+                    "type": "boolean",
+                    "title": "Enable RDS VPC Endpoint",
+                    "description": "Create a VPC endpoint for RDS access",
+                    "default": False,
+                    "visibleIf": {"vpc_mode": "new"},
+                    "group": "VPC Configuration",
+                    "order": 59
+                },
+                "enable_ssm_endpoints": {
+                    "type": "boolean",
+                    "title": "Enable SSM VPC Endpoints",
+                    "description": "Create VPC endpoints for AWS Systems Manager",
+                    "default": True,
+                    "cost_impact": "$22/mo",
+                    "visibleIf": {"vpc_mode": "new"},
+                    "group": "VPC Configuration",
+                    "order": 60
+                },
             },
             "required": ["project_name"]
         }
