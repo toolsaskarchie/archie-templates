@@ -47,7 +47,7 @@ class ALBNonProdTemplate(InfrastructureTemplate):
         self.cfg = ALBNonProdConfig(raw_config)
         
         # Sub-templates
-        self.vpc_template: Optional[VPCSimpleNonprodTemplate] = None
+        self.vpc_template: Optional[VPCProdTemplate] = None
         self.ec2_templates: List[EC2NonProdTemplate] = []
         
         # Resources (Pattern B)

@@ -31,7 +31,7 @@ from provisioner.templates.atomic_factory import PulumiAtomicFactory as factory
 from provisioner.utils.aws import ResourceNamer, get_standard_tags
 from provisioner.utils.aws.cidr_utils import generate_random_vpc_cidr
 from provisioner.templates.templates.aws.database.rds_postgres_nonprod.config import RDSPostgresNonProdConfig
-from provisioner.templates.templates.aws.networking.vpc_nonprod.pulumi import VPCSimpleNonprodTemplate
+from provisioner.templates.templates.aws.networking.vpc_prod.pulumi import VPCProdTemplate
 
 
 @template_registry("aws-rds-postgres-nonprod")
@@ -63,7 +63,7 @@ class RDSPostgresNonProdTemplate(InfrastructureTemplate):
         self.cfg = RDSPostgresNonProdConfig(raw_config)
 
         # Layer 4 sub-templates
-        self.vpc_template: Optional[VPCSimpleNonprodTemplate] = None
+        self.vpc_template: Optional[VPCProdTemplate] = None
         
         # Resources (Pattern B)
         self.db_instance = None
@@ -118,7 +118,7 @@ class RDSPostgresNonProdTemplate(InfrastructureTemplate):
                 "az_1": f"{self.cfg.region}a"
             }
             
-            self.vpc_template = VPCSimpleNonprodTemplate(
+            self.vpc_template = VPCProdTemplate(
                 name=f"{self.name}-vpc",
                 config=vpc_config
             )

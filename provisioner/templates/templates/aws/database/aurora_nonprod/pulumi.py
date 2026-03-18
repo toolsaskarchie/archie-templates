@@ -31,7 +31,7 @@ from provisioner.templates.template_config import TemplateConfig
 from provisioner.utils.aws import ResourceNamer, get_standard_tags
 from provisioner.utils.aws.cidr_utils import generate_random_vpc_cidr
 from provisioner.templates.templates.aws.database.aurora_nonprod.config import AuroraNonProdConfig
-from provisioner.templates.templates.aws.networking.vpc_nonprod.pulumi import VPCSimpleNonprodTemplate
+from provisioner.templates.templates.aws.networking.vpc_prod.pulumi import VPCProdTemplate
 
 
 @template_registry("aws-aurora-nonprod")
@@ -65,7 +65,7 @@ class AuroraNonProdTemplate(InfrastructureTemplate):
         self.cfg = AuroraNonProdConfig(raw_config)
 
         # Sub-templates
-        self.vpc_template: Optional[VPCSimpleNonprodTemplate] = None
+        self.vpc_template: Optional[VPCProdTemplate] = None
         
         # Resources (Pattern B)
         self.cluster = None
@@ -120,7 +120,7 @@ class AuroraNonProdTemplate(InfrastructureTemplate):
                 "ssh_access_ip": self.cfg.ssh_access_ip or ''
             }
             
-            self.vpc_template = VPCSimpleNonprodTemplate(
+            self.vpc_template = VPCProdTemplate(
                 name=f"{self.name}-vpc",
                 config=vpc_config
             )

@@ -104,7 +104,7 @@ class AuroraNonProdConfig(BaseModel):
     @staticmethod
     def get_config_schema() -> Dict[str, Any]:
         """Get JSON schema for UI configuration."""
-        from provisioner.templates.templates.aws.networking.vpc_nonprod.pulumi import VPCSimpleNonprodTemplate
+        from provisioner.templates.templates.aws.networking.vpc_prod.pulumi import VPCProdTemplate
         from provisioner.templates.shared.aws_schema import (
             get_database_selection_schema,
             get_security_connectivity_schema,
@@ -112,7 +112,7 @@ class AuroraNonProdConfig(BaseModel):
         )
         
         # Pull base VPC Non-Prod schema
-        vpc_schema = VPCSimpleNonprodTemplate.get_config_schema()
+        vpc_schema = VPCProdTemplate.get_config_schema()
         
         # Merge logic: Aurora specific fields + VPC base
         properties = {

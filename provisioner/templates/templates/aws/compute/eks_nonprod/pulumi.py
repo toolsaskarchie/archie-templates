@@ -19,7 +19,7 @@ from provisioner.templates.atomic_factory import PulumiAtomicFactory as factory
 from provisioner.templates.template_config import TemplateConfig
 from provisioner.utils.aws import ResourceNamer, get_standard_tags
 from provisioner.templates.templates.aws.compute.eks_nonprod.config import EKSNonProdConfig
-from provisioner.templates.templates.aws.networking.vpc_nonprod.pulumi import VPCSimpleNonprodTemplate
+from provisioner.templates.templates.aws.networking.vpc_prod.pulumi import VPCProdTemplate
 from provisioner.templates.templates.aws.compute.ec2_nonprod.pulumi import EC2NonProdTemplate
 
 
@@ -43,7 +43,7 @@ class EKSNonProdTemplate(InfrastructureTemplate):
         self.cfg = EKSNonProdConfig(raw_config)
         
         # Sub-templates
-        self.vpc_template: Optional[VPCSimpleNonprodTemplate] = None
+        self.vpc_template: Optional[VPCProdTemplate] = None
         self.ec2_templates: List[EC2NonProdTemplate] = []
         
         # Resources (Pattern B)
@@ -87,7 +87,7 @@ class EKSNonProdTemplate(InfrastructureTemplate):
                 "environment": self.cfg.environment,
                 "ssh_access_ip": self.cfg.ssh_access_ip or ''
             }
-            self.vpc_template = VPCSimpleNonprodTemplate(name=f"{self.name}-vpc", config=vpc_config)
+            self.vpc_template = VPCProdTemplate(name=f"{self.name}-vpc", config=vpc_config)
             self.vpc_template.create_infrastructure()
             vpc_outputs = self.vpc_template.get_outputs()
             
