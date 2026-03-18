@@ -281,14 +281,28 @@ class RedisNonProdTemplate(InfrastructureTemplate):
         schema = {
             "type": "object",
             "required": ["project_name", "cluster_name"],
-            "properties": {}
+            "properties": {
+                "project_name": {
+                    "type": "string", "title": "Project Name",
+                    "description": "Unique name for this deployment",
+                    "group": "Essentials", "isEssential": True, "order": 1,
+                },
+                "region": {
+                    "type": "string", "title": "AWS Region", "default": "us-east-1",
+                    "group": "Essentials", "isEssential": True, "order": 2,
+                },
+                "vpc_id": {
+                    "type": "string", "title": "VPC ID",
+                    "description": "VPC for the Redis cluster",
+                    "group": "Networking", "order": 10,
+                },
+                "subnet_ids": {
+                    "type": "array", "title": "Subnet IDs",
+                    "description": "Subnets for the ElastiCache subnet group",
+                    "group": "Networking", "order": 11,
+                },
+            }
         }
-        
-        # Add Project/Env fields
-        schema["properties"].update(get_project_env_schema())
-        
-        # Add VPC fields
-        schema["properties"].update(get_vpc_selection_schema())
         
         # Add Template specific fields
         schema["properties"].update({
