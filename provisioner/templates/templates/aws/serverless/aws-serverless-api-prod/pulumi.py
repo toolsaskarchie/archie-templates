@@ -89,16 +89,30 @@ class ServerlessApiProdTemplate(InfrastructureTemplate):
             server_side_encryption={"enabled": True},
             tags=tags)
 
+        # Pulumi exports
+        if self.api:
+            pulumi.export("api_endpoint", self.api.api_endpoint)
+            pulumi.export("api_id", self.api.id)
+        if self.fn:
+            pulumi.export("lambda_arn", self.fn.arn)
+            pulumi.export("function_name", self.fn.name)
+        if self.table:
+            pulumi.export("table_name", self.table.name)
+            pulumi.export("table_arn", self.table.arn)
+
         return self.get_outputs()
 
     def get_outputs(self) -> Dict[str, Any]:
         outputs = {}
         if self.api:
             outputs["api_endpoint"] = self.api.api_endpoint
+            outputs["api_id"] = self.api.id
         if self.fn:
+            outputs["lambda_arn"] = self.fn.arn
             outputs["function_name"] = self.fn.name
         if self.table:
             outputs["table_name"] = self.table.name
+            outputs["table_arn"] = self.table.arn
         return outputs
 
     @classmethod
@@ -126,15 +140,84 @@ class ServerlessApiProdTemplate(InfrastructureTemplate):
             ],
             "use_cases": ["Webhooks and event handlers", "Lightweight REST APIs", "Cron jobs", "Backend for mobile/web apps"],
             "pillars": [
-                {"title": "Scalability", "score": "excellent", "score_color": "#10b981",
-                 "description": "Auto-scales from zero to thousands of concurrent requests",
-                 "practices": ["Lambda auto-scaling", "DynamoDB on-demand", "API Gateway managed scaling"]},
-                {"title": "Cost Efficiency", "score": "excellent", "score_color": "#10b981",
-                 "description": "Pay-per-invocation pricing. Zero cost when idle.",
-                 "practices": ["No idle costs", "DynamoDB on-demand billing", "API Gateway pay-per-request"]},
-                {"title": "Observability", "score": "good", "score_color": "#f59e0b",
-                 "description": "X-Ray distributed tracing and CloudWatch metrics",
-                 "practices": ["X-Ray tracing enabled", "CloudWatch Logs", "API Gateway access logs"]}
+                {
+                    "title": "Operational Excellence",
+                    "score": "excellent",
+                    "score_color": "#10b981",
+                    "description": "Fully managed services eliminate operational overhead with built-in monitoring and tracing",
+                    "practices": [
+                        "X-Ray distributed tracing for end-to-end visibility",
+                        "CloudWatch Logs auto-configured for Lambda",
+                        "API Gateway access logs for request auditing",
+                        "Infrastructure as Code with Pulumi for repeatable deployments",
+                        "No server patching or OS maintenance required"
+                    ]
+                },
+                {
+                    "title": "Security",
+                    "score": "excellent",
+                    "score_color": "#10b981",
+                    "description": "Least-privilege IAM roles with encryption at rest and in transit",
+                    "practices": [
+                        "IAM roles with least-privilege permissions",
+                        "DynamoDB server-side encryption enabled",
+                        "API Gateway TLS encryption in transit",
+                        "Lambda runs in isolated execution environment",
+                        "No long-lived credentials or SSH access"
+                    ]
+                },
+                {
+                    "title": "Reliability",
+                    "score": "excellent",
+                    "score_color": "#10b981",
+                    "description": "Fully managed services with built-in redundancy and automatic failover",
+                    "practices": [
+                        "Lambda automatically runs across multiple AZs",
+                        "DynamoDB point-in-time recovery enabled",
+                        "API Gateway managed availability across regions",
+                        "Automatic retry and dead-letter queue support",
+                        "No single points of failure in serverless architecture"
+                    ]
+                },
+                {
+                    "title": "Performance Efficiency",
+                    "score": "good",
+                    "score_color": "#f59e0b",
+                    "description": "Auto-scales from zero to thousands of concurrent requests with configurable memory",
+                    "practices": [
+                        "Lambda auto-scaling to thousands of concurrent executions",
+                        "DynamoDB on-demand capacity scales automatically",
+                        "API Gateway managed scaling with no configuration",
+                        "Configurable Lambda memory for performance tuning",
+                        "HTTP API Gateway for low-latency request routing"
+                    ]
+                },
+                {
+                    "title": "Cost Optimization",
+                    "score": "excellent",
+                    "score_color": "#10b981",
+                    "description": "Pay-per-invocation pricing with zero cost when idle",
+                    "practices": [
+                        "No idle costs when not processing requests",
+                        "DynamoDB on-demand billing scales with usage",
+                        "API Gateway pay-per-request pricing model",
+                        "Lambda billed per 1ms of execution time",
+                        "No reserved capacity or minimum commitments"
+                    ]
+                },
+                {
+                    "title": "Sustainability",
+                    "score": "excellent",
+                    "score_color": "#10b981",
+                    "description": "Serverless architecture maximizes resource utilization and minimizes idle waste",
+                    "practices": [
+                        "Scales to zero when not in use, no idle resources",
+                        "Shared infrastructure reduces per-tenant carbon footprint",
+                        "AWS optimizes underlying compute for energy efficiency",
+                        "No over-provisioned servers running continuously",
+                        "Event-driven design processes only when needed"
+                    ]
+                }
             ]
         }
 

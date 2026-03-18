@@ -140,6 +140,17 @@ class GCPVPCSimpleTemplate(InfrastructureTemplate):
             )
             self.firewall_rules.append(fw)
 
+        # Pulumi exports for stack outputs
+        pulumi.export("network_id", self.vpc.id)
+        pulumi.export("network_name", self.vpc.name)
+        if self.public_subnet:
+            pulumi.export("subnet_id", self.public_subnet.id)
+            pulumi.export("subnet_name", self.public_subnet.name)
+        if self.router:
+            pulumi.export("router_id", self.router.id)
+        if self.nat:
+            pulumi.export("nat_id", self.nat.id)
+
         return self.get_outputs()
 
     def get_outputs(self) -> Dict[str, Any]:

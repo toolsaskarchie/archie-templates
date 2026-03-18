@@ -45,6 +45,7 @@ class RedisNonProdConfig:
         self.multi_az_enabled = self.get_parameter('multi_az_enabled', False)
         
         # Tags
+        self.tags = self.raw_config.get('tags', {})
         self.project = self.get_parameter('project') or self.raw_config.get('projectName') or ""
 
     def get_parameter(self, key: str, default: Any = None) -> Any:

@@ -6,14 +6,17 @@ class AzureContainerWebAppConfig:
     
     def __init__(self, raw_config: Dict[str, Any]):
         """Parse configuration from user input"""
+        self.raw_config = raw_config
         # Support both direct config and nested parameters structure
         params = raw_config.get('parameters', raw_config)
-        
+
         # Core configuration
         self.appName = params.get('appName') or params.get('app_name')
         self.resourceGroup = params.get('resourceGroup') or params.get('resource_group')
         self.location = params.get('location', 'eastus')
         self.environment = params.get('environment', 'nonprod')
+        self.region = self.raw_config.get('region', self.raw_config.get('location', 'eastus'))
+        self.tags = self.raw_config.get('tags', {})
         
         # App Service configuration
         self.sku_tier = params.get('sku_tier', 'Free')

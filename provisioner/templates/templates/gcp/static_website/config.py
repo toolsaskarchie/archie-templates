@@ -26,6 +26,7 @@ class GCPStaticWebsiteConfig:
         )
         
         # Labels (GCP equivalent of tags)
+        self.tags = self.raw_config.get('tags', {})
         self.labels = self.raw_config.get('labels', {})
         
         # Validate required fields

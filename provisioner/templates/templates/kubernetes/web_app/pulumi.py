@@ -195,7 +195,86 @@ class K8sSimpleWebAppTemplate(InfrastructureTemplate):
             "tags": ["kubernetes", "docker", "k8s", "webapp"],
             "complexity": "medium",
             "deployment_time": "2-4 minutes",
-            "marketplace_group": "COMPUTE"
+            "marketplace_group": "COMPUTE",
+            "pillars": [
+                {
+                    "title": "Operational Excellence",
+                    "score": "good",
+                    "score_color": "#f59e0b",
+                    "description": "Declarative deployments with configurable replicas and environment variables.",
+                    "practices": [
+                        "Infrastructure as Code with Pulumi for repeatable Kubernetes deployments",
+                        "ConfigMap-driven environment variables for easy configuration updates",
+                        "Standardized resource labels for observability and organization",
+                        "Optional namespace isolation for workload separation",
+                        "Declarative Deployment spec with rolling update strategy"
+                    ]
+                },
+                {
+                    "title": "Security",
+                    "score": "good",
+                    "score_color": "#f59e0b",
+                    "description": "Namespace isolation with resource limits and network policies.",
+                    "practices": [
+                        "Namespace isolation separates workloads from other applications",
+                        "Resource limits prevent container resource exhaustion attacks",
+                        "ConfigMap separates configuration from container images",
+                        "Service abstraction hides pod IPs from external access",
+                        "Optional Ingress with controlled external routing"
+                    ]
+                },
+                {
+                    "title": "Reliability",
+                    "score": "good",
+                    "score_color": "#f59e0b",
+                    "description": "Multi-replica deployment with self-healing and load balancing.",
+                    "practices": [
+                        "Configurable replica count for availability requirements",
+                        "Kubernetes self-healing restarts failed containers automatically",
+                        "Service load balancing distributes traffic across healthy pods",
+                        "Rolling update strategy ensures zero-downtime deployments",
+                        "Health checks via Kubernetes liveness and readiness probes"
+                    ]
+                },
+                {
+                    "title": "Performance Efficiency",
+                    "score": "good",
+                    "score_color": "#f59e0b",
+                    "description": "Right-sized containers with resource requests and limits.",
+                    "practices": [
+                        "CPU and memory requests ensure guaranteed resources per pod",
+                        "Resource limits prevent noisy-neighbor performance degradation",
+                        "Configurable container port for application-specific optimization",
+                        "Service type selection (ClusterIP, NodePort, LoadBalancer) for access patterns",
+                        "Horizontal scaling via replica count adjustment"
+                    ]
+                },
+                {
+                    "title": "Cost Optimization",
+                    "score": "excellent",
+                    "score_color": "#10b981",
+                    "description": "Minimal resource footprint with right-sized containers.",
+                    "practices": [
+                        "Resource requests and limits prevent over-provisioning",
+                        "Configurable replica count scales to actual demand",
+                        "ClusterIP service type avoids load balancer costs when not needed",
+                        "Namespace sharing reduces cluster overhead",
+                        "Container-based deployment maximizes compute utilization"
+                    ]
+                },
+                {
+                    "title": "Sustainability",
+                    "score": "good",
+                    "score_color": "#f59e0b",
+                    "description": "Efficient container orchestration with minimal resource waste.",
+                    "practices": [
+                        "Container bin-packing maximizes node utilization",
+                        "Resource requests prevent idle over-provisioning",
+                        "Shared cluster infrastructure reduces per-app overhead",
+                        "Configurable replicas scale down during low demand"
+                    ]
+                }
+            ]
         }
 
     @classmethod

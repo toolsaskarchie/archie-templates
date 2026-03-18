@@ -62,6 +62,8 @@ class GcpComputeNonProdConfig:
         
         # Tags
         self.environment = config.get('environment', self.environment)
+        self.region = config.get('region', 'us-central1')
+        self.tags = config.get('tags', {})
         self.network_tags = config.get('network_tags', self.network_tags)
     
     @property

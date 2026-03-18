@@ -300,19 +300,23 @@ class S3StaticWebsiteTemplate(InfrastructureTemplate):
             self.temp_dir.cleanup()
     
     @classmethod
-    def get_metadata(cls):
+    def get_metadata(cls) -> Dict[str, Any]:
         """Get template metadata (implements abstract method)"""
-        from provisioner.templates.base.template import TemplateMetadata, TemplateCategory
-        return TemplateMetadata(
-            name="aws-static-website",
-            title="Demo Static Website",
-            subtitle="Perfect for your first AWS deployment",
-            description="Enterprise-grade static website hosting solution that deploys a fully-customized Archie congratulations page on Amazon S3, designed specifically for your first AWS infrastructure deployment. This template automatically creates an S3 bucket with static website hosting enabled, configures public read access with proper security boundaries, and deploys a professionally designed landing page featuring Archie's branding, deployment details, and responsive design with dark/light theme support. The website includes your project name, deployment timestamp, environment details, and region information dynamically injected during deployment. Built using Infrastructure-as-Code principles with Pulumi, this template demonstrates secure S3 bucket policy configuration, automated public access block management, and zero infrastructure cost operation within AWS Free Tier limits. Perfect for testing deployment workflows, showcasing successful infrastructure automation, or serving as a foundation for more complex static website architectures.",
-            category=TemplateCategory.WEBSITE,
-            version="1.0.0",
-            author="InnovativeApps",
-            tags=["s3", "website", "static", "free", "beginner-friendly", "aws-static-website"],
-            features=[
+        return {
+            "name": "aws-static-website",
+            "title": "Demo Static Website",
+            "description": "Enterprise-grade static website hosting on Amazon S3. Deploys a customized Archie congratulations page with responsive design, dark/light theme support, and zero infrastructure cost within AWS Free Tier.",
+            "category": "website",
+            "version": "1.0.0",
+            "author": "InnovativeApps",
+            "cloud": "aws",
+            "environment": "nonprod",
+            "base_cost": "$0/month",
+            "estimated_cost": "$0.00 - $0.50/month (Free Tier Eligible)",
+            "deployment_time": "1-2 minutes",
+            "complexity": "beginner",
+            "tags": ["s3", "website", "static", "free", "beginner-friendly", "aws-static-website"],
+            "features": [
                 "Instant S3-Backed Web Hosting",
                 "Pre-customized Archie Congratulations Page",
                 "Automated Public Access Block Management",
@@ -320,29 +324,19 @@ class S3StaticWebsiteTemplate(InfrastructureTemplate):
                 "Zero Infrastructure Cost (AWS Free Tier)",
                 "Dark/Light Theme Support with native assets"
             ],
-            estimated_cost="$0.00 - $0.50/month (Free Tier Eligible)",
-            complexity="low",
-            deployment_time="1-2 minutes",
-            free_trial=True,
-            marketplace_group="WEBSITES",
-            requires_cloud_account=False,
-            is_essential=True,
-            cloud="aws",
-            deployment_scope="single-region",
-            certifications=["aws-well-architected"],
-            pillars_text=[
-                "Instant S3-Backed Web Hosting",
-                "Pre-customized Archie Congratulations Page",
-                "Automated Public Access Block Management",
-                "Secure S3 Bucket Policy Configuration",
-                "Zero Infrastructure Cost (AWS Free Tier)",
-                "Dark/Light Theme Support with native assets"
+            "use_cases": [
+                "First deployment with Archie",
+                "Learn S3 static website hosting",
+                "Test Archie deployment flow",
+                "Static landing pages"
             ],
-            pillars={
-                "operational_excellence": {
-                    "score": "8",
-                    "description": "Fully automated deployment with Archie. No server management, updates, or maintenance required. Simple to update content.",
-                    "best_practices": [
+            "pillars": [
+                {
+                    "title": "Operational Excellence",
+                    "score": "excellent",
+                    "score_color": "#10b981",
+                    "description": "Fully automated deployment with Archie. No server management, updates, or maintenance required.",
+                    "practices": [
                         "One-click deployment with Archie",
                         "No server patching or updates needed",
                         "S3 versioning available for rollbacks",
@@ -350,10 +344,12 @@ class S3StaticWebsiteTemplate(InfrastructureTemplate):
                         "Easy content updates via S3 console or CLI"
                     ]
                 },
-                "security": {
-                    "score": "7",
+                {
+                    "title": "Security",
+                    "score": "good",
+                    "score_color": "#f59e0b",
                     "description": "S3 bucket configured with public access for static website hosting. Uses bucket policies for controlled public access.",
-                    "best_practices": [
+                    "practices": [
                         "Bucket policy allows public read access only",
                         "Block public access settings configured appropriately",
                         "HTTPS available through CloudFront (optional upgrade)",
@@ -361,32 +357,12 @@ class S3StaticWebsiteTemplate(InfrastructureTemplate):
                         "IAM controls who can modify bucket contents"
                     ]
                 },
-                "performance": {
-                    "score": "7",
-                    "description": "S3 static website hosting provides good performance for static content. Can be enhanced with CloudFront CDN for global distribution.",
-                    "best_practices": [
-                        "Static content served directly from S3",
-                        "Minimal latency for single-region access",
-                        "HTML/CSS optimized for fast loading",
-                        "Can add CloudFront for edge caching",
-                        "No compute overhead - pure storage"
-                    ]
-                },
-                "sustainability": {
-                    "score": "9",
-                    "description": "S3 is a managed service with AWS optimizing infrastructure efficiency. No dedicated servers means minimal carbon footprint.",
-                    "best_practices": [
-                        "Shared infrastructure reduces carbon per user",
-                        "AWS optimizes data center efficiency",
-                        "No dedicated servers to run 24/7",
-                        "Minimal compute resources for static content",
-                        "Scales down to zero when not accessed"
-                    ]
-                },
-                "reliability": {
-                    "score": "8",
-                    "description": "S3 provides 99.99% availability and 99.999999999% durability. Website content is automatically replicated across availability zones.",
-                    "best_practices": [
+                {
+                    "title": "Reliability",
+                    "score": "excellent",
+                    "score_color": "#10b981",
+                    "description": "S3 provides 99.99% availability and 99.999999999% durability with automatic AZ replication.",
+                    "practices": [
                         "S3 automatically replicates across AZs",
                         "No server maintenance or patching required",
                         "Built-in redundancy and fault tolerance",
@@ -394,19 +370,47 @@ class S3StaticWebsiteTemplate(InfrastructureTemplate):
                         "Content served from multiple S3 endpoints"
                     ]
                 },
-                "cost_optimization": {
-                    "score": "10",
+                {
+                    "title": "Performance Efficiency",
+                    "score": "good",
+                    "score_color": "#f59e0b",
+                    "description": "S3 static website hosting provides good performance for static content. Can be enhanced with CloudFront CDN.",
+                    "practices": [
+                        "Static content served directly from S3",
+                        "Minimal latency for single-region access",
+                        "HTML/CSS optimized for fast loading",
+                        "Can add CloudFront for edge caching",
+                        "No compute overhead - pure storage"
+                    ]
+                },
+                {
+                    "title": "Cost Optimization",
+                    "score": "excellent",
+                    "score_color": "#10b981",
                     "description": "Extremely cost-effective solution. Free tier covers most small websites. Only pay for storage and bandwidth used.",
-                    "best_practices": [
+                    "practices": [
                         "S3 free tier: 5GB storage, 20K GET requests",
                         "Pay only for actual storage used (~$0.023/GB)",
                         "No server costs or compute charges",
                         "Minimal bandwidth costs for small sites",
                         "No minimum fees or commitments"
                     ]
+                },
+                {
+                    "title": "Sustainability",
+                    "score": "excellent",
+                    "score_color": "#10b981",
+                    "description": "S3 is a managed service with AWS optimizing infrastructure efficiency. No dedicated servers means minimal carbon footprint.",
+                    "practices": [
+                        "Shared infrastructure reduces carbon per user",
+                        "AWS optimizes data center efficiency",
+                        "No dedicated servers to run 24/7",
+                        "Minimal compute resources for static content",
+                        "Scales down to zero when not accessed"
+                    ]
                 }
-            }
-        )
+            ]
+        }
 
     @classmethod
     def get_config_schema(cls) -> Dict[str, Any]:

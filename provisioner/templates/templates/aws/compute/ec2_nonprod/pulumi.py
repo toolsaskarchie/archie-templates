@@ -557,6 +557,7 @@ class EC2NonProdTemplate(InfrastructureTemplate):
                 "Multiple AMI Options (Amazon Linux 2, Ubuntu, Windows)"
             ],
             "estimated_cost": "$10-35/month (Burstable performance)",
+            "cloud": "aws",
             "complexity": "medium",
             "deployment_time": "5-8 minutes",
             "marketplace_group": "aws-compute-group",
@@ -565,6 +566,7 @@ class EC2NonProdTemplate(InfrastructureTemplate):
                 {
                     "pillar_name": "Operational Excellence",
                     "score": 75,
+                    "score_color": "#f59e0b",
                     "practices": [
                         "SSM integration enables secure, auditable instance access without managing SSH keys or bastion hosts",
                         "Application presets provide standardized configurations for common workloads (web servers, databases, Node.js)",
@@ -576,6 +578,7 @@ class EC2NonProdTemplate(InfrastructureTemplate):
                 {
                     "pillar_name": "Security",
                     "score": 80,
+                    "score_color": "#10b981",
                     "practices": [
                         "Security groups restrict access to only required ports based on application preset",
                         "IAM instance profiles follow least-privilege principle with SSM and S3 read-only access",
@@ -588,6 +591,7 @@ class EC2NonProdTemplate(InfrastructureTemplate):
                 {
                     "pillar_name": "Reliability",
                     "score": 65,
+                    "score_color": "#f59e0b",
                     "practices": [
                         "Multi-AZ VPC architecture provides infrastructure redundancy for networking components",
                         "NAT gateway options ensure reliable outbound internet connectivity from private subnets",
@@ -599,6 +603,7 @@ class EC2NonProdTemplate(InfrastructureTemplate):
                 {
                     "pillar_name": "Performance Efficiency",
                     "score": 70,
+                    "score_color": "#f59e0b",
                     "practices": [
                         "T3 burstable instances provide cost-effective baseline performance with burst capacity",
                         "Application presets select appropriate instance types (t3.micro for web, t3.small for databases)",
@@ -610,6 +615,7 @@ class EC2NonProdTemplate(InfrastructureTemplate):
                 {
                     "pillar_name": "Cost Optimization",
                     "score": 85,
+                    "score_color": "#10b981",
                     "practices": [
                         "T3 instance family provides lowest-cost option for variable workloads ($10-35/month)",
                         "Single-AZ VPC option eliminates unnecessary NAT gateway costs for dev environments",
@@ -622,6 +628,7 @@ class EC2NonProdTemplate(InfrastructureTemplate):
                 {
                     "pillar_name": "Sustainability",
                     "score": 70,
+                    "score_color": "#f59e0b",
                     "practices": [
                         "T3 instances use AWS Nitro System for improved resource efficiency and lower power consumption",
                         "Burstable instances reduce over-provisioning by rightsizing to actual workload needs",

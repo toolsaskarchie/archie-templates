@@ -77,7 +77,10 @@ class AuroraNonProdConfig(BaseModel):
             aws_config['project_name'] = aws_config['projectName']
             
         super().__init__(**aws_config)
-        
+
+        # Store raw_config for framework compatibility
+        self.raw_config = config_dict
+
         # Handle SSH Access IP normalization
         if self.ssh_access_ip and '/' not in self.ssh_access_ip:
             self.ssh_access_ip = f"{self.ssh_access_ip}/32"

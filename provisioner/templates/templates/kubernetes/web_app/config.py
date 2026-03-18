@@ -15,6 +15,8 @@ class K8sSimpleWebAppConfig:
 
         # Core attributes
         self.environment = self.raw_config.get('environment', 'nonprod')
+        self.region = self.raw_config.get('region', 'us-east-1')
+        self.tags = self.raw_config.get('tags', {})
 
         # Kubernetes-specific configuration
         self.namespace = self.get_parameter('namespace', 'default')

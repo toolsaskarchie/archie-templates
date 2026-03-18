@@ -24,6 +24,7 @@ class EC2ProdConfig:
         self.ssh_access_ip = params.get('ssh_access_ip') or params.get('ssh_allowed_ips', [])
         self.region = params.get('region', 'us-east-1')
         self.environment = params.get('environment', 'prod')  # Default to 'prod' for production template
+        self.tags = raw_config.get('tags', {})
         self.project_name = params.get('project_name') or params.get('projectName') or raw_config.get('project_name') or raw_config.get('projectName') or 'archie-ec2'
 
     @staticmethod

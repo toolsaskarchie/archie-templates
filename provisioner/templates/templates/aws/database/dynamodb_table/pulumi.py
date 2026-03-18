@@ -100,27 +100,106 @@ class DynamoDBTableTemplate(InfrastructureTemplate):
     @classmethod
     def get_metadata(cls):
         """Template metadata for marketplace registration"""
-        from provisioner.templates.base.template import TemplateMetadata, TemplateCategory
-        return TemplateMetadata(
-            name="aws-dynamodb-table",
-            title="DynamoDB Table",
-            description="Highly-performant NoSQL table with automatic scaling, encrypted storage, and flexible querying via GSIs. Fully serverless database solution for modern applications.",
-            category=TemplateCategory.DATABASE,
-            version="1.0.0",
-            author="InnovativeApps",
-            tags=["dynamodb", "nosql", "database", "serverless", "aws"],
-            features=[
+        return {
+            "name": "aws-dynamodb-table",
+            "title": "DynamoDB Table",
+            "description": "Highly-performant NoSQL table with automatic scaling, encrypted storage, and flexible querying via GSIs. Fully serverless database solution for modern applications.",
+            "category": "database",
+            "version": "1.0.0",
+            "author": "InnovativeApps",
+            "cloud": "aws",
+            "tags": ["dynamodb", "nosql", "database", "serverless", "aws"],
+            "features": [
                 "Serverless On-Demand Throughput Scaling",
                 "Advanced flexible schemas with attributes and GSIs",
                 "Encryption at Rest with KMS management",
                 "Automated TTL for efficient data lifecycle",
                 "Point-in-Time Recovery enabled for durability"
             ],
-            estimated_cost="$0 - $25/month (usage dependent)",
-            complexity="intermediate",
-            deployment_time="2-4 minutes",
-            marketplace_group="DATABASES"
-        )
+            "estimated_cost": "$0 - $25/month (usage dependent)",
+            "complexity": "intermediate",
+            "deployment_time": "2-4 minutes",
+            "marketplace_group": "DATABASES",
+            "pillars": [
+                {
+                    "title": "Operational Excellence",
+                    "score": "excellent",
+                    "score_color": "#10b981",
+                    "description": "Fully managed serverless database with zero operational overhead.",
+                    "practices": [
+                        "AWS-managed infrastructure eliminates patching and maintenance",
+                        "Infrastructure as Code with Pulumi for repeatable deployments",
+                        "Standard tagging for cost allocation and resource tracking",
+                        "On-demand capacity mode auto-scales without manual intervention",
+                        "TTL automates data lifecycle management"
+                    ]
+                },
+                {
+                    "title": "Security",
+                    "score": "excellent",
+                    "score_color": "#10b981",
+                    "description": "Encrypted at rest with KMS and fine-grained IAM access control.",
+                    "practices": [
+                        "Server-side encryption at rest with AWS KMS",
+                        "IAM-based access control for fine-grained permissions",
+                        "VPC endpoint support for private network access",
+                        "CloudTrail integration for API-level audit logging",
+                        "Encryption in transit via TLS for all connections"
+                    ]
+                },
+                {
+                    "title": "Reliability",
+                    "score": "excellent",
+                    "score_color": "#10b981",
+                    "description": "99.99% SLA with automatic multi-AZ replication.",
+                    "practices": [
+                        "Automatic data replication across three availability zones",
+                        "Point-in-time recovery for continuous backups",
+                        "On-demand backup and restore for disaster recovery",
+                        "99.99% availability SLA for single-region tables",
+                        "Global tables option for multi-region resilience"
+                    ]
+                },
+                {
+                    "title": "Performance Efficiency",
+                    "score": "excellent",
+                    "score_color": "#10b981",
+                    "description": "Single-digit millisecond latency at any scale.",
+                    "practices": [
+                        "Consistent single-digit millisecond read and write latency",
+                        "Global Secondary Indexes for flexible query patterns",
+                        "On-demand mode scales instantly to handle traffic spikes",
+                        "DAX caching option for microsecond read latency",
+                        "Partition-level throughput for predictable performance"
+                    ]
+                },
+                {
+                    "title": "Cost Optimization",
+                    "score": "excellent",
+                    "score_color": "#10b981",
+                    "description": "Pay-per-request pricing with no minimum commitments.",
+                    "practices": [
+                        "On-demand billing charges only for actual reads and writes",
+                        "No idle costs when table is not being accessed",
+                        "TTL automatically deletes expired data to reduce storage costs",
+                        "Reserved capacity option for predictable workloads",
+                        "Free tier includes 25 GB storage and 25 WCU/RCU"
+                    ]
+                },
+                {
+                    "title": "Sustainability",
+                    "score": "excellent",
+                    "score_color": "#10b981",
+                    "description": "Serverless architecture eliminates idle resource waste.",
+                    "practices": [
+                        "Serverless model shares infrastructure across customers",
+                        "On-demand scaling eliminates over-provisioned capacity",
+                        "TTL reduces unnecessary data storage over time",
+                        "AWS commitment to 100% renewable energy by 2025"
+                    ]
+                }
+            ]
+        }
 
     @classmethod
     def get_config_schema(cls) -> Dict[str, Any]:

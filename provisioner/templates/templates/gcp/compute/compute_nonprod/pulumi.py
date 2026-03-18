@@ -117,6 +117,20 @@ class GcpComputeNonProdTemplate(InfrastructureTemplate):
             allow_stopping_for_update=True
         )
         
+        # Pulumi exports for stack outputs
+        pulumi.export("instance_id", self.instance.id)
+        pulumi.export("instance_name", self.instance.name)
+        pulumi.export("internal_ip", self.instance.network_interfaces.apply(
+            lambda interfaces: interfaces[0].network_ip if interfaces else "None"
+        ))
+        external_ip = self.instance.network_interfaces.apply(
+            lambda interfaces: interfaces[0].access_configs[0].nat_ip
+            if interfaces and interfaces[0].access_configs and len(interfaces[0].access_configs) > 0 and hasattr(interfaces[0].access_configs[0], 'nat_ip')
+            else "None"
+        )
+        pulumi.export("external_ip", external_ip)
+        pulumi.export("zone", self.cfg.zone)
+
         return self.get_outputs()
 
     def get_outputs(self) -> Dict[str, Any]:
