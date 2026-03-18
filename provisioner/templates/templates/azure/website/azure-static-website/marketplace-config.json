@@ -1,0 +1,9 @@
+{
+  "features": [
+    "Auto-scaling based on demand",
+    "Multi-AZ high availability",
+    "CloudWatch monitoring and alarms",
+    "Automated security patching",
+    "Custom AMI support"
+  ]
+}
