@@ -248,14 +248,17 @@ class EC2NonProdTemplate(InfrastructureTemplate):
             preset_sg_map = {"web-server": vpc_web_sg, "alb-backend": vpc_app_sg, "mysql": vpc_db_sg, "wordpress": vpc_web_sg}
             tier_sg = preset_sg_map.get(self.cfg.config_preset, vpc_app_sg)
             if tier_sg: sgs.append(tier_sg)
-            
+
+            # Filter out None values from Pulumi Outputs at runtime
+            resolved_sgs = pulumi.Output.all(*sgs).apply(lambda ids: [i for i in ids if i])
+
             inst = factory.create(
                 "aws:ec2:Instance",
                 name_final,
                 instance_type=self.cfg.instance_type,
                 ami=ami_id,
                 subnet_id=subnet_id,
-                vpc_security_group_ids=sgs,
+                vpc_security_group_ids=resolved_sgs,
                 iam_instance_profile=instance_profile_name,
                 key_name=self.cfg.key_name,
                 user_data=self.cfg.user_data,
