@@ -1,13 +1,13 @@
 metadata:
   name: gcp-vpc-nonprod
-  title: VPC Networking
+  title: VPC Network
   description: Complete VPC network for GCP non-production environments with public/private subnets and Cloud NAT.
   category: networking
   version: latest
   author: InnovativeApps
   cloud: gcp
   environment: nonprod
-  base_cost: ~$20/month
+  base_cost: $5/month
   tags:
   - vpc
   - networking
@@ -17,6 +17,63 @@ metadata:
   complexity: intermediate
   deployment_time: 3-5 minutes
   marketplace_group: gcp-vpc-group
+  pillars:
+  - title: Operational Excellence
+    score: excellent
+    score_color: '#10b981'
+    description: Fully automated VPC provisioning with consistent naming and labeling.
+    practices:
+    - Infrastructure as Code with Pulumi for repeatable deployments
+    - Standardized naming conventions via GCP naming utilities
+    - Automated subnet CIDR calculation for consistent addressing
+    - Cloud Router and NAT configuration managed as code
+    - Configurable firewall rules for operational flexibility
+  - title: Security
+    score: excellent
+    score_color: '#10b981'
+    description: Network segmentation with firewall rules and private subnets.
+    practices:
+    - Public and private subnet isolation for defense in depth
+    - Firewall rules scoped to specific protocols and ports
+    - Private IP Google Access for secure GCP service connectivity
+    - Cloud NAT for private subnet egress without public IPs
+    - Custom mode VPC prevents auto-created subnets in all regions
+  - title: Reliability
+    score: good
+    score_color: '#f59e0b'
+    description: Regional networking with Cloud NAT for resilient egress.
+    practices:
+    - Regional VPC network spans all zones in the region
+    - Cloud NAT provides managed, highly available egress
+    - Cloud Router enables dynamic routing for failover
+    - Configurable routing mode (regional or global)
+  - title: Performance Efficiency
+    score: good
+    score_color: '#f59e0b'
+    description: Optimized network topology for non-production workloads.
+    practices:
+    - Subnet isolation separates traffic by tier
+    - Cloud NAT auto-scales IP allocation for egress
+    - Configurable CIDR ranges for right-sized address space
+    - Private Google Access for low-latency GCP API calls
+  - title: Cost Optimization
+    score: good
+    score_color: '#f59e0b'
+    description: Minimal networking costs with optional Cloud NAT.
+    practices:
+    - VPC Network and subnets are free resources in GCP
+    - Cloud NAT is optional and can be disabled to save costs
+    - Single-region deployment avoids cross-region data transfer
+    - No redundant NAT gateways for non-production use
+  - title: Sustainability
+    score: good
+    score_color: '#f59e0b'
+    description: Right-sized networking with minimal resource overhead.
+    practices:
+    - No over-provisioned networking resources
+    - Managed Cloud NAT eliminates idle VM-based NAT instances
+    - Regional deployment reduces cross-region traffic
+    - Google Cloud carbon-neutral infrastructure
   architecture:
     summary: GCP VPC Simple Non-Prod Template - Pattern B Implementation
   action_name: gcp-vpc-nonprod

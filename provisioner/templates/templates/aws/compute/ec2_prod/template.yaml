@@ -1,13 +1,13 @@
 metadata:
   name: aws-ec2-prod
-  title: Enterprise EC2 Instance
+  title: EC2 Instance (Production)
   description: Production-ready EC2 infrastructure featuring a high-availability VPC across 3 AZs, enhanced CloudWatch monitoring with automated alarms, and encrypted EBS storage. Optimized for mission-critical workloads.
   category: compute
   version: latest
   author: InnovativeApps
   cloud: aws
   environment: prod
-  base_cost: $45-120/month
+  base_cost: $25/month
   tags:
   - ec2
   - compute
@@ -25,7 +25,7 @@ metadata:
   - High-availability web clusters
   - Mission-critical workloads
   deployment_time: 8-12 minutes
-  complexity: advanced
+  complexity: intermediate
   pillars:
   - title: Operational Excellence
     score: excellent
@@ -36,6 +36,7 @@ metadata:
     - Enhanced CloudWatch monitoring enabled by default
     - SSM integration for auditable instance management without SSH keys
     - Automated tagging for cost allocation and resource tracking
+    - EBS-optimized instances for predictable storage performance
   - title: Security
     score: excellent
     score_color: '#10b981'
@@ -45,6 +46,7 @@ metadata:
     - Strict security groups restricting traffic to necessary ports
     - IAM instance profiles with least-privilege permissions
     - Private subnet placement options for isolation from internet
+    - Detailed CloudWatch monitoring for anomaly detection
   - title: Reliability
     score: excellent
     score_color: '#10b981'
@@ -53,6 +55,8 @@ metadata:
     - Multi-AZ networking foundation when using new VPC mode
     - EBS optimized instances for consistent storage performance
     - Recovery alarms configured for instance status checks
+    - Automated health monitoring via enhanced CloudWatch metrics
+    - GP3 volumes with consistent baseline IOPS for reliability
   - title: Performance Efficiency
     score: good
     score_color: '#f59e0b'
@@ -61,14 +65,18 @@ metadata:
     - Latest generation instance types (t3/m5) for best price/performance
     - GP3 volumes for predictable storage throughput
     - EBS optimization enabled for dedicated storage bandwidth
+    - Configurable instance sizing to match workload requirements
+    - VPC tier-based security groups for efficient network routing
   - title: Cost Optimization
     score: good
     score_color: '#f59e0b'
     description: Balances performance needs with cost controls
     practices:
-    - Right-sized default instance types
+    - Right-sized default instance types to avoid over-provisioning
     - GP3 volumes offer better value than legacy GP2
-    - Detailed cost allocation tagging
+    - Detailed cost allocation tagging for chargeback visibility
+    - SSM eliminates need for bastion hosts saving compute costs
+    - Configurable VPC mode to reuse existing networking infrastructure
   - title: Sustainability
     score: good
     score_color: '#f59e0b'
@@ -77,6 +85,8 @@ metadata:
     - Modern instance generations provide better performance per watt
     - Shared resources (NAT Gateway) reduce infrastructure overhead
     - GP3 volumes eliminate need for over-provisioning for IOPS
+    - Right-sizing guidance reduces unnecessary compute waste
+    - Encrypted EBS with efficient storage types minimizes footprint
   architecture:
     summary: EC2 Production Template
   action_name: aws-ec2-prod
@@ -749,24 +759,20 @@ configuration:
       - new
       - existing
       cost_impact: $0/month (mode selection)
-    use_custom_cidr:
-      type: boolean
-      default: false
-      title: Use Custom CIDR
-      description: Enable to specify a custom IPv4 CIDR block for the new VPC
-      order: 21
-      group: Network Settings
-      cost_impact: $0/month (CIDR selection is free)
     vpc_cidr:
       type: string
       default: 10.0.0.0/16
       title: VPC CIDR Block
-      description: IPv4 CIDR block for new VPC (auto-generated if Use Custom CIDR is disabled)
+      description: IPv4 CIDR block for new VPC
+      order: 21
+      group: Network Settings
+    use_random_vpc_cidr:
+      type: boolean
+      default: true
+      title: Use Random CIDR
+      description: Automatically generate a unique CIDR block
       order: 22
       group: Network Settings
-      cost_impact: $0/month
-      conditional:
-        field: use_custom_cidr
     vpc_id:
       type: string
       default: ''
@@ -825,43 +831,20 @@ configuration:
       description: Cloud-init script to run on first boot
       order: 40
       group: Advanced Settings
-    enable_ssh_access:
-      type: boolean
-      default: false
-      title: Enable SSH Access
-      description: Create a security group for direct SSH access from your IP
-      order: 34
-      group: Security Settings
-      cost_impact: $0/month
-    enable_detailed_monitoring:
-      type: boolean
-      default: true
-      title: Enable Detailed CloudWatch Monitoring
-      description: 1-minute metric intervals (default is 5-minute). Recommended for production workloads.
-      order: 41
-      group: Advanced Settings
-      cost_impact: +$3/month per instance
-    enable_ebs_encryption:
-      type: boolean
-      default: true
-      title: Enable EBS Volume Encryption
-      description: Encrypt root and data volumes at rest using AWS KMS
-      order: 42
-      group: Security Settings
-      cost_impact: $0/month (no additional cost for encryption)
-    enable_imdsv2:
-      type: boolean
-      default: true
-      title: Require IMDSv2 for Instance Metadata
-      description: Enhanced security for instance metadata service (protects against SSRF attacks)
-      order: 43
-      group: Security Settings
-      cost_impact: $0/month
-    enable_termination_protection:
-      type: boolean
-      default: true
-      title: Enable Termination Protection
-      description: Prevent accidental instance termination via AWS Console or API
-      order: 44
-      group: Security Settings
-      cost_impact: $0/month
+outputs:
+- name: instance_id
+  description: 'Output: instance_id'
+- name: instance_type
+  description: 'Output: instance_type'
+- name: public_ip
+  description: 'Output: public_ip'
+- name: private_ip
+  description: 'Output: private_ip'
+- name: security_group_id
+  description: 'Output: security_group_id'
+- name: ssh_command
+  description: 'Output: ssh_command'
+- name: vpc_id
+  description: 'Output: vpc_id'
+- name: subnet_id
+  description: 'Output: subnet_id'

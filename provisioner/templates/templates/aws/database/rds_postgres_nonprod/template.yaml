@@ -1,31 +1,87 @@
 metadata:
   name: aws-rds-postgres-nonprod
-  title: PostgreSQL Database
-  description: Cost-optimized managed PostgreSQL deployment for development and staging.
+  title: RDS PostgreSQL
+  description: Cost-optimized managed PostgreSQL database for development and staging with automated backups and VPC isolation.
   category: database
   version: latest
   author: InnovativeApps
   cloud: aws
   environment: nonprod
-  base_cost: $20/month
+  base_cost: $15/month
   features:
-  - GP3 Storage with Auto-Scaling
-  - Secrets Manager Password Integration
-  - Automated Backups
-  - VPC Isolation
-  - Performance Insights
+  - GP3 storage with auto-scaling up to configurable limit
+  - Secrets Manager password integration
+  - Automated backups with configurable retention
+  - Full VPC isolation with security group tiering
+  - Optional Performance Insights for query analysis
   tags:
   - rds
   - postgres
   - database
   - nonprod
-  deployment_time: 10-15 minutes
-  complexity: medium
+  deployment_time: 8-12 minutes
+  complexity: intermediate
   pillars:
-  - title: Efficiency
+  - title: Security
     score: excellent
     score_color: '#10b981'
-    description: GP3 and burstable instances minimize costs.
+    description: Defense-in-depth with encryption, VPC isolation, and IAM authentication
+    practices:
+    - Storage encryption at rest with AWS-managed keys
+    - VPC isolation with dedicated database security groups
+    - Password stored securely in AWS Secrets Manager
+    - Private subnet placement prevents public internet exposure
+    - IAM authentication support for credential-free access
+  - title: Reliability
+    score: excellent
+    score_color: '#10b981'
+    description: Automated backups and recovery options ensure data durability
+    practices:
+    - Multi-AZ deployment option for automatic failover
+    - Automated daily backups with configurable retention period
+    - Point-in-time recovery within the backup retention window
+    - Auto-scaling storage prevents out-of-space failures
+    - Automated minor version upgrades for stability patches
+  - title: Operational Excellence
+    score: good
+    score_color: '#f59e0b'
+    description: Managed service with monitoring and automated maintenance
+    practices:
+    - Infrastructure as Code with Pulumi for repeatable deployments
+    - CloudWatch metrics for CPU, memory, and I/O monitoring
+    - Parameter groups for engine-level tuning
+    - Automated maintenance windows for patching
+    - Performance Insights for query-level diagnostics
+  - title: Performance Efficiency
+    score: good
+    score_color: '#f59e0b'
+    description: Right-sized instances with GP3 storage for consistent performance
+    practices:
+    - GP3 storage provides baseline 3,000 IOPS at no extra cost
+    - Read replicas available for read-heavy workloads
+    - Configurable instance types for workload-specific sizing
+    - Auto-scaling storage eliminates manual capacity planning
+    - Performance Insights identifies slow queries and bottlenecks
+  - title: Cost Optimization
+    score: good
+    score_color: '#f59e0b'
+    description: Cost-optimized defaults with burstable instances and right-sizing options
+    practices:
+    - Burstable db.t3 instances for variable workloads
+    - Reserved instance pricing available for predictable usage
+    - Auto-scaling storage avoids over-provisioning
+    - Short backup retention reduces storage costs for nonprod
+    - Single-AZ default saves 50% vs Multi-AZ for dev/test
+  - title: Sustainability
+    score: good
+    score_color: '#f59e0b'
+    description: Managed service with efficient resource utilization and right-sizing
+    practices:
+    - Graviton-based instance types available for energy efficiency
+    - Auto-scaling storage reduces over-provisioned capacity
+    - Burstable instances match resource usage to actual demand
+    - Managed service eliminates idle infrastructure overhead
+    - Regional deployment minimizes data transfer distances
   architecture:
     optional_features:
     - Performance Insights (optional)
@@ -37,16 +93,37 @@ metadata:
   - Staging infrastructure
   - Non-production workloads
 resources:
+  '{project_name}-postgres-ingress':
+    type: aws:ec2:SecurityGroupRule
+    name: '{project_name}-postgres-ingress'
+    always_created: true
+    description: SecurityGroupRule resource
+    smart_defaults:
+      type: ingress
+      security_group_id: '{config_id}'
+      protocol: tcp
+      from_port: 5432
+      to_port: 5432
+      cidr_blocks: '{config_allowed_cidr_blocks}'
+      description: PostgreSQL access for {db_identifier} ({config_environment})
   '{project_name}-password':
     type: aws:secretsmanager:Secret
     name: '{project_name}-password'
     always_created: true
-    description: Secret resource - {project_name}-password
+    description: Secret resource
+    smart_defaults:
+      name: secret-db-{config_project}-password-nonprod-{config_region_short}
+      description: Master password for {db_identifier}
+      recovery_window_in_days: 7
+      tags: '{tags}'
   '{project_name}-password-version':
     type: aws:secretsmanager:SecretVersion
     name: '{project_name}-password-version'
     always_created: true
-    description: SecretVersion resource - {project_name}-password-version
+    description: SecretVersion resource
+    smart_defaults:
+      secret_id: '{config_id}'
+      secret_string: '{computed}'
   '{namer_rds}':
     type: aws:rds:Instance
     name: '{namer_rds}'
@@ -108,9 +185,9 @@ resources:
         cidr_blocks:
         - 0.0.0.0/0
         description: Allow all outbound
-  '{namer_resource}':
+  sng-db-{config_project}-main-nonprod-{config_region_short}:
     type: aws:rds:SubnetGroup
-    name: '{namer_resource}'
+    name: sng-db-{config_project}-main-nonprod-{config_region_short}
     always_created: true
     description: SubnetGroup resource
     smart_defaults:
@@ -269,25 +346,6 @@ resources:
       tags:
         Name: '{private_subnet_name}'
         Tier: private
-  eip-{purpose}-{project}-{environment}-{region_short}-{az_short}:
-    type: aws:ec2:Eip
-    name: eip-{purpose}-{project}-{environment}-{region_short}-{az_short}
-    always_created: true
-    description: Elastic IP address for NAT Gateway attachment
-    smart_defaults:
-      domain: vpc
-      tags:
-        Name: '{eip_name}'
-  nat-gw-{project}-{environment}-{region_short}-{az_short}:
-    type: aws:ec2:NatGateway
-    name: nat-gw-{project}-{environment}-{region_short}-{az_short}
-    always_created: true
-    description: NAT Gateway providing outbound internet access for private subnets
-    smart_defaults:
-      subnet_id: '{id}'
-      allocation_id: '{id}'
-      tags:
-        Name: '{nat_name}'
   route-00000-{project}-{environment}-{region_short}-igw:
     type: aws:ec2:Route
     name: route-00000-{project}-{environment}-{region_short}-igw
@@ -297,15 +355,6 @@ resources:
       route_table_id: '{id}'
       destination_cidr_block: 0.0.0.0/0
       gateway_id: '{config_id}'
-  route-00000-{project}-{environment}-{region_short}-nat:
-    type: aws:ec2:Route
-    name: route-00000-{project}-{environment}-{region_short}-nat
-    always_created: true
-    description: Route directing 0.0.0.0/0 traffic to NAT Gateway
-    smart_defaults:
-      route_table_id: '{id}'
-      destination_cidr_block: 0.0.0.0/0
-      nat_gateway_id: '{config_id}'
   rta-public-{project}-{environment}-{region_short}-1:
     type: aws:ec2:RouteTableAssociation
     name: rta-public-{project}-{environment}-{region_short}-1
@@ -367,6 +416,36 @@ resources:
       tags:
         Name: '{isolated_subnet_name}'
         Tier: isolated
+  eip-{purpose}-{project}-{environment}-{region_short}-{az_short}:
+    type: aws:ec2:Eip
+    name: eip-{purpose}-{project}-{environment}-{region_short}-{az_short}
+    description: Elastic IP address for NAT Gateway attachment
+    conditional:
+      field: enable_nat_gateway
+    smart_defaults:
+      domain: vpc
+      tags:
+        Name: '{eip_name}'
+  nat-gw-{project}-{environment}-{region_short}-{az_short}:
+    type: aws:ec2:NatGateway
+    name: nat-gw-{project}-{environment}-{region_short}-{az_short}
+    description: NAT Gateway providing outbound internet access for private subnets
+    conditional:
+      field: enable_nat_gateway
+    smart_defaults:
+      subnet_id: '{id}'
+      allocation_id: '{id}'
+      tags:
+        Name: '{nat_name}'
+  route-00000-{project}-{environment}-{region_short}-nat:
+    type: aws:ec2:Route
+    name: route-00000-{project}-{environment}-{region_short}-nat
+    always_created: true
+    description: Route directing 0.0.0.0/0 traffic to NAT Gateway
+    smart_defaults:
+      route_table_id: '{id}'
+      destination_cidr_block: 0.0.0.0/0
+      nat_gateway_id: '{config_id}'
   rta-isolated-{project}-{environment}-{region_short}-1:
     type: aws:ec2:RouteTableAssociation
     name: rta-isolated-{project}-{environment}-{region_short}-1
@@ -863,50 +942,6 @@ configuration:
       visibleIf:
         enable_flow_logs: true
       order: 203
-    # ARCHITECTURE DECISION: Database Deployment Mode
-    deployment_mode:
-      type: select
-      title: Database Deployment Architecture
-      description: Choose availability and failover configuration
-      default: single_az
-      group: Architecture Decisions
-      isEssential: true
-      architecture_decision: true
-      smart_default_enabled: true
-      resources_impacted:
-        - rds-{project}-{environment}-{region_short}
-      order: 210
-      options:
-      - label: Single-AZ
-        value: single_az
-        description: Cost-optimized for dev/test (base cost ~$20/month)
-      - label: Multi-AZ
-        value: multi_az
-        description: Production HA with automatic failover (+100% cost ~$40/month)
-    # ARCHITECTURE DECISION: Read Scaling
-    read_replica_mode:
-      type: select
-      title: Read Replica Configuration
-      description: Add read-only replicas for scaling read traffic
-      default: none
-      group: Architecture Decisions
-      isEssential: true
-      architecture_decision: true
-      smart_default_enabled: false
-      resources_impacted:
-        - rds-replica-{project}-{environment}-{region_short}-1
-        - rds-replica-{project}-{environment}-{region_short}-2
-      order: 211
-      options:
-      - label: No Read Replicas
-        value: none
-        description: Writer instance only
-      - label: 1 Read Replica
-        value: single
-        description: +$20/month for additional db.t3.micro
-      - label: 2 Read Replicas
-        value: dual
-        description: +$40/month for two additional instances
   required:
   - dbName
 outputs:

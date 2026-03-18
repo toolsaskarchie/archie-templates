@@ -1,13 +1,13 @@
 metadata:
   name: aws-eks-nonprod
-  title: Managed Kubernetes Cluster
+  title: EKS Kubernetes Cluster
   description: Enterprise Kubernetes environment with managed control plane and EC2 node groups.
   category: compute
   version: latest
   author: InnovativeApps
   cloud: aws
   environment: nonprod
-  base_cost: $121/month
+  base_cost: $75/month
   features:
   - AWS-Managed EKS Control Plane
   - Automated Node Group orchestration
@@ -22,6 +22,67 @@ metadata:
   - nonprod
   deployment_time: 15-20 minutes
   complexity: advanced
+  pillars:
+  - title: Operational Excellence
+    score: good
+    score_color: '#f59e0b'
+    description: Managed control plane with automated upgrades and observability
+    practices:
+    - AWS-managed control plane eliminates manual upgrade burden
+    - Infrastructure as Code via Pulumi for repeatable cluster deployments
+    - Automated node bootstrapping with self-healing user data scripts
+    - Integrated IAM roles for auditability and access control
+    - Standard tagging for cost allocation and resource tracking
+  - title: Security
+    score: excellent
+    score_color: '#10b981'
+    description: Enterprise-grade Kubernetes security with IAM integration
+    practices:
+    - IAM OIDC provider for fine-grained pod-level service accounts
+    - Pod security standards enforced via Kubernetes admission control
+    - Dedicated IAM roles for cluster and node separation of duties
+    - Private subnet placement for worker nodes with public API endpoint
+    - EKS-managed security patches for control plane components
+  - title: Reliability
+    score: excellent
+    score_color: '#10b981'
+    description: Highly available managed control plane across multiple AZs
+    practices:
+    - Multi-AZ control plane managed by AWS with automatic failover
+    - Worker nodes distributed across availability zones for resilience
+    - Self-healing node bootstrap logic for automatic recovery
+    - Dedicated VPC with private subnets for network isolation
+    - EKS-managed etcd with automated backups and replication
+  - title: Performance Efficiency
+    score: excellent
+    score_color: '#10b981'
+    description: Scalable compute with right-sized node groups
+    practices:
+    - Horizontal Pod Autoscaler support for workload-driven scaling
+    - Cluster autoscaler integration for node-level elasticity
+    - Configurable instance types to match workload requirements
+    - Multi-AZ subnet distribution for balanced resource placement
+    - EBS-optimized nodes for consistent storage performance
+  - title: Cost Optimization
+    score: good
+    score_color: '#f59e0b'
+    description: Cost-aware defaults with scaling flexibility
+    practices:
+    - Fargate profile support for serverless pay-per-pod pricing
+    - Spot instance compatibility for non-critical workloads
+    - Right-sized node groups to avoid over-provisioning
+    - Shared VPC infrastructure reduces networking overhead
+    - Configurable desired capacity to match actual demand
+  - title: Sustainability
+    score: good
+    score_color: '#f59e0b'
+    description: Efficient container orchestration reduces resource waste
+    practices:
+    - Container bin-packing maximizes compute utilization per node
+    - Autoscaling eliminates idle capacity during low-demand periods
+    - Managed control plane shares AWS infrastructure efficiently
+    - Graviton-compatible instance types for better performance per watt
+    - Shared networking layer reduces duplicated infrastructure
   architecture:
     summary: EKS Non-Prod Template
   action_name: aws-eks-nonprod
@@ -43,13 +104,12 @@ resources:
       - arn:aws:iam::aws:policy/AmazonSSMManagedInstanceCore
       tags:
         Name: '{role_name}'
-  '{namer_resource}':
+  instance-profile-nodes-{config_project}-nonprod-{config_region_short}:
     type: aws:iam:InstanceProfile
-    name: '{namer_resource}'
+    name: instance-profile-nodes-{config_project}-nonprod-{config_region_short}
     always_created: true
     description: InstanceProfile resource
     smart_defaults:
-      name: '{namer_resource}'
       role: '{config_name}'
       tags: '{tags}'
   '{config_cluster_name}':
@@ -58,7 +118,6 @@ resources:
     always_created: true
     description: Cluster resource
     smart_defaults:
-      name: <cluster_name>
       role_arn: '{config_arn}'
       version: '1.28'
       vpc_config:
@@ -66,66 +125,6 @@ resources:
         endpoint_private_access: true
         endpoint_public_access: true
       tags: {}
-  '{namer_iam_profile}':
-    type: aws:iam:InstanceProfile
-    name: '{namer_iam_profile}'
-    description: InstanceProfile resource
-    conditional:
-      field: enable_ssm
-    smart_defaults:
-      role: '{name}'
-      tags:
-        Name: '{profile_name}'
-  ec2-{preset}-{project}-{environment}-{region_short}:
-    type: aws:ec2:Instance
-    name: ec2-{preset}-{project}-{environment}-{region_short}
-    always_created: true
-    description: Instance resource
-    smart_defaults:
-      instance_type: '{config_instance_type}'
-      ami: '{config_id}'
-      subnet_id: <subnet_id>
-      vpc_security_group_ids: '{base_security_groups}'
-      iam_instance_profile: '{config_name}'
-      key_name: '{config_key_name}'
-      user_data: '{config_user_data}'
-      tags:
-        Name: '{name_final}'
-        ManagedBy: Archie
-  secg-access-{project}-{environment}-{region_short}:
-    type: aws:ec2:SecurityGroup
-    name: secg-access-{project}-{environment}-{region_short}
-    description: Management access security group (SSH/RDP)
-    conditional:
-      field: enable_ssh
-    smart_defaults:
-      vpc_id: '{config_id}'
-      description: Management access security group (SSH/RDP)
-      ingress: '{access_sg_ingress}'
-      egress:
-      - protocol: '-1'
-        from_port: 0
-        to_port: 0
-        cidr_blocks:
-        - 0.0.0.0/0
-        description: Allow all outbound
-      tags:
-        Name: '{access_sg_name}'
-        Tier: management
-  '{project_name}--rule-{idx}':
-    type: aws:ec2:SecurityGroupRule
-    name: '{project_name}--rule-{idx}'
-    always_created: true
-    description: SecurityGroupRule resource
-    smart_defaults:
-      type: ingress
-      security_group_id: '{access_sg_id}'
-      protocol: tcp
-      from_port: '{remote_port}'
-      to_port: '{remote_port}'
-      cidr_blocks:
-      - '{cidr_ip}'
-      description: '{remote_proto} from {cidr_ip}'
   vpc-{project}-{environment}-{region_short}-{network_num}:
     type: aws:ec2:Vpc
     name: vpc-{project}-{environment}-{region_short}-{network_num}
@@ -311,25 +310,6 @@ resources:
       tags:
         Name: '{private_subnet_name}'
         Tier: private
-  eip-{purpose}-{project}-{environment}-{region_short}-{az_short}:
-    type: aws:ec2:Eip
-    name: eip-{purpose}-{project}-{environment}-{region_short}-{az_short}
-    always_created: true
-    description: Elastic IP address for NAT Gateway attachment
-    smart_defaults:
-      domain: vpc
-      tags:
-        Name: '{eip_name}'
-  nat-gw-{project}-{environment}-{region_short}-{az_short}:
-    type: aws:ec2:NatGateway
-    name: nat-gw-{project}-{environment}-{region_short}-{az_short}
-    always_created: true
-    description: NAT Gateway providing outbound internet access for private subnets
-    smart_defaults:
-      subnet_id: '{id}'
-      allocation_id: '{id}'
-      tags:
-        Name: '{nat_name}'
   route-00000-{project}-{environment}-{region_short}-igw:
     type: aws:ec2:Route
     name: route-00000-{project}-{environment}-{region_short}-igw
@@ -339,15 +319,6 @@ resources:
       route_table_id: '{id}'
       destination_cidr_block: 0.0.0.0/0
       gateway_id: '{config_id}'
-  route-00000-{project}-{environment}-{region_short}-nat:
-    type: aws:ec2:Route
-    name: route-00000-{project}-{environment}-{region_short}-nat
-    always_created: true
-    description: Route directing 0.0.0.0/0 traffic to NAT Gateway
-    smart_defaults:
-      route_table_id: '{id}'
-      destination_cidr_block: 0.0.0.0/0
-      nat_gateway_id: '{config_id}'
   rta-public-{project}-{environment}-{region_short}-1:
     type: aws:ec2:RouteTableAssociation
     name: rta-public-{project}-{environment}-{region_short}-1
@@ -375,6 +346,24 @@ resources:
       tags:
         Name: '{isolated_rt_name}'
         Tier: isolated
+  secg-access-{project}-{environment}-{region_short}:
+    type: aws:ec2:SecurityGroup
+    name: secg-access-{project}-{environment}-{region_short}
+    description: Management access
+    conditional:
+      field: ssh_access_ip
+    smart_defaults:
+      vpc_id: <vpc_id>
+      description: Management access
+      ingress: '{access_sg_ingress}'
+      egress:
+      - protocol: '-1'
+        from_port: 0
+        to_port: 0
+        cidr_blocks:
+        - 0.0.0.0/0
+      tags:
+        Name: '{access_sg_name}'
   isolatedsub-{project}-{environment}-{region_short}-{az_short}-{subnet_num}:
     type: aws:ec2:Subnet
     name: isolatedsub-{project}-{environment}-{region_short}-{az_short}-{subnet_num}
@@ -389,6 +378,36 @@ resources:
       tags:
         Name: '{isolated_subnet_name}'
         Tier: isolated
+  eip-{purpose}-{project}-{environment}-{region_short}-{az_short}:
+    type: aws:ec2:Eip
+    name: eip-{purpose}-{project}-{environment}-{region_short}-{az_short}
+    description: Elastic IP address for NAT Gateway attachment
+    conditional:
+      field: enable_nat_gateway
+    smart_defaults:
+      domain: vpc
+      tags:
+        Name: '{eip_name}'
+  nat-gw-{project}-{environment}-{region_short}-{az_short}:
+    type: aws:ec2:NatGateway
+    name: nat-gw-{project}-{environment}-{region_short}-{az_short}
+    description: NAT Gateway providing outbound internet access for private subnets
+    conditional:
+      field: enable_nat_gateway
+    smart_defaults:
+      subnet_id: '{id}'
+      allocation_id: '{id}'
+      tags:
+        Name: '{nat_name}'
+  route-00000-{project}-{environment}-{region_short}-nat:
+    type: aws:ec2:Route
+    name: route-00000-{project}-{environment}-{region_short}-nat
+    always_created: true
+    description: Route directing 0.0.0.0/0 traffic to NAT Gateway
+    smart_defaults:
+      route_table_id: '{id}'
+      destination_cidr_block: 0.0.0.0/0
+      nat_gateway_id: '{config_id}'
   rta-isolated-{project}-{environment}-{region_short}-1:
     type: aws:ec2:RouteTableAssociation
     name: rta-isolated-{project}-{environment}-{region_short}-1
@@ -497,6 +516,46 @@ resources:
       max_aggregation_interval: 600
       tags:
         Name: '{flow_log_name}'
+  '{namer_iam_profile}':
+    type: aws:iam:InstanceProfile
+    name: '{namer_iam_profile}'
+    description: InstanceProfile resource
+    conditional:
+      field: enable_ssm
+    smart_defaults:
+      role: '{name}'
+      tags:
+        Name: '{profile_name}'
+  ec2-{preset}-{project}-{environment}-{region_short}:
+    type: aws:ec2:Instance
+    name: ec2-{preset}-{project}-{environment}-{region_short}
+    always_created: true
+    description: Instance resource
+    smart_defaults:
+      instance_type: '{config_instance_type}'
+      ami: '{config_id}'
+      subnet_id: <subnet_id>
+      vpc_security_group_ids: '{base_security_groups}'
+      iam_instance_profile: '{config_name}'
+      key_name: '{config_key_name}'
+      user_data: '{config_user_data}'
+      tags:
+        Name: '{name_final}'
+        ManagedBy: Archie
+  '{project_name}--rule-{idx}':
+    type: aws:ec2:SecurityGroupRule
+    name: '{project_name}--rule-{idx}'
+    always_created: true
+    description: SecurityGroupRule resource
+    smart_defaults:
+      type: ingress
+      security_group_id: '{access_sg_id}'
+      protocol: tcp
+      from_port: '{remote_port}'
+      to_port: '{remote_port}'
+      cidr_blocks:
+      - '{cidr_ip}'
+      description: '{remote_proto} from {cidr_ip}'
 configuration:
   properties:
     use_custom_cidr:
@@ -537,11 +596,15 @@ configuration:
       order: 71
     enable_ssh_access:
       type: boolean
-      default: true
-      title: Enable SSH Access
-      description: Enable SSH/RDP access to instances
-      order: 14
-      group: Network Configuration
+      default: false
+      title: Enable SSH Security Group
+      description: Traditional SSH/RDP key-based access (alternative to SSM Session Manager)
+      architecture_decision: true
+      smart_default_enabled: false
+      foundation: true
+      section: Security & Access
+      order: 102
+      group: Architecture Decisions
       cost_impact: +$0/month
     ssh_access_ip:
       type: string
@@ -553,14 +616,27 @@ configuration:
         ssh_mode: enabled
       isEssential: true
       order: 141
+    enable_nat_gateway:
+      type: boolean
+      title: Provision NAT Gateway
+      description: Provide internet access to private subnets
+      default: true
+      group: Networking & Connectivity
+      visibleIf: *id001
+      isEssential: true
+      order: 60
     enable_isolated_tier:
       type: boolean
       default: false
-      title: Enable Isolated Subnet Tier
-      description: Creates isolated subnet with no internet access for databases
-      order: 101
-      group: High Availability & Cost
-      cost_impact: +$0/month (no additional cost)
+      title: Enable Isolated Tier
+      description: Additional database subnet tier with no internet access for maximum security
+      architecture_decision: true
+      smart_default_enabled: false
+      foundation: true
+      section: Network Segmentation
+      order: 103
+      group: Architecture Decisions
+      cost_impact: +$0/month
     enable_flow_logs:
       type: boolean
       title: Enable Flow Logs
@@ -582,9 +658,13 @@ configuration:
       type: boolean
       default: false
       title: Enable RDS VPC Endpoint
-      description: Private interface endpoint for RDS API calls
-      order: 102
-      group: High Availability & Cost
+      description: Private interface endpoint for secure RDS API access without traversing internet
+      architecture_decision: true
+      smart_default_enabled: false
+      foundation: false
+      section: VPC Endpoints
+      order: 105
+      group: Architecture Decisions
       cost_impact: +$14/month
     enable_ssm_endpoints:
       type: boolean
@@ -757,15 +837,6 @@ configuration:
       visibleIf: *id001
       isEssential: true
       order: 59
-    enable_nat_gateway:
-      type: boolean
-      title: Provision NAT Gateway
-      description: Provide internet access to private subnets
-      default: true
-      group: Networking & Connectivity
-      visibleIf: *id001
-      isEssential: true
-      order: 60
     nat_gateway_count:
       type: number
       title: NAT Gateway Count
@@ -1062,10 +1133,16 @@ configuration:
       order: 67
   required:
   - region
-  - cluster_name
   - project_name
+  - cluster_name
 outputs:
 - name: kubeconfig
   description: 'Output: kubeconfig'
+- name: cluster_name
+  description: 'Output: cluster_name'
 - name: cluster_endpoint
   description: 'Output: cluster_endpoint'
+- name: cluster_arn
+  description: 'Output: cluster_arn'
+- name: kubeconfig_command
+  description: 'Output: kubeconfig_command'

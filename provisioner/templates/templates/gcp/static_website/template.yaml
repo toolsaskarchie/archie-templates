@@ -16,6 +16,63 @@ metadata:
   complexity: low
   deployment_time: 2-3 minutes
   marketplace_group: WEBSITES
+  pillars:
+  - title: Operational Excellence
+    score: good
+    score_color: '#f59e0b'
+    description: Managed hosting with minimal operational overhead.
+    practices:
+    - Infrastructure as Code with Pulumi for repeatable deployments
+    - Automated content upload from versioned source bucket
+    - Consistent resource labeling for tracking and organization
+    - Force-destroy enabled for clean teardown in non-production
+  - title: Security
+    score: good
+    score_color: '#f59e0b'
+    description: Public-read access appropriate for static website hosting.
+    practices:
+    - Uniform bucket-level access for simplified IAM management
+    - IAM binding scoped to objectViewer role only
+    - No server-side code execution surface to attack
+    - HTTPS access via Cloud Storage public URL
+  - title: Reliability
+    score: excellent
+    score_color: '#10b981'
+    description: Cloud Storage provides highly durable and available hosting.
+    practices:
+    - Google Cloud Storage 99.95% availability SLA
+    - 11 nines durability for stored objects
+    - Automatic replication across zones within region
+    - Embedded fallback content if source bucket is unavailable
+  - title: Performance Efficiency
+    score: good
+    score_color: '#f59e0b'
+    description: Serverless static hosting with global Google network.
+    practices:
+    - Direct Cloud Storage serving with no compute overhead
+    - Google global network edge caching for low latency
+    - Lightweight HTML/CSS assets for fast page loads
+    - No cold start or server provisioning delays
+  - title: Cost Optimization
+    score: excellent
+    score_color: '#10b981'
+    description: Near-zero cost for static website hosting on Cloud Storage.
+    practices:
+    - No compute instances or server costs
+    - Pay only for storage and egress bandwidth
+    - Free-tier eligible for small sites
+    - No idle resources consuming budget
+  - title: Sustainability
+    score: excellent
+    score_color: '#10b981'
+    description: Serverless architecture with minimal resource consumption.
+    practices:
+    - No always-on compute instances
+    - Google Cloud carbon-neutral infrastructure
+    - Efficient object storage with no over-provisioning
+    - Minimal resource footprint for static content delivery
+  architecture:
+    summary: GCP Static Website Template - Pattern B Implementation
   action_name: gcp-static-website
   environment: prod
   tier: template
@@ -24,16 +81,16 @@ metadata:
   - Mission-critical applications
   - Enterprise-grade infrastructure
 resources:
-  index-html:
+  index-gcp-html:
     type: aws:s3:BucketObject
-    name: index-html
+    name: index-gcp-html
     always_created: true
-    description: Archie-branded congratulations page (index.html)
+    description: Archie-branded congratulations page (index-gcp.html)
     smart_defaults:
-      key: index.html
+      key: index-gcp.html
       content_type: text/html
       tags:
-        Name: archie-index-html-{environment}
+        Name: archie-index-gcp-html-{environment}
         ManagedBy: Archie
   styles-css:
     type: aws:s3:BucketObject
@@ -46,25 +103,13 @@ resources:
       tags:
         Name: archie-styles-css-{environment}
         ManagedBy: Archie
-  archie-logo-png:
-    type: aws:s3:BucketObject
-    name: archie-logo-png
-    always_created: true
-    description: Archie brand logo (archie-logo.png)
-    smart_defaults:
-      key: archie-logo.png
-      content_type: image/png
-      tags:
-        Name: archie-archie-logo-png-{environment}
-        ManagedBy: Archie
-  '{project_name}':
+  bucket_name:
     type: gcp:storage:Bucket
-    name: '{project_name}'
+    name: bucket_name
     always_created: true
-    description: gcp:storage:Bucket resource
+    description: Bucket resource
     smart_defaults:
-      name: '{bucket_name}'
-      location: '{config_location}'
+      location: <location>
       project: '{config_project}'
       website: {}
       uniform_bucket_level_access: true
@@ -75,7 +120,7 @@ resources:
     type: gcp:storage:BucketIAMBinding
     name: '{project_name}-public-read'
     always_created: true
-    description: gcp:storage:BucketIAMBinding resource
+    description: BucketIAMBinding resource
     smart_defaults:
       bucket: '{config_name}'
       role: roles/storage.objectViewer
@@ -85,7 +130,11 @@ resources:
     type: gcp:storage:BucketObject
     name: '{project_name}-'
     always_created: true
-    description: gcp:storage:BucketObject resource
+    description: BucketObject resource
+    smart_defaults:
+      name: '{file_key}'
+      bucket: '{config_name}'
+      source: '{computed}'
 configuration:
   properties:
     bucket_name_prefix:
@@ -157,3 +206,8 @@ configuration:
       type: string
       title: Website Name
       default: my-gcp-site
+outputs:
+- name: website_url
+  description: 'Output: website_url'
+- name: bucket_name
+  description: 'Output: bucket_name'

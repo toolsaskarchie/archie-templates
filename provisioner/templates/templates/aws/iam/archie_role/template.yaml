@@ -1,10 +1,13 @@
 metadata:
   name: aws-archie-role
   title: Archie Cross-Account Role
-  description: Secure, managed IAM role for connecting your AWS account to Archie. Implements the principle of least privilege using restricted read-only permissions and STS External ID verification. The industry-standard approach for cross-account infrastructure management.
+  description: Secure, managed IAM role for connecting your AWS account to Archie. Implements the principle of least privilege using restricted read-only permissions and STS External ID verification.
   category: security
   version: latest
   author: InnovativeApps
+  cloud: aws
+  environment: all
+  base_cost: $0.00/month
   tags:
   - iam
   - role
@@ -16,57 +19,101 @@ metadata:
   - Mandatory STS External ID Verification
   - Restricted Read-Only permissions for discovery
   - Automated Customer Managed Policy creation
-  - Managed via Pulumi Infrastructure-as-Code
   - No long-term credentials or access keys required
-  estimated_cost: $0.00/month (IAM is free)
-  complexity: intermediate
   deployment_time: 1-2 minutes
-  marketplace_group: aws-security-group
+  complexity: low
+  pillars:
+  - title: Operational Excellence
+    score: excellent
+    score_color: '#10b981'
+    description: Fully automated IAM provisioning with infrastructure as code
+    practices:
+    - Infrastructure as Code for repeatable role deployments
+    - Automated policy lifecycle management via Pulumi
+    - Standard tagging for governance and resource tracking
+    - Consistent naming conventions for cross-account roles
+    - One-click deployment eliminates manual IAM configuration
+  - title: Security
+    score: excellent
+    score_color: '#10b981'
+    description: Industry-standard cross-account trust with least privilege
+    practices:
+    - STS External ID prevents confused deputy attacks
+    - Restricted read-only permissions follow least privilege principle
+    - Cross-account trust eliminates long-term access key exposure
+    - Customer Managed Policy for granular permission control
+    - No root or admin-level permissions granted
+  - title: Reliability
+    score: excellent
+    score_color: '#10b981'
+    description: IAM is a globally resilient AWS service with no downtime
+    practices:
+    - IAM is a global service with built-in multi-region redundancy
+    - Role assumption is stateless and inherently reliable
+    - No infrastructure dependencies that could cause failures
+    - Automated deployment reduces human error in configuration
+    - External ID validation prevents unauthorized access attempts
+  - title: Performance Efficiency
+    score: excellent
+    score_color: '#10b981'
+    description: Zero-overhead identity federation with instant provisioning
+    practices:
+    - IAM role assumption adds no latency to API operations
+    - No compute resources required for credential management
+    - STS tokens are cached and reused efficiently
+    - Read-only scoped permissions minimize API call overhead
+    - Deploys in under 2 minutes with no warm-up required
+  - title: Cost Optimization
+    score: excellent
+    score_color: '#10b981'
+    description: IAM roles and policies are completely free
+    practices:
+    - IAM roles and policies incur zero AWS charges
+    - Eliminates need for bastion hosts or VPN infrastructure
+    - No compute or storage costs for credential management
+    - STS temporary credentials are free to generate
+    - Replaces costly long-term credential rotation processes
+  - title: Sustainability
+    score: excellent
+    score_color: '#10b981'
+    description: Serverless identity service with minimal resource footprint
+    practices:
+    - No compute resources provisioned or running
+    - Leverages shared AWS IAM infrastructure globally
+    - Zero energy consumption for credential storage
+    - Eliminates need for dedicated identity management servers
+    - Stateless role assumption minimizes resource utilization
+  architecture:
+    summary: Archie Cross-Account Role Template
   action_name: aws-archie-role
-  environment: prod
-  cloud: aws
   tier: template
   use_cases:
   - Production workloads
   - Mission-critical applications
   - Enterprise-grade infrastructure
 resources:
-  policy:
+  '{project_name}-policy':
     type: aws:iam:Policy
-    name: policy
+    name: '{project_name}-policy'
     always_created: true
-    description: IAM policy - policy
+    description: Policy resource
     smart_defaults:
-      name: archie-policy
-      tags:
-        Name: archie-policy-{environment}
-        ManagedBy: Archie
-  '{project}':
+      name: pol-archierole-{config_project_name}-{environment}-{region}
+      description: Restricted ReadOnly policy for Archie connection
+      policy: '{json_config}'
+      tags: '{tags}'
+  '{project_name}':
     type: aws:iam:Role
-    name: '{project}'
+    name: '{project_name}'
     always_created: true
-    description: IAM role - {project}
+    description: Role resource
     smart_defaults:
-      name: archie-{project}
-      tags:
-        Name: archie-{project}-{environment}
-        ManagedBy: Archie
-  generated-resource:
-    type: aws:iam:Policy
-    name: generated-resource
-    always_created: true
-    description: Policy resource - generated-resource
-    smart_defaults: {}
-  role-{project}-{environment}:
-    type: aws:iam:Role
-    name: role-{project}-{environment}
-    always_created: true
-    description: IAM role - role-{project}-{environment}
-    smart_defaults:
-      tags:
-        Name: archie-role-{project}-{environment}
-        Environment: '{environment}'
-        ManagedBy: Archie
+      name: role-archie-{config_project_name}-{environment}-{region}
+      assume_role_policy: '{json_config}'
+      managed_policy_arns:
+      - '{arn}'
+      tags: '{tags}'
+      opts: '{computed}'
 configuration:
   properties:
     role_name:
@@ -145,3 +192,10 @@ configuration:
       order: 6
   required:
   - project_name
+outputs:
+- name: role_arn
+  description: 'Output: role_arn'
+- name: role_name
+  description: 'Output: role_name'
+- name: external_id
+  description: 'Output: external_id'

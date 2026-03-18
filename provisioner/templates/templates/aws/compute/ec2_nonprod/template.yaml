@@ -356,25 +356,6 @@ resources:
       tags:
         Name: '{private_subnet_name}'
         Tier: private
-  eip-{purpose}-{project}-{environment}-{region_short}-{az_short}:
-    type: aws:ec2:Eip
-    name: eip-{purpose}-{project}-{environment}-{region_short}-{az_short}
-    always_created: true
-    description: Elastic IP address for NAT Gateway attachment
-    smart_defaults:
-      domain: vpc
-      tags:
-        Name: '{eip_name}'
-  nat-gw-{project}-{environment}-{region_short}-{az_short}:
-    type: aws:ec2:NatGateway
-    name: nat-gw-{project}-{environment}-{region_short}-{az_short}
-    always_created: true
-    description: NAT Gateway providing outbound internet access for private subnets
-    smart_defaults:
-      subnet_id: '{id}'
-      allocation_id: '{id}'
-      tags:
-        Name: '{nat_name}'
   route-00000-{project}-{environment}-{region_short}-igw:
     type: aws:ec2:Route
     name: route-00000-{project}-{environment}-{region_short}-igw
@@ -384,15 +365,6 @@ resources:
       route_table_id: '{id}'
       destination_cidr_block: 0.0.0.0/0
       gateway_id: '{config_id}'
-  route-00000-{project}-{environment}-{region_short}-nat:
-    type: aws:ec2:Route
-    name: route-00000-{project}-{environment}-{region_short}-nat
-    always_created: true
-    description: Route directing 0.0.0.0/0 traffic to NAT Gateway
-    smart_defaults:
-      route_table_id: '{id}'
-      destination_cidr_block: 0.0.0.0/0
-      nat_gateway_id: '{config_id}'
   rta-public-{project}-{environment}-{region_short}-1:
     type: aws:ec2:RouteTableAssociation
     name: rta-public-{project}-{environment}-{region_short}-1
@@ -434,6 +406,36 @@ resources:
       tags:
         Name: '{isolated_subnet_name}'
         Tier: isolated
+  eip-{purpose}-{project}-{environment}-{region_short}-{az_short}:
+    type: aws:ec2:Eip
+    name: eip-{purpose}-{project}-{environment}-{region_short}-{az_short}
+    description: Elastic IP address for NAT Gateway attachment
+    conditional:
+      field: enable_nat_gateway
+    smart_defaults:
+      domain: vpc
+      tags:
+        Name: '{eip_name}'
+  nat-gw-{project}-{environment}-{region_short}-{az_short}:
+    type: aws:ec2:NatGateway
+    name: nat-gw-{project}-{environment}-{region_short}-{az_short}
+    description: NAT Gateway providing outbound internet access for private subnets
+    conditional:
+      field: enable_nat_gateway
+    smart_defaults:
+      subnet_id: '{id}'
+      allocation_id: '{id}'
+      tags:
+        Name: '{nat_name}'
+  route-00000-{project}-{environment}-{region_short}-nat:
+    type: aws:ec2:Route
+    name: route-00000-{project}-{environment}-{region_short}-nat
+    always_created: true
+    description: Route directing 0.0.0.0/0 traffic to NAT Gateway
+    smart_defaults:
+      route_table_id: '{id}'
+      destination_cidr_block: 0.0.0.0/0
+      nat_gateway_id: '{config_id}'
   rta-isolated-{project}-{environment}-{region_short}-1:
     type: aws:ec2:RouteTableAssociation
     name: rta-isolated-{project}-{environment}-{region_short}-1
@@ -553,56 +555,14 @@ configuration:
     vpc_mode:
       type: string
       default: new
-      title: VPC Strategy
-      description: Create new VPC with full network infrastructure (subnets, NAT, security groups) or deploy into existing VPC
-      architecture_decision: true
-      smart_default_enabled: true
-      foundation: true
-      section: Network Configuration
-      resources_impacted:
-        - All VPC resources (28 resources when creating new)
-      order: 100
-      group: Architecture Decisions
+      title: VPC Mode
+      description: Create new VPC infrastructure or use existing VPC
+      order: 20
+      group: Network Configuration
       enum:
       - new
       - existing
-      cost_impact: +$77/month (VPC nonprod base cost when creating new)
-    # ARCHITECTURE DECISION: Instance Deployment Pattern
-    deployment_pattern:
-      type: select
-      title: Instance Deployment Pattern
-      description: Deploy single or multiple EC2 instances
-      default: single
-      group: Architecture Decisions
-      isEssential: true
-      architecture_decision: true
-      smart_default_enabled: true
-      section: Instance Configuration
-      resources_impacted:
-        - ec2-{preset}-{project}-{environment}-{region_short}
-      order: 21
-      options:
-      - label: Single Instance
-        value: single
-        description: One EC2 instance
-      - label: Multiple Identical Instances
-        value: multiple_identical
-        description: N copies with same configuration (can spread across AZs)
-    instance_count:
-      type: integer
-      title: Number of Instances
-      description: How many EC2 instances to deploy
-      default: 1
-      min: 1
-      max: 10
-      group: Architecture Decisions
-      isEssential: true
-      architecture_decision: true
-      smart_default_enabled: false
-      order: 22
-      conditional:
-        field: deployment_pattern
-        value: multiple_identical
+      cost_impact: $0/month (mode selection, VPC components have separate costs)
     vpc_id:
       type: string
       title: Vpc Id
@@ -637,7 +597,14 @@ configuration:
       group: Network Configuration
       resource_category: Vpc
       cost_impact: $0/month
-
+    use_random_vpc_cidr:
+      type: boolean
+      title: Use Random Vpc Cidr
+      description: 'DEPRECATED: Use not use_custom_cidr instead.'
+      group: Network Configuration
+      order: 7
+      pattern: ^([0-9]{1,3}\.){3}[0-9]{1,3}/[0-9]{1,2}$
+      placeholder: 10.0.0.0/16
     subnet_id:
       type: string
       title: Subnet Id
@@ -689,17 +656,11 @@ configuration:
     enable_ssm:
       type: boolean
       default: true
-      title: Enable SSM Session Manager
-      description: Browser-based secure shell access without SSH keys or bastion hosts (modern best practice)
-      architecture_decision: true
-      smart_default_enabled: true
-      section: Security & Access
-      resources_impacted:
-        - iam-role-ec2-{project}-{environment}
-        - iam-instanceprofile-ec2-{project}-{environment}
-      order: 104
-      group: Architecture Decisions
-      cost_impact: $0/month (SSM is free)
+      title: Enable AWS Systems Manager
+      description: Secure instance access without SSH keys via AWS Systems Manager Session Manager
+      order: 100
+      group: Security & Access
+      cost_impact: $0/month (SSM Session Manager is free, creates IAM role/profile)
     enable_ssm_endpoints:
       type: boolean
       default: false
@@ -717,43 +678,6 @@ configuration:
       order: 105
       group: Security & Access
       resource_category: SecurityGroup
-      cost_impact: $0/month
-    enable_detailed_monitoring:
-      type: boolean
-      default: false
-      title: Enable Detailed CloudWatch Monitoring
-      description: 1-minute metric intervals (vs 5-minute basic). Faster insights for troubleshooting and autoscaling.
-      architecture_decision: true
-      smart_default_enabled: false
-      section: Monitoring & Observability
-      resources_impacted:
-        - ec2-{preset}-{project}-{environment}-{region_short}
-      order: 106
-      group: Architecture Decisions
-      cost_impact: +$3/month per instance when enabled
-    enable_ebs_encryption:
-      type: boolean
-      default: true
-      title: Enable EBS Volume Encryption
-      description: Encrypt root and data volumes at rest using AWS KMS
-      order: 111
-      group: Security & Access
-      cost_impact: $0/month (no additional cost for encryption)
-    enable_imdsv2:
-      type: boolean
-      default: true
-      title: Require IMDSv2 for Instance Metadata
-      description: Enhanced security for instance metadata service (protects against SSRF attacks)
-      order: 112
-      group: Security & Access
-      cost_impact: $0/month
-    enable_termination_protection:
-      type: boolean
-      default: false
-      title: Enable Termination Protection
-      description: Prevent accidental instance termination via AWS Console or API
-      order: 113
-      group: Security & Access
       cost_impact: $0/month
     instance_tenancy:
       type: string
@@ -953,19 +877,14 @@ configuration:
       type: string
       default: amazon-linux-2
       title: Operating System
-      description: Choose OS for your instances (Amazon Linux 2 = AWS optimized and free, Ubuntu = popular for web apps)
-      architecture_decision: true
-      smart_default_enabled: true
-      section: Instance Configuration
-      resources_impacted:
-        - ec2-{preset}-{project}-{environment}-{region_short}
-      order: 103
-      group: Architecture Decisions
+      description: Operating system for the EC2 instance
+      order: 12
+      group: Compute Configuration
       enum:
       - amazon-linux-2
       - ubuntu-22.04
       - windows-2022
-      cost_impact: +$0/month (OS selection, actual cost in instance type)
+      cost_impact: $0/month (OS choice, actual cost in instance type)
     ami_id:
       type: string
       title: Ami Id
@@ -990,20 +909,6 @@ configuration:
       description: "Get array of instance configurations.\nSupports both legacy single-instance and new multi-instance modes.\n\nReturns:\n    List of instance configuration dicts"
       group: Compute Configuration
       order: 45
-    application_preset:
-      type: string
-      default: Web Server
-      title: Application Preset
-      description: Pre-configured application template with optimized instance type and security groups
-      order: 10
-      group: Compute Configuration
-      resource_category: Instance
-      enum:
-      - Web Server
-      - Database Server
-      - Cache Server
-      - Custom
-      cost_impact: $0/month (preset selection, actual cost varies by instance type)
     instance_count:
       type: integer
       default: 1
@@ -1019,3 +924,34 @@ configuration:
       - 4
       - 5
       cost_impact: Multiplies instance cost by count
+    application_preset:
+      type: string
+      default: Web Server
+      title: Application Preset
+      description: Pre-configured application template with optimized instance type and security groups
+      order: 10
+      group: Compute Configuration
+      resource_category: Instance
+      enum:
+      - Web Server
+      - Database Server
+      - Cache Server
+      - Custom
+      cost_impact: $0/month (preset selection, actual cost varies by instance type)
+outputs:
+- name: instance_id
+  description: 'Output: instance_id'
+- name: instance_type
+  description: 'Output: instance_type'
+- name: public_ip
+  description: 'Output: public_ip'
+- name: private_ip
+  description: 'Output: private_ip'
+- name: security_group_id
+  description: 'Output: security_group_id'
+- name: ssh_command
+  description: 'Output: ssh_command'
+- name: vpc_id
+  description: 'Output: vpc_id'
+- name: subnet_id
+  description: 'Output: subnet_id'

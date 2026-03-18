@@ -1,19 +1,19 @@
 metadata:
   name: aws-aurora-nonprod
-  title: Aurora Database Cluster
-  description: Cost-optimized managed Aurora PostgreSQL or MySQL-compatible database cluster designed for development and staging.
+  title: Aurora PostgreSQL Cluster
+  description: Cost-optimized Aurora PostgreSQL cluster for development and staging with serverless scaling and automated failover.
   category: database
   version: latest
   author: InnovativeApps
   cloud: aws
   environment: nonprod
-  base_cost: $45/month
+  base_cost: $30/month
   features:
-  - Serverless v2 Scaling Support
-  - Managed Aurora Cluster with automated failover
-  - Optional Read Replicas for load distribution
-  - 'Secure Identity: Automated password rotation via Secrets Manager'
-  - Automated Backups with 3-day retention for non-prod safety
+  - Serverless v2 scaling support for variable workloads
+  - Managed Aurora cluster with automated failover
+  - Optional read replicas for load distribution
+  - Automated password rotation via AWS Secrets Manager
+  - Automated backups with configurable retention
   tags:
   - aws
   - database
@@ -23,7 +23,68 @@ metadata:
   - nonprod
   - cost-optimized
   deployment_time: 15-20 minutes
-  complexity: medium
+  complexity: advanced
+  pillars:
+  - title: Security
+    score: excellent
+    score_color: '#10b981'
+    description: Enterprise-grade security with encryption, VPC isolation, and secrets management
+    practices:
+    - Storage encryption at rest enabled by default
+    - VPC isolation with dedicated database-tier security groups
+    - Password stored and managed via AWS Secrets Manager
+    - Private subnet placement prevents public internet exposure
+    - SSL/TLS encryption for all client connections in transit
+  - title: Reliability
+    score: excellent
+    score_color: '#10b981'
+    description: Aurora's distributed storage engine with automated failover and continuous backups
+    practices:
+    - Aurora storage replicates data 6 ways across 3 AZs automatically
+    - Multi-AZ cluster option with automatic failover under 30 seconds
+    - Continuous backups to S3 with point-in-time recovery
+    - Global database support for cross-region disaster recovery
+    - Automated minor version upgrades for stability patches
+  - title: Operational Excellence
+    score: good
+    score_color: '#f59e0b'
+    description: Fully managed cluster with monitoring and automated maintenance
+    practices:
+    - Infrastructure as Code with Pulumi for repeatable deployments
+    - CloudWatch metrics for cluster and instance-level monitoring
+    - Optional Performance Insights for query-level diagnostics
+    - Automated maintenance windows for patching and upgrades
+    - Cluster parameter groups for engine-level tuning
+  - title: Performance Efficiency
+    score: excellent
+    score_color: '#10b981'
+    description: Aurora's purpose-built storage engine delivers up to 5x PostgreSQL throughput
+    practices:
+    - Aurora storage engine provides up to 5x throughput over standard PostgreSQL
+    - Serverless v2 scaling adjusts capacity in fine-grained increments
+    - Read replicas share the same storage volume with minimal lag
+    - Configurable instance types from db.t3 to db.r6g families
+    - Parallel query for complex analytical workloads
+  - title: Cost Optimization
+    score: good
+    score_color: '#f59e0b'
+    description: Cost-optimized for nonprod with serverless scaling and right-sizing options
+    practices:
+    - Serverless v2 scales to zero ACUs during idle periods
+    - Burstable db.t3 instances for variable development workloads
+    - Single-instance default reduces costs for nonprod environments
+    - Short backup retention minimizes storage costs
+    - Reserved instance pricing available for predictable usage
+  - title: Sustainability
+    score: good
+    score_color: '#f59e0b'
+    description: Efficient managed service with serverless scaling and shared storage architecture
+    practices:
+    - Serverless scaling matches resource consumption to actual demand
+    - Graviton-based db.r6g instances available for energy efficiency
+    - Shared storage volume eliminates per-replica storage duplication
+    - Managed service eliminates idle infrastructure overhead
+    - Regional deployment minimizes cross-region data transfer
   architecture:
     summary: Aurora Non-Production Template
   action_name: aws-aurora-nonprod
@@ -33,16 +94,37 @@ metadata:
   - Staging infrastructure
   - Non-production workloads
 resources:
+  '{project_name}-aurora-ingress':
+    type: aws:ec2:SecurityGroupRule
+    name: '{project_name}-aurora-ingress'
+    always_created: true
+    description: SecurityGroupRule resource
+    smart_defaults:
+      type: ingress
+      security_group_id: '{config_id}'
+      protocol: tcp
+      from_port: '{config_port}'
+      to_port: '{config_port}'
+      cidr_blocks: '{config_allowed_cidr_blocks}'
+      description: Aurora access for {db_identifier} ({config_environment})
   '{project_name}-password':
     type: aws:secretsmanager:Secret
     name: '{project_name}-password'
     always_created: true
-    description: Secret resource - {project_name}-password
+    description: Secret resource
+    smart_defaults:
+      name: secret-db-{config_project}-password-nonprod-{config_region_short}
+      description: Master password for {db_identifier}
+      recovery_window_in_days: 7
+      tags: '{tags}'
   '{project_name}-password-version':
     type: aws:secretsmanager:SecretVersion
     name: '{project_name}-password-version'
     always_created: true
-    description: SecretVersion resource - {project_name}-password-version
+    description: SecretVersion resource
+    smart_defaults:
+      secret_id: '{config_id}'
+      secret_string: '{computed}'
   '{namer_rds}':
     type: aws:rds:Cluster
     name: '{namer_rds}'
@@ -100,9 +182,9 @@ resources:
         cidr_blocks:
         - 0.0.0.0/0
         description: Allow all outbound
-  '{namer_resource}':
+  sng-db-{config_project}-main-nonprod-{config_region_short}:
     type: aws:rds:SubnetGroup
-    name: '{namer_resource}'
+    name: sng-db-{config_project}-main-nonprod-{config_region_short}
     always_created: true
     description: SubnetGroup resource
     smart_defaults:
@@ -276,25 +358,6 @@ resources:
       tags:
         Name: '{private_subnet_name}'
         Tier: private
-  eip-{purpose}-{project}-{environment}-{region_short}-{az_short}:
-    type: aws:ec2:Eip
-    name: eip-{purpose}-{project}-{environment}-{region_short}-{az_short}
-    always_created: true
-    description: Elastic IP address for NAT Gateway attachment
-    smart_defaults:
-      domain: vpc
-      tags:
-        Name: '{eip_name}'
-  nat-gw-{project}-{environment}-{region_short}-{az_short}:
-    type: aws:ec2:NatGateway
-    name: nat-gw-{project}-{environment}-{region_short}-{az_short}
-    always_created: true
-    description: NAT Gateway providing outbound internet access for private subnets
-    smart_defaults:
-      subnet_id: '{id}'
-      allocation_id: '{id}'
-      tags:
-        Name: '{nat_name}'
   route-00000-{project}-{environment}-{region_short}-igw:
     type: aws:ec2:Route
     name: route-00000-{project}-{environment}-{region_short}-igw
@@ -304,15 +367,6 @@ resources:
       route_table_id: '{id}'
       destination_cidr_block: 0.0.0.0/0
       gateway_id: '{config_id}'
-  route-00000-{project}-{environment}-{region_short}-nat:
-    type: aws:ec2:Route
-    name: route-00000-{project}-{environment}-{region_short}-nat
-    always_created: true
-    description: Route directing 0.0.0.0/0 traffic to NAT Gateway
-    smart_defaults:
-      route_table_id: '{id}'
-      destination_cidr_block: 0.0.0.0/0
-      nat_gateway_id: '{config_id}'
   rta-public-{project}-{environment}-{region_short}-1:
     type: aws:ec2:RouteTableAssociation
     name: rta-public-{project}-{environment}-{region_short}-1
@@ -374,6 +428,36 @@ resources:
       tags:
         Name: '{isolated_subnet_name}'
         Tier: isolated
+  eip-{purpose}-{project}-{environment}-{region_short}-{az_short}:
+    type: aws:ec2:Eip
+    name: eip-{purpose}-{project}-{environment}-{region_short}-{az_short}
+    description: Elastic IP address for NAT Gateway attachment
+    conditional:
+      field: enable_nat_gateway
+    smart_defaults:
+      domain: vpc
+      tags:
+        Name: '{eip_name}'
+  nat-gw-{project}-{environment}-{region_short}-{az_short}:
+    type: aws:ec2:NatGateway
+    name: nat-gw-{project}-{environment}-{region_short}-{az_short}
+    description: NAT Gateway providing outbound internet access for private subnets
+    conditional:
+      field: enable_nat_gateway
+    smart_defaults:
+      subnet_id: '{id}'
+      allocation_id: '{id}'
+      tags:
+        Name: '{nat_name}'
+  route-00000-{project}-{environment}-{region_short}-nat:
+    type: aws:ec2:Route
+    name: route-00000-{project}-{environment}-{region_short}-nat
+    always_created: true
+    description: Route directing 0.0.0.0/0 traffic to NAT Gateway
+    smart_defaults:
+      route_table_id: '{id}'
+      destination_cidr_block: 0.0.0.0/0
+      nat_gateway_id: '{config_id}'
   rta-isolated-{project}-{environment}-{region_short}-1:
     type: aws:ec2:RouteTableAssociation
     name: rta-isolated-{project}-{environment}-{region_short}-1
@@ -517,11 +601,15 @@ configuration:
       group: Network Configuration
     enable_ssh_access:
       type: boolean
-      default: true
-      title: Enable SSH Access
-      description: Enable SSH/RDP access to instances
-      order: 14
-      group: Network Configuration
+      default: false
+      title: Enable SSH Security Group
+      description: Traditional SSH/RDP key-based access (alternative to SSM Session Manager)
+      architecture_decision: true
+      smart_default_enabled: false
+      foundation: true
+      section: Security & Access
+      order: 102
+      group: Architecture Decisions
       cost_impact: +$0/month
     ssh_access_ip:
       type: string
@@ -533,14 +621,30 @@ configuration:
         ssh_mode: enabled
       isEssential: true
       order: 161
+    enable_nat_gateway:
+      type: boolean
+      default: true
+      title: Enable NAT Gateway
+      description: Provides outbound internet access for private subnets via NAT Gateway
+      architecture_decision: true
+      smart_default_enabled: true
+      foundation: true
+      section: Internet Access
+      order: 101
+      group: Architecture Decisions
+      cost_impact: +$32/month
     enable_isolated_tier:
       type: boolean
       default: false
-      title: Enable Isolated Subnet Tier
-      description: Creates isolated subnet with no internet access for databases
-      order: 101
-      group: High Availability & Cost
-      cost_impact: +$0/month (no additional cost)
+      title: Enable Isolated Tier
+      description: Additional database subnet tier with no internet access for maximum security
+      architecture_decision: true
+      smart_default_enabled: false
+      foundation: true
+      section: Network Segmentation
+      order: 103
+      group: Architecture Decisions
+      cost_impact: +$0/month
     enable_flow_logs:
       type: boolean
       title: Enable Flow Logs
@@ -562,9 +666,13 @@ configuration:
       type: boolean
       default: false
       title: Enable RDS VPC Endpoint
-      description: Private interface endpoint for RDS API calls
-      order: 102
-      group: High Availability & Cost
+      description: Private interface endpoint for secure RDS API access without traversing internet
+      architecture_decision: true
+      smart_default_enabled: false
+      foundation: false
+      section: VPC Endpoints
+      order: 105
+      group: Architecture Decisions
       cost_impact: +$14/month
     enable_ssm_endpoints:
       type: boolean
@@ -734,14 +842,18 @@ configuration:
         enable_flow_logs: true
       order: 202
   required:
-  - project_name
   - db_name
+  - project_name
   - region
 outputs:
 - name: cluster_endpoint
   description: 'Output: cluster_endpoint'
 - name: cluster_reader_endpoint
   description: 'Output: cluster_reader_endpoint'
+- name: port
+  description: 'Output: port'
+- name: database_name
+  description: 'Output: database_name'
 - name: db_password_secret_name
   description: 'Output: db_password_secret_name'
 cost_calculator:

@@ -1,46 +1,60 @@
 metadata:
-  name: aws-dynamodb-table
+  name: dynamodb-table
   title: DynamoDB NoSQL Table
-  description: Fully managed, high-performance NoSQL database table. Features on-demand or provisioned capacity, Global Secondary Indexes (GSIs) for flexible querying, and automated encryption at rest using AWS KMS.
+  description: A high-performance serverless NoSQL database designed for fast, granular data access.
   category: database
   version: latest
   author: InnovativeApps
   tags:
   - dynamodb
   - nosql
-  - database
-  - serverless
   - aws
+  - serverless
   features:
-  - Serverless NoSQL with On-Demand Capacity Scaling
-  - Global Secondary Indexes (GSIs) for Optimized Queries
-  - Native Encryption at Rest via AWS KMS
-  - Automated TTL (Time-to-Live) Management
-  - Point-in-Time Recovery (PITR) Support
-  - Intelligent Resource Tagging & Compliance
-  estimated_cost: $1.00 - $25.00/month (scales with data & throughput)
+  - Serverless On-Demand Scaling
+  - Global Secondary Indexes (GSI)
+  - Native SSE Encryption
+  - Automated TTL Expiration
+  - 99.99% Availability SLA
+  estimated_cost: $1-25/month
   complexity: intermediate
   deployment_time: 2-4 minutes
-  marketplace_group: aws-database-group
+  marketplace_group: DATABASES
+  cost_tier: low
+  use_cases:
+  - User sessions & profiles
+  - High-volume catalog data
+  - Serverless application state
+  required_config:
+  - project_name
+  - table_name
+  outputs:
+  - table_name - The unique table identifier
+  - table_arn - Resource Name for IAM
+  - table_id - Short identifier
+  architecture:
+    summary: DynamoDB Table Template
   action_name: aws-dynamodb-table
   environment: prod
   cloud: aws
   tier: template
-  use_cases:
-  - Production workloads
-  - Mission-critical applications
-  - Enterprise-grade infrastructure
 resources:
-  '{project}':
+  '{project_name}':
     type: aws:dynamodb:Table
-    name: '{project}'
+    name: '{project_name}'
     always_created: true
-    description: DynamoDB table - {project}
+    description: Table resource
     smart_defaults:
-      name: archie-{project}
-      tags:
-        Name: archie-{project}-{environment}
-        ManagedBy: Archie
+      attributes: '{config_attributes}'
+      hash_key: '{config_hash_key}'
+      range_key: '{config_range_key}'
+      billing_mode: '{config_billing_mode}'
+      read_capacity: '{config_read_capacity}'
+      write_capacity: '{config_write_capacity}'
+      global_secondary_indexes: '{config_global_secondary_indexes}'
+      server_side_encryption: '{config_server_side_encryption}'
+      ttl: '{config_ttl}'
+      tags: '{tags}'
 configuration:
   properties:
     project_name:
@@ -67,27 +81,113 @@ configuration:
       group: Essentials
       isEssential: true
       order: 1
-    table_name:
+    db_header:
+      type: separator
+      title: Database Configuration
+      group: Database Settings
+      isEssential: true
+      order: 80
+    dbName:
       type: string
-      title: Table Name
-      description: Name for the DynamoDB table
-      default: dynamodb-table
-      group: Table Settings
-    billing_mode:
+      title: Database Name
+      description: Primary database name
+      default: mydb
+      group: Database Settings
+      isEssential: true
+      order: 81
+    dbUsername:
       type: string
-      title: Billing Mode
-      description: Billing mode for the table
+      title: Master Username
+      description: Database administrator username
+      default: admin
+      group: Database Settings
+      isEssential: true
+      order: 82
+    engineVersion:
+      type: string
+      title: Engine Version
+      description: Version of dynamodb
+      default: '8.0'
+      group: Database Settings
+      order: 83
+    instanceClass:
+      type: string
+      title: Instance Class
+      description: Compute and memory capacity
+      default: db.t3.micro
       enum:
-      - PAY_PER_REQUEST
-      - PROVISIONED
-      default: PAY_PER_REQUEST
-      group: Table Settings
-    hash_key:
-      type: string
-      title: Partition Key (Hash Key)
-      description: Name of the partition key
-      default: id
-      group: Table Settings
+      - db.t3.micro
+      - db.t3.small
+      - db.t3.medium
+      - db.t3.large
+      - db.m5.large
+      group: Database Settings
+      isEssential: true
+      order: 84
+    allocatedStorage:
+      type: number
+      title: Allocated Storage (GB)
+      description: Initial storage capacity
+      default: 20
+      group: Database Settings
+      order: 85
+    maxAllocatedStorage:
+      type: number
+      title: Max Storage (GB)
+      description: Auto-scaling storage limit
+      default: 100
+      group: Database Settings
+      order: 86
+    backupRetentionDays:
+      type: number
+      title: Backup Retention (Days)
+      description: Number of days to keep backups
+      default: 3
+      group: Database Settings
+      order: 87
+    flow_logs_header:
+      type: separator
+      title: Flow Logs Configuration
+      group: Observability
+      isEssential: true
+      order: 200
+    enable_flow_logs:
+      type: boolean
+      title: Enable Flow Logs
+      description: Capture IP traffic information
+      default: true
+      group: Observability
+      isEssential: true
+      order: 201
+    log_destination_type:
+      type: select
+      title: Flow Log Destination
+      description: Where to store flow logs
+      default: cloud-watch-logs
+      options:
+      - label: CloudWatch Logs
+        value: cloud-watch-logs
+      - label: S3 Bucket
+        value: s3
+      group: Observability
+      visibleIf:
+        enable_flow_logs: true
+      order: 202
+    flow_log_retention:
+      type: number
+      title: Log Retention (Days)
+      description: How long to keep flow logs
+      default: 7
+      group: Observability
+      visibleIf:
+        enable_flow_logs: true
+      order: 203
   required:
   - project_name
+  - region
   - table_name
+outputs:
+- name: table_name
+  description: 'Output: table_name'
+- name: table_arn
+  description: 'Output: table_arn'

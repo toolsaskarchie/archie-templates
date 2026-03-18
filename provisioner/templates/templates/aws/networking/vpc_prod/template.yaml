@@ -184,29 +184,23 @@ resources:
         to_port: 80
         cidr_blocks:
         - 0.0.0.0/0
-        description: HTTP from internet
       - protocol: tcp
         from_port: 443
         to_port: 443
         cidr_blocks:
         - 0.0.0.0/0
-        description: HTTPS from internet
       egress:
       - protocol: '-1'
         from_port: 0
         to_port: 0
         cidr_blocks:
         - 0.0.0.0/0
-        description: Allow all outbound
       tags:
         Name: '{web_sg_name}'
         Project: '{project_name}'
         Environment: prod
         Tier: web
         ManagedBy: Archie
-    display_properties:
-      - ingress
-      - egress
   secg-app-{project}-{environment}-{region_short}:
     type: aws:ec2:SecurityGroup
     name: secg-app-{project}-{environment}-{region_short}
@@ -215,35 +209,18 @@ resources:
     smart_defaults:
       vpc_id: '{config_id}'
       description: Security group for application tier
-      ingress:
-      - protocol: tcp
-        from_port: 3000
-        to_port: 3000
-        security_groups:
-        - '{security_group_web}'
-        description: App traffic from web tier
-      - protocol: tcp
-        from_port: 8080
-        to_port: 8080
-        security_groups:
-        - '{security_group_web}'
-        description: Alt app port from web tier
       egress:
       - protocol: '-1'
         from_port: 0
         to_port: 0
         cidr_blocks:
         - 0.0.0.0/0
-        description: Allow all outbound
       tags:
         Name: '{app_sg_name}'
         Project: '{project_name}'
         Environment: prod
         Tier: app
         ManagedBy: Archie
-    display_properties:
-      - ingress
-      - egress
   secg-db-{project}-{environment}-{region_short}:
     type: aws:ec2:SecurityGroup
     name: secg-db-{project}-{environment}-{region_short}
@@ -252,41 +229,18 @@ resources:
     smart_defaults:
       vpc_id: '{config_id}'
       description: Security group for database tier
-      ingress:
-      - protocol: tcp
-        from_port: 3306
-        to_port: 3306
-        security_groups:
-        - '{security_group_app}'
-        description: MySQL from app tier
-      - protocol: tcp
-        from_port: 5432
-        to_port: 5432
-        security_groups:
-        - '{security_group_app}'
-        description: PostgreSQL from app tier
-      - protocol: tcp
-        from_port: 1433
-        to_port: 1433
-        security_groups:
-        - '{security_group_app}'
-        description: SQL Server from app tier
       egress:
       - protocol: '-1'
         from_port: 0
         to_port: 0
         cidr_blocks:
         - 0.0.0.0/0
-        description: Allow all outbound
       tags:
         Name: '{db_sg_name}'
         Project: '{project_name}'
         Environment: prod
         Tier: db
         ManagedBy: Archie
-    display_properties:
-      - ingress
-      - egress
   secg-access-{project}-{environment}-{region_short}:
     type: aws:ec2:SecurityGroup
     name: secg-access-{project}-{environment}-{region_short}
@@ -302,16 +256,12 @@ resources:
         to_port: 0
         cidr_blocks:
         - 0.0.0.0/0
-        description: Allow all outbound
       tags:
         Name: '{access_sg_name}'
         Project: '{project_name}'
         Environment: prod
         Tier: access
         ManagedBy: Archie
-    display_properties:
-      - ingress
-      - egress
   route-00000-{project}-{environment}-{region_short}-igw:
     type: aws:ec2:Route
     name: route-00000-{project}-{environment}-{region_short}-igw
@@ -560,9 +510,9 @@ resources:
         Project: '{project_name}'
         Environment: prod
         Purpose: VPC Flow Logs
-  s3-{purpose}-{project}-{environment}-{region_short}-lifecycle:
+  '{bucket_name}-lifecycle':
     type: aws:s3:BucketLifecycleConfigurationV2
-    name: s3-{purpose}-{project}-{environment}-{region_short}-lifecycle
+    name: '{bucket_name}-lifecycle'
     description: S3 bucket lifecycle rules for automatic log retention and deletion
     conditional:
       field: enable_flow_logs
@@ -715,26 +665,13 @@ resources:
         AZ: '{az}'
 configuration:
   properties:
-    use_custom_cidr:
-      type: boolean
-      default: false
-      title: Use Custom CIDR
-      description: Enable to specify a custom IPv4 CIDR block for the VPC
-      order: 9
-      group: Network Configuration
-      cost_impact: $0/month
-      resource_category: Vpc
-    vpc_cidr:
+    cidr_block:
       type: string
       default: random
       title: VPC CIDR Block
-      description: IPv4 CIDR block for the VPC (e.g., 10.0.0.0/16, 172.16.0.0/16, 192.168.0.0/16)
+      description: IPv4 CIDR block for the VPC (use 'random' for auto-generated)
       order: 10
       group: Network Configuration
-      isEssential: true
-      resource_category: Vpc
-      conditional:
-        field: use_custom_cidr
     enable_dns_support:
       type: boolean
       default: true
@@ -749,49 +686,6 @@ configuration:
       description: Enable DNS hostnames for instances
       order: 12
       group: Network Configuration
-      resource_category: Vpc
-    enable_isolated_tier:
-      type: boolean
-      default: true
-      title: Enable Isolated Database Tier
-      description: Creates isolated subnet with no internet access for databases (best practice for production)
-      architecture_decision: true
-      smart_default_enabled: true
-      section: Network Configuration
-      resources_impacted:
-        - isolatedsub-{project}-{environment}-{region_short}-{az_short}-1
-        - isolatedsub-{project}-{environment}-{region_short}-{az_short}-2
-        - isolatedsub-{project}-{environment}-{region_short}-{az_short}-3
-        - rt-isolated-{project}-{environment}-{region_short}
-      order: 99
-      group: Architecture Decisions
-      cost_impact: +$0/month (best practice for prod)
-    enable_ssh_access:
-      type: boolean
-      default: false
-      title: Enable SSH Security Group
-      description: Traditional SSH/RDP key-based access (alternative to SSM Session Manager)
-      architecture_decision: true
-      smart_default_enabled: false
-      foundation: true
-      section: Security & Access
-      resources_impacted:
-        - secg-ssh-{project}-{environment}-{region_short}
-      order: 105
-      group: Architecture Decisions
-      cost_impact: +$0/month
-      resource_category: SecurityGroup
-    ssh_access_ip:
-      type: string
-      default: ""
-      title: SSH Access Source IP/CIDR
-      description: Your public IP address or CIDR block for SSH/RDP access (e.g., 203.0.113.45/32). Required when SSH is enabled.
-      placeholder: "203.0.113.45/32"
-      required: false
-      order: 106
-      group: Architecture Decisions
-      conditional:
-        field: enable_ssh_access
     az_1:
       type: string
       default: ''
@@ -813,38 +707,30 @@ configuration:
       description: Third availability zone (auto-selected if empty)
       order: 22
       group: Availability Zones
-    nat_gateway_ha:
+    enable_nat_gateway:
       type: boolean
       default: true
-      title: NAT Gateway High Availability
-      description: "Deploy 3 NAT Gateways (1 per AZ) for high availability. Disabling deploys 1 NAT Gateway to save $64/mo but creates single point of failure. ⚠️ Not recommended for mission-critical workloads."
-      architecture_decision: true
-      smart_default_enabled: true
-      section: Network Configuration
-      resources_impacted:
-        - natgw-{project}-{environment}-{region_short}-{az_short}-1
-        - natgw-{project}-{environment}-{region_short}-{az_short}-2
-        - natgw-{project}-{environment}-{region_short}-{az_short}-3
-        - eip-natgw-{project}-{environment}-{region_short}-{az_short}-1
-        - eip-natgw-{project}-{environment}-{region_short}-{az_short}-2
-        - eip-natgw-{project}-{environment}-{region_short}-{az_short}-3
+      title: Enable NAT Gateway
+      description: Creates NAT Gateway(s) for private subnet internet access
       order: 100
-      group: Architecture Decisions
-      cost_impact: "3 NAT GWs: $96/mo (default) | 1 NAT GW: $32/mo (saves $64, single point of failure)"
+      group: High Availability & Cost
+      cost_impact: +$96/month
+    nat_gateway_count:
+      type: integer
+      default: 3
+      title: NAT Gateway Count
+      description: Number of NAT Gateways (1 or 3 for HA)
+      order: 101
+      group: High Availability & Cost
+      cost_impact: +$32-96/month
     enable_flow_logs:
       type: boolean
       default: true
       title: Enable VPC Flow Logs
-      description: Capture network traffic logs to S3 for security monitoring and compliance (required for most production environments)
-      architecture_decision: true
-      smart_default_enabled: true
-      section: Monitoring & Observability
-      resources_impacted:
-        - s3-flowlogs-{project}-{environment}-{region_short}
-        - fl-{scope}-{project}-{environment}-{region_short}-{traffic}
-      order: 101
-      group: Architecture Decisions
-      cost_impact: +$3/month (included in base)
+      description: Capture network traffic logs to S3 for security monitoring
+      order: 110
+      group: High Availability & Cost
+      cost_impact: +$3/month
     flow_log_retention:
       type: integer
       default: 30
@@ -856,92 +742,54 @@ configuration:
       type: boolean
       default: true
       title: Enable Network ACLs
-      description: Subnet-level firewall rules for defense-in-depth security (recommended for production)
-      architecture_decision: true
-      smart_default_enabled: true
-      section: Network Configuration
-      resources_impacted:
-        - nacl-public-{project}-{environment}-{region_short}
-        - nacl-private-{project}-{environment}-{region_short}
-        - nacl-isolated-{project}-{environment}-{region_short}
-      order: 104
-      group: Architecture Decisions
-      cost_impact: +$0/month
+      description: Create Network ACLs for subnet-level security
+      order: 120
+      group: Security Settings
+      cost_impact: $0/month
     enable_rds_endpoint:
       type: boolean
       default: false
       title: Enable RDS VPC Endpoint
-      description: Private interface endpoint for RDS API calls (optional for enhanced database security)
-      architecture_decision: true
-      smart_default_enabled: false
-      resources_impacted:
-        - vpce-rds-{project}-{environment}-{region_short}
-      order: 107
-      group: Architecture Decisions
-      cost_impact: +$14/month when enabled
+      description: Interface endpoint for RDS API calls
+      order: 132
+      group: VPC Endpoints
+      cost_impact: +$42/month
     enable_ssm_endpoints:
       type: boolean
       default: true
       title: Enable SSM VPC Endpoints
-      description: Private endpoints for AWS Systems Manager - enables secure instance access without bastion hosts or SSH keys (best practice for production)
-      architecture_decision: true
-      smart_default_enabled: true
-      resources_impacted:
-        - vpce-ssm-{project}-{environment}-{region_short}
-        - vpce-ssmmessages-{project}-{environment}-{region_short}
-        - vpce-ec2messages-{project}-{environment}-{region_short}
-      order: 102
-      group: Architecture Decisions
-      cost_impact: +$42/month (included in base)
+      description: Private endpoints for AWS Systems Manager
+      order: 133
+      group: VPC Endpoints
+      cost_impact: +$126/month
+    ssh_access_ip:
+      type: string
+      default: ''
+      title: SSH Access IP (Optional)
+      description: Your IP for SSH/RDP access (e.g., 1.2.3.4/32)
+      order: 140
+      group: Security Settings
   required:
   - project_name
   - region
 outputs:
 - name: vpc_id
   description: 'Output: vpc_id'
+- name: vpc_name
+  description: 'Output: vpc_name'
 - name: vpc_cidr
   description: 'Output: vpc_cidr'
-- name: vpc_arn
-  description: 'Output: vpc_arn'
-- name: internet_gateway_id
-  description: 'Output: internet_gateway_id'
-- name: nat_gateway_id
-  description: 'Output: nat_gateway_id'
 - name: public_subnet_ids
   description: 'Output: public_subnet_ids'
 - name: private_subnet_ids
   description: 'Output: private_subnet_ids'
-- name: public_route_table_id
-  description: 'Output: public_route_table_id'
-- name: private_route_table_ids
-  description: 'Output: private_route_table_ids'
-- name: security_group_web_id
-  description: 'Output: security_group_web_id'
-- name: security_group_app_id
-  description: 'Output: security_group_app_id'
-- name: security_group_db_id
-  description: 'Output: security_group_db_id'
-- name: security_group_access_id
-  description: 'Output: security_group_access_id'
-  conditional:
-    field: enable_ssh_access
-- name: vpc_endpoint_s3_id
-  description: 'Output: vpc_endpoint_s3_id'
-- name: vpc_endpoint_dynamodb_id
-  description: 'Output: vpc_endpoint_dynamodb_id'
 - name: isolated_subnet_ids
   description: 'Output: isolated_subnet_ids'
-  conditional:
-    field: enable_isolated_tier
-- name: isolated_route_table_ids
-  description: 'Output: isolated_route_table_ids'
-  conditional:
-    field: enable_isolated_tier
-- name: flow_logs_bucket
-  description: 'Output: flow_logs_bucket'
-  conditional:
-    field: enable_flow_logs
-- name: flow_log_id
-  description: 'Output: flow_log_id'
-  conditional:
-    field: enable_flow_logs
+- name: web_security_group_id
+  description: 'Output: web_security_group_id'
+- name: app_security_group_id
+  description: 'Output: app_security_group_id'
+- name: db_security_group_id
+  description: 'Output: db_security_group_id'
+- name: access_security_group_id
+  description: 'Output: access_security_group_id'

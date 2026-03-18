@@ -1,145 +1,174 @@
 metadata:
   name: aws-redis-nonprod
-  title: Distributed Cache (Redis)
-  description: Rapidly deploy a managed Redis cluster for development and testing using AWS ElastiCache. Features cost-optimized t3-family nodes, automated snapshot integration, and pre-configured security group isolation. Perfect for application caching and session management.
+  title: ElastiCache Redis
+  description: Managed Redis cluster for development and testing with cost-optimized nodes and automated snapshots.
   category: database
   version: latest
   author: InnovativeApps
-  supported_regions:
-  - us-east-1
-  - us-east-2
-  - us-west-2
-  is_listed_in_marketplace: true
-  marketplace_group: aws-caching-group
-  base_template: aws-vpc-nonprod
-  base_cost: $12-35/month
+  cloud: aws
+  environment: nonprod
+  base_cost: $15/month
+  features:
+  - High-performance managed Redis engine
+  - Cost-optimized burstable node types (t3 family)
+  - Integrated security group with Redis port isolation
+  - Automated backups and maintenance windows
+  - Multi-AZ support for testing HA failover
   tags:
   - redis
   - elasticache
   - database
   - cache
   - nonprod
-  features:
-  - High-Performance Managed Redis Engine
-  - Cost-Optimized Burstable Node Types (t3 family)
-  - Integrated Security Group with Redis Port isolation
-  - Automated Backups & Maintenance Windows
-  - Multi-AZ Support for testing HA failover
-  - Intelligent Subnet Group placement for VPCs
-  estimated_cost: $12-35/month (depends on node type)
-  complexity: medium
   deployment_time: 5-10 minutes
+  complexity: intermediate
+  pillars:
+  - title: Performance Efficiency
+    score: excellent
+    score_color: '#10b981'
+    description: In-memory data store delivering sub-millisecond latency for caching and session management
+    practices:
+    - In-memory architecture delivers sub-millisecond read/write latency
+    - Configurable node types from cache.t3.micro to cache.r6g for workload matching
+    - Redis data structures (sorted sets, hashes) optimize application-level operations
+    - Multi-node clusters distribute load across cache nodes
+    - Dedicated subnet group ensures low-latency VPC placement
+  - title: Security
+    score: good
+    score_color: '#f59e0b'
+    description: VPC isolation with dedicated security groups and encryption options
+    practices:
+    - Dedicated security group restricts access to Redis port only
+    - VPC subnet group ensures cluster runs in private network
+    - Encryption at rest available with AWS-managed keys
+    - Encryption in transit available for client connections
+    - Configurable CIDR-based access control for ingress rules
+  - title: Reliability
+    score: good
+    score_color: '#f59e0b'
+    description: Automated snapshots and optional Multi-AZ for high availability testing
+    practices:
+    - Automated daily snapshots with configurable retention period
+    - Multi-AZ replication available for failover testing
+    - Automatic node replacement on hardware failure
+    - Configurable maintenance windows for controlled patching
+    - Snapshot-based restore for rapid recovery scenarios
+  - title: Operational Excellence
+    score: good
+    score_color: '#f59e0b'
+    description: Managed service with automated maintenance and monitoring integration
+    practices:
+    - Infrastructure as Code with Pulumi for repeatable deployments
+    - CloudWatch metrics for cache hit ratio, memory, and CPU monitoring
+    - Automated maintenance windows for engine patching
+    - Configurable snapshot windows for backup scheduling
+    - Standard tagging for resource identification and cost tracking
+  - title: Cost Optimization
+    score: good
+    score_color: '#f59e0b'
+    description: Burstable node types and right-sizing options minimize nonprod costs
+    practices:
+    - Burstable cache.t3 nodes for variable development workloads
+    - Single-node default eliminates replication costs for nonprod
+    - Reserved node pricing available for predictable usage
+    - Right-sizing from micro to xlarge based on cache requirements
+    - No storage costs beyond node memory allocation
+  - title: Sustainability
+    score: good
+    score_color: '#f59e0b'
+    description: Efficient in-memory service with right-sized nodes and managed infrastructure
+    practices:
+    - Graviton-based cache.r6g nodes available for energy efficiency
+    - Burstable instances match resource usage to actual demand
+    - In-memory architecture eliminates disk I/O overhead
+    - Managed service reduces idle infrastructure waste
+    - Regional deployment minimizes data transfer distances
+  architecture:
+    optional_features:
+    - Cost-optimized for non-production workloads
+    - Configurable node type and count
+    - Automatic backups with retention
+    - Security group with configurable CIDR access
+    - Multi-AZ support for testing HA scenarios
+    summary: Redis Non-Prod Template
   action_name: aws-redis-nonprod
-  environment: nonprod
-  cloud: aws
   tier: template
   use_cases:
   - Development and testing environments
   - Staging infrastructure
   - Non-production workloads
 resources:
-  sg-{project}-{environment}:
+  '{project_name}-sg':
     type: aws:ec2:SecurityGroup
-    name: sg-{project}-{environment}
+    name: '{project_name}-sg'
     always_created: true
-    description: SecurityGroup resource - sg-{project}-{environment}
-    resource_category: SecurityGroup
+    description: Security group for {cluster_name} Redis cluster
     smart_defaults:
-      vpc_id: '{config_id}'
-      description: Security group for Redis {project}-{environment}
-      tags:
-        Name: 'sg-redis-{project}-{environment}'
-        Environment: '{environment}'
-        ManagedBy: Archie
-  subnet-group-{project}-{environment}:
+      description: Security group for {cluster_name} Redis cluster
+      vpc_id: '{config_vpc_id}'
+      ingress:
+      - description: Redis access
+        from_port: '{port}'
+        to_port: '{port}'
+        protocol: tcp
+        cidr_blocks: '{allowed_cidr_blocks}'
+      egress:
+      - description: Allow all outbound
+        from_port: 0
+        to_port: 0
+        protocol: '-1'
+        cidr_blocks:
+        - 0.0.0.0/0
+      tags: '{tags}'
+  '{project_name}-subnet-group':
     type: aws:elasticache:SubnetGroup
-    name: subnet-group-{project}-{environment}
+    name: '{project_name}-subnet-group'
     always_created: true
-    description: ElastiCache subnet group
-    resource_category: Subnet
+    description: SubnetGroup resource
     smart_defaults:
-      description: Subnet group for Redis {project}-{environment}
+      description: Subnet group for {cluster_name} Redis cluster
       subnet_ids: '{config_subnet_ids}'
-      tags:
-        Name: 'sng-redis-{project}-{environment}'
-        ManagedBy: Archie
-  cluster-{project}-{environment}:
+      tags: '{tags}'
+  '{project_name}-cluster':
     type: aws:elasticache:Cluster
-    name: cluster-{project}-{environment}
+    name: '{project_name}-cluster'
     always_created: true
-    description: ElastiCache Redis cluster
-    resource_category: Database
+    description: Cluster resource
     smart_defaults:
-      cluster_id: 'redis-{project}-{environment}'
+      cluster_id: '{config_cluster_name}'
       engine: redis
-      engine_version: '{engine_version}'
-      node_type: '{node_type}'
-      num_cache_nodes: '{num_cache_nodes}'
-      parameter_group_name: default.redis7
-      port: '{port}'
-      subnet_group_name: '{subnet-group-{project}-{environment}.name}'
-      security_group_ids: ['{sg-{project}-{environment}.id}']
-      tags:
-        Name: 'redis-{project}-{environment}'
-        ManagedBy: Archie
+      engine_version: '{config_engine_version}'
+      node_type: '{config_node_type}'
+      num_cache_nodes: '{config_num_cache_nodes}'
+      port: '{config_port}'
+      subnet_group_name: '{config_name}'
+      security_group_ids:
+      - '{id}'
+      az_mode: <az_mode>
+      snapshot_retention_limit: '{config_snapshot_retention_limit}'
+      snapshot_window: '{config_snapshot_window}'
+      maintenance_window: '{config_maintenance_window}'
+      tags: '{tags}'
 configuration:
   properties:
-    project_name:
+    resource_tags:
       type: string
-      title: Project Name
-      description: Project Name
-      help_text: Name of your project for resource tagging and tracking
-      placeholder: my-project
-      group: Essentials
-      isEssential: true
-      order: 0
-    region:
-      type: string
-      title: AWS Region
-      description: AWS Region
-      default: us-east-1
-      enum:
-      - us-east-1
-      - us-east-2
-      - us-west-1
-      - us-west-2
-      - eu-west-1
-      - eu-central-1
-      group: Essentials
-      isEssential: true
+      title: Resource Tags
+      description: Get resource tags
+      group: General Settings
       order: 1
-    cluster_name:
+    az_mode:
       type: string
-      title: Cluster Name
-      description: Name for the Redis cluster
-      default: redis-nonprod
-      pattern: ^[a-zA-Z][a-zA-Z0-9-]{0,39}$
-      group: Redis Settings
-    engine_version:
-      type: string
-      title: Engine Version
-      description: Redis version
-      default: '7.0'
-      group: Redis Settings
-    node_type:
-      type: string
-      title: Node Type
-      description: Cache node instance type
-      default: cache.t3.micro
-      group: Redis Settings
-    num_cache_nodes:
-      type: number
-      title: Number of Nodes
-      description: Number of cache nodes in the cluster
-      default: 1
-      minimum: 1
-      group: Redis Settings
-    port:
-      type: number
-      title: Port
-      description: Redis connection port
-      default: 6379
-      group: Network Settings
-  required:
-  - project_name
-  - cluster_name
+      title: Az Mode
+      description: Get AZ mode based on multi-AZ setting
+      group: Network Configuration
+      order: 2
+outputs:
+- name: cluster_id
+  description: 'Output: cluster_id'
+- name: endpoint
+  description: 'Output: endpoint'
+- name: port
+  description: 'Output: port'
+- name: connection_string
+  description: 'Output: connection_string'

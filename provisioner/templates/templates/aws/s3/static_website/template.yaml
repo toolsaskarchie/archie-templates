@@ -1,6 +1,6 @@
 metadata:
   name: aws-static-website
-  title: Demo Static Website
+  title: Free Static Website
   subtitle: Perfect for your first AWS deployment
   description: Enterprise-grade static website hosting solution that deploys a fully-customized Archie congratulations page on Amazon S3, designed specifically for your first AWS infrastructure deployment. This template automatically creates an S3 bucket with static website hosting enabled, configures public read access with proper security boundaries, and deploys a professionally designed landing page featuring Archie's branding, deployment details, and responsive design with dark/light theme support. The website includes your project name, deployment timestamp, environment details, and region information dynamically injected during deployment. Built using Infrastructure-as-Code principles with Pulumi, this template demonstrates secure S3 bucket policy configuration, automated public access block management, and zero infrastructure cost operation within AWS Free Tier limits. Perfect for testing deployment workflows, showcasing successful infrastructure automation, or serving as a foundation for more complex static website architectures.
   category: website
@@ -12,15 +12,13 @@ metadata:
   - static
   - free
   - beginner-friendly
-  - aws-static-website
   features:
-  - Instant S3-Backed Web Hosting
-  - Pre-customized Archie Congratulations Page
-  - Automated Public Access Block Management
-  - Secure S3 Bucket Policy Configuration
-  - Zero Infrastructure Cost (AWS Free Tier)
-  - Dark/Light Theme Support with native assets
-  estimated_cost: $0.00 - $0.50/month (Free Tier Eligible)
+  - S3 bucket with website hosting
+  - Archie-branded congratulations page
+  - Dark/light theme support
+  - Public access configured
+  - Zero cost (free tier eligible)
+  estimated_cost: '$0.00 - $0.50/month (S3 free tier: 5GB storage, 20K GET requests)'
   complexity: low
   deployment_time: 1-2 minutes
   free_trial: true
@@ -93,24 +91,39 @@ metadata:
       - No server costs or compute charges
       - Minimal bandwidth costs for small sites
       - No minimum fees or commitments
+  cost_tier: free
+  use_cases:
+  - First deployment with Archie
+  - Learn S3 static website hosting
+  - Test Archie deployment flow
+  required_config: []
+  optional_config:
+  - 'bucket_name - Custom bucket name (default: auto-generated)'
+  - tags - Resource tags
+  outputs:
+  - website_url - The URL to visit your congratulations page
+  - bucket_name - The S3 bucket name
+  - bucket_arn - The bucket ARN
+  next_steps:
+  - Visit the website URL to see your page
+  - Connect your AWS account for more advanced deployments
+  - Browse the Archie marketplace for more templates
+  architecture:
+    summary: Free Static Website Template
   action_name: aws-static-website
   environment: prod
   tier: template
-  use_cases:
-  - Production workloads
-  - Mission-critical applications
-  - Enterprise-grade infrastructure
 resources:
-  index-html:
+  index-aws-html:
     type: aws:s3:BucketObject
-    name: index-html
+    name: index-aws-html
     always_created: true
-    description: Archie-branded congratulations page (index.html)
+    description: Archie-branded congratulations page (index-aws.html)
     smart_defaults:
-      key: index.html
+      key: index-aws.html
       content_type: text/html
       tags:
-        Name: archie-index-html-{environment}
+        Name: archie-index-aws-html-{environment}
         ManagedBy: Archie
   styles-css:
     type: aws:s3:BucketObject
@@ -123,32 +136,51 @@ resources:
       tags:
         Name: archie-styles-css-{environment}
         ManagedBy: Archie
-  archie-logo-png:
-    type: aws:s3:BucketObject
-    name: archie-logo-png
-    always_created: true
-    description: Archie brand logo (archie-logo.png)
-    smart_defaults:
-      key: archie-logo.png
-      content_type: image/png
-      tags:
-        Name: archie-archie-logo-png-{environment}
-        ManagedBy: Archie
   archie-guest-{bucket_name}:
     type: aws:s3:Bucket
     name: archie-guest-{bucket_name}
     always_created: true
-    description: aws:s3:Bucket resource
+    description: S3 bucket for object storage
     smart_defaults:
       bucket: '{bucket_name}'
       force_destroy: true
       tags:
         Name: '{bucket_name}'
+  '{project_name}-public-access':
+    type: aws:s3:BucketPublicAccessBlock
+    name: '{project_name}-public-access'
+    always_created: true
+    description: BucketPublicAccessBlock resource
+    smart_defaults:
+      bucket: '{config_id}'
+      block_public_acls: false
+      block_public_policy: false
+      ignore_public_acls: false
+      restrict_public_buckets: false
+  '{project_name}-website-config':
+    type: aws:s3:BucketWebsiteConfigurationV2
+    name: '{project_name}-website-config'
+    always_created: true
+    description: BucketWebsiteConfigurationV2 resource
+    smart_defaults:
+      bucket: '{config_id}'
+      index_document:
+        suffix: index.html
+      error_document:
+        key: index.html
+  '{project_name}-bucket-policy':
+    type: aws:s3:BucketPolicy
+    name: '{project_name}-bucket-policy'
+    always_created: true
+    description: BucketPolicy resource
+    smart_defaults:
+      bucket: '{config_id}'
+      policy: '{computed}'
   '{project_name}-':
     type: aws:s3:BucketObject
     name: '{project_name}-'
     always_created: true
-    description: aws:s3:BucketObject resource
+    description: BucketObject resource
     smart_defaults:
       bucket: '{config_id}'
       key: '{file_key}'
@@ -215,3 +247,8 @@ configuration:
       description: Get lifecycle rules configuration, empty if not specified.
       group: General Settings
       order: 9
+outputs:
+- name: bucket_name
+  description: 'Output: bucket_name'
+- name: website_url
+  description: 'Output: website_url'

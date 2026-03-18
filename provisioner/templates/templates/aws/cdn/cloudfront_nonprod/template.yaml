@@ -5,6 +5,9 @@ metadata:
   category: networking
   version: latest
   author: InnovativeApps
+  cloud: aws
+  environment: nonprod
+  base_cost: $5/month
   tags:
   - cloudfront
   - cdn
@@ -17,15 +20,72 @@ metadata:
   - Edge Caching Policies for minimized origin load
   - Orchestrated S3 Origin Deployment
   - Built-in SPA routing support
-  estimated_cost: $0 - $2.00/month (traffic dependent)
-  complexity: intermediate
   deployment_time: 5-10 minutes
-  marketplace_group: WEBSITES
+  complexity: intermediate
+  pillars:
+  - title: Operational Excellence
+    score: good
+    score_color: '#f59e0b'
+    description: Automated CDN provisioning with infrastructure as code
+    practices:
+    - Infrastructure as Code via Pulumi for repeatable deployments
+    - Automated S3 origin provisioning via template composition
+    - Standard tagging for cost allocation and resource identification
+    - Configurable cache behaviors for operational flexibility
+    - Built-in error response handling for SPA routing
+  - title: Security
+    score: excellent
+    score_color: '#10b981'
+    description: HTTPS enforcement with WAF-ready edge security
+    practices:
+    - Automatic HTTPS redirect for all viewer connections
+    - TLS 1.2 minimum for origin connections
+    - Origin Access Identity prevents direct S3 bucket access
+    - WAF integration ready for application-layer protection
+    - Geo-restriction support for compliance requirements
+  - title: Reliability
+    score: excellent
+    score_color: '#10b981'
+    description: AWS-managed global edge network with built-in redundancy
+    practices:
+    - 400+ global Points of Presence for high availability
+    - Automatic failover across edge locations
+    - S3 origin with 11 nines durability for content storage
+    - Custom error responses prevent broken user experiences
+    - Origin shield reduces load on origin during traffic spikes
+  - title: Performance Efficiency
+    score: excellent
+    score_color: '#10b981'
+    description: Edge caching delivers sub-millisecond latency globally
+    practices:
+    - Global edge caching reduces latency for end users worldwide
+    - Gzip compression enabled for reduced transfer sizes
+    - Configurable TTL policies for optimal cache hit ratios
+    - HTTP/2 support for multiplexed connections
+    - Price class configuration to target specific edge regions
+  - title: Cost Optimization
+    score: good
+    score_color: '#f59e0b'
+    description: Pay-per-request pricing with price class controls
+    practices:
+    - Pay-per-request model eliminates idle infrastructure costs
+    - Price class selection limits distribution to cost-effective regions
+    - S3 origin eliminates need for always-on compute servers
+    - Edge caching reduces origin transfer costs significantly
+    - Compression reduces data transfer volume and associated costs
+  - title: Sustainability
+    score: good
+    score_color: '#f59e0b'
+    description: Serverless edge delivery minimizes resource consumption
+    practices:
+    - Serverless architecture eliminates idle compute resources
+    - Edge caching reduces redundant data transfers from origin
+    - Shared AWS edge infrastructure for efficient resource usage
+    - Compression reduces bandwidth consumption per request
+    - S3 static hosting avoids over-provisioned web servers
   architecture:
     summary: CloudFront NonProd Template
   action_name: aws-cloudfront-nonprod
-  environment: nonprod
-  cloud: aws
   tier: template
   use_cases:
   - Development and testing environments
@@ -53,16 +113,16 @@ resources:
       viewer_certificate:
         cloudfront_default_certificate: true
       tags: '{tags}'
-  index-html:
+  index-aws-html:
     type: aws:s3:BucketObject
-    name: index-html
+    name: index-aws-html
     always_created: true
-    description: Archie-branded congratulations page (index.html)
+    description: Archie-branded congratulations page (index-aws.html)
     smart_defaults:
-      key: index.html
+      key: index-aws.html
       content_type: text/html
       tags:
-        Name: archie-index-html-{environment}
+        Name: archie-index-aws-html-{environment}
         ManagedBy: Archie
   styles-css:
     type: aws:s3:BucketObject
@@ -74,17 +134,6 @@ resources:
       content_type: text/css
       tags:
         Name: archie-styles-css-{environment}
-        ManagedBy: Archie
-  archie-logo-png:
-    type: aws:s3:BucketObject
-    name: archie-logo-png
-    always_created: true
-    description: Archie brand logo (archie-logo.png)
-    smart_defaults:
-      key: archie-logo.png
-      content_type: image/png
-      tags:
-        Name: archie-archie-logo-png-{environment}
         ManagedBy: Archie
   archie-guest-{bucket_name}:
     type: aws:s3:Bucket
@@ -138,30 +187,6 @@ resources:
       content_type: '{content_type}'
 configuration:
   properties:
-    # ARCHITECTURE DECISION: Origin Type
-    origin_type:
-      type: select
-      title: CloudFront Origin Type
-      description: Choose your content source - this changes what infrastructure gets deployed
-      default: s3_static
-      group: Architecture Decisions
-      isEssential: true
-      architecture_decision: true
-      smart_default_enabled: true
-      resources_impacted:
-        - cloudfront-distribution-{project}
-        - s3-bucket-{project}
-      order: 1
-      options:
-      - label: S3 Static Website
-        value: s3_static
-        description: Static files (HTML, CSS, JS, images)
-      - label: Application Load Balancer
-        value: alb
-        description: Dynamic web application with backend servers
-      - label: Custom HTTP Origin
-        value: custom
-        description: Your own web server or API endpoint
     cloudfront_enabled:
       type: boolean
       title: Cloudfront Enabled
