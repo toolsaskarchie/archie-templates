@@ -199,10 +199,12 @@ class EC2ProdTemplate(InfrastructureTemplate):
             )
             instance_profile_name = self.instance_profile.name
             
-        # Create instance
+        # Create instance — assign SG based on preset
         sgs = base_security_groups + (self.cfg.security_group_ids or [])
-        if vpc_app_sg: sgs.append(vpc_app_sg)
-        if vpc_web_sg: sgs.append(vpc_web_sg)
+        preset = self.cfg.config_preset if hasattr(self.cfg, 'config_preset') else "web-server"
+        preset_sg_map = {"web-server": vpc_web_sg, "alb-backend": vpc_app_sg, "mysql": vpc_db_sg, "wordpress": vpc_web_sg}
+        tier_sg = preset_sg_map.get(preset, vpc_app_sg)
+        if tier_sg: sgs.append(tier_sg)
 
         self.ec2_instance = factory.create(
             "aws:ec2:Instance",
@@ -252,7 +254,7 @@ class EC2ProdTemplate(InfrastructureTemplate):
         """Get template metadata (SOURCE OF TRUTH for extractor)"""
         return {
             "name": "aws-ec2-prod",
-            "title": "EC2 Instance (Production)",
+            "title": "EC2 Instance",
             "description": "Production-ready EC2 infrastructure featuring a high-availability VPC across 3 AZs, enhanced CloudWatch monitoring with automated alarms, and encrypted EBS storage. Optimized for mission-critical workloads.",
             "category": "compute",
             "version": "1.0.0",

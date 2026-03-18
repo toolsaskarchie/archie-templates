@@ -49,11 +49,12 @@ class DynamoDBTableConfig:
 
         # Collect any extra args passed through
         excluded_keys = [
-            'table_name', 'tableName', 'project_name', 'projectName', 'environment', 
+            'table_name', 'tableName', 'project_name', 'projectName', 'environment', 'region',
             'attributes', 'hash_key', 'hashKey', 'range_key', 'rangeKey',
-            'billing_mode', 'billingMode', 'read_capacity', 'readCapacity', 
-            'write_capacity', 'writeCapacity', 'global_secondary_indexes', 
-            'globalSecondaryIndexes', 'server_side_encryption', 'serverSideEncryption', 'ttl'
+            'billing_mode', 'billingMode', 'read_capacity', 'readCapacity',
+            'write_capacity', 'writeCapacity', 'global_secondary_indexes',
+            'globalSecondaryIndexes', 'server_side_encryption', 'serverSideEncryption', 'ttl',
+            'tags', 'cloud',
         ]
         self.extra_args = {k: v for k, v in self.parameters.items() if k not in excluded_keys}
 
