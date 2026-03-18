@@ -38,7 +38,7 @@ class EC2NonProdConfig:
             'instance_type': 't3.micro',
             'ports': [80, 443],
             'script': 'alb-backend.sh',
-            'is_template': True
+            'is_template': False
         }
     }
 
