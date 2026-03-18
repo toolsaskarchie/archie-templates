@@ -278,6 +278,11 @@ class ALBNonProdTemplate(InfrastructureTemplate):
 
         # Exports
         pulumi.export("alb_dns_name", self.alb.dns_name)
+        pulumi.export("alb_arn", self.alb.arn)
+        pulumi.export("target_group_arn", self.target_group.arn)
+        pulumi.export("alb_url", pulumi.Output.concat("http://", self.alb.dns_name))
+        if vpc_id:
+            pulumi.export("vpc_id", vpc_id)
 
         return self.get_outputs()
 

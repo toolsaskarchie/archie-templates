@@ -265,6 +265,8 @@ class AuroraNonProdTemplate(InfrastructureTemplate):
         # ========================================
         pulumi.export("cluster_endpoint", self.cluster.endpoint)
         pulumi.export("cluster_reader_endpoint", self.cluster.reader_endpoint)
+        pulumi.export("port", self.cfg.port)
+        pulumi.export("database_name", self.cfg.db_name)
         pulumi.export("db_password_secret_name", self.db_password_secret.name)
 
         return self.get_outputs()
@@ -283,6 +285,8 @@ class AuroraNonProdTemplate(InfrastructureTemplate):
         outputs = {
             "cluster_id": self.cluster.id,
             "cluster_endpoint": self.cluster.endpoint,
+            "reader_endpoint": self.cluster.reader_endpoint,
+            "port": self.cfg.port,
             "database_name": self.cfg.db_name,
             "master_username": self.cfg.db_username,
             "password_secret": self.db_password_secret.name if self.db_password_secret else None

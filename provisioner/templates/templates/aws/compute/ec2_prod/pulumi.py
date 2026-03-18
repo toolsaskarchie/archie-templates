@@ -218,7 +218,21 @@ class EC2ProdTemplate(InfrastructureTemplate):
             ebs_optimized=True,
             root_block_device={"encrypted": True, "volume_size": 20, "volume_type": "gp3"}
         )
-        
+
+        # Pulumi exports for stack outputs
+        pulumi.export("instance_id", self.ec2_instance.id)
+        pulumi.export("instance_type", self.cfg.instance_type)
+        pulumi.export("public_ip", self.ec2_instance.public_ip)
+        pulumi.export("private_ip", self.ec2_instance.private_ip)
+        pulumi.export("security_group_id", self.ec2_instance.vpc_security_group_ids)
+        if self.vpc_template:
+            vpc_out = self.vpc_template.get_outputs()
+            pulumi.export("vpc_id", vpc_out.get("vpc_id"))
+            pulumi.export("subnet_id", subnet_id)
+        pulumi.export("ssh_command", self.ec2_instance.public_ip.apply(
+            lambda ip: f"ssh -i key.pem ec2-user@{ip}" if ip else "N/A (no public IP)"
+        ))
+
         return self.get_outputs()
     
     def get_outputs(self) -> Dict[str, Any]:

@@ -143,6 +143,7 @@ class RedisNonProdTemplate(InfrastructureTemplate):
 
         pulumi.export('cluster_id', self.cluster.cluster_id)
         pulumi.export('endpoint', self.cluster.cache_nodes[0].address)
+        pulumi.export('port', self.cfg.port)
         pulumi.export('connection_string', connection_string)
 
         return self.get_outputs()

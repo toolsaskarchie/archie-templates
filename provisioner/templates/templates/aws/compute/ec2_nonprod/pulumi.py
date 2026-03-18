@@ -244,7 +244,10 @@ class EC2NonProdTemplate(InfrastructureTemplate):
         for idx in range(1, self.cfg.instance_count + 1):
             name_final = namer.ec2_instance(preset_for_naming, sequence=idx if self.cfg.instance_count > 1 else None)
             sgs = base_security_groups + (self.cfg.security_group_ids or [])
-            if vpc_app_sg: sgs.append(vpc_app_sg)
+            # Assign the right SG tier based on preset
+            preset_sg_map = {"web-server": vpc_web_sg, "alb-backend": vpc_app_sg, "mysql": vpc_db_sg, "wordpress": vpc_web_sg}
+            tier_sg = preset_sg_map.get(self.cfg.config_preset, vpc_app_sg)
+            if tier_sg: sgs.append(tier_sg)
             
             inst = factory.create(
                 "aws:ec2:Instance",
@@ -259,6 +262,21 @@ class EC2NonProdTemplate(InfrastructureTemplate):
                 tags={**tags, "Name": name_final, "ManagedBy": "Archie"}
             )
             self.ec2_instances.append(inst)
+
+        # Pulumi exports for stack outputs
+        first_ec2 = self.ec2_instances[0]
+        pulumi.export("instance_id", first_ec2.id)
+        pulumi.export("instance_type", self.cfg.instance_type)
+        pulumi.export("public_ip", first_ec2.public_ip)
+        pulumi.export("private_ip", first_ec2.private_ip)
+        pulumi.export("security_group_id", first_ec2.vpc_security_group_ids)
+        if self.vpc_template:
+            vpc_out = self.vpc_template.get_outputs()
+            pulumi.export("vpc_id", vpc_out.get("vpc_id"))
+            pulumi.export("subnet_id", vpc_out.get("public_subnet_id"))
+        pulumi.export("ssh_command", first_ec2.public_ip.apply(
+            lambda ip: f"ssh -i key.pem ec2-user@{ip}" if ip else "N/A (no public IP)"
+        ))
 
         return self.get_outputs()
     

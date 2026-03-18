@@ -215,7 +215,12 @@ set -ex
         }))
 
         pulumi.export("kubeconfig", kubeconfig)
+        pulumi.export("cluster_name", self.cluster.name)
         pulumi.export("cluster_endpoint", self.cluster.endpoint)
+        pulumi.export("cluster_arn", self.cluster.arn)
+        pulumi.export("kubeconfig_command", self.cluster.name.apply(
+            lambda name: f"aws eks update-kubeconfig --name {name} --region {self.cfg.region}"
+        ))
 
         return self.get_outputs()
 
@@ -227,6 +232,7 @@ set -ex
         outputs = {
             "cluster_name": self.cluster.name,
             "cluster_endpoint": self.cluster.endpoint,
+            "cluster_arn": self.cluster.arn,
             "vpc_id": self.cfg.vpc_id
         }
         
