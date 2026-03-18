@@ -63,7 +63,7 @@ echo "Downloading website template..."
 cd /usr/share/nginx/html
 
 # Download all website files (using wget since bucket is public)
-wget -O index.html https://archie-static-website-source-prod.s3.amazonaws.com/index-aws.html
+wget -O index.html https://archie-static-website-source-prod.s3.amazonaws.com/ec2-web-success-page.html
 wget -O styles.css https://archie-static-website-source-prod.s3.amazonaws.com/styles.css
 wget -O archie-logo.png https://archie-static-website-source-prod.s3.amazonaws.com/archie-logo.png
 
