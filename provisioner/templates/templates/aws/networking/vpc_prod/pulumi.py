@@ -491,8 +491,10 @@ class VPCProdTemplate(InfrastructureTemplate):
         # 8. Flow Logs to S3 (Production-grade with lifecycle)
         if self.cfg.get('enable_flow_logs', True):
             flow_name = namer.flow_logs("vpc", "all")
-            bucket_name = namer.s3_bucket("flowlogs")
-            
+            import random, string
+            suffix = ''.join(random.choices(string.ascii_lowercase + string.digits, k=6))
+            bucket_name = f"{namer.s3_bucket('flowlogs')}-{suffix}"[:63]
+
             # Create S3 Bucket for Flow Logs
             flow_logs_bucket = factory.create(
                 "aws:s3:Bucket",

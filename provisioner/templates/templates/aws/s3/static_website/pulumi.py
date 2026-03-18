@@ -165,10 +165,13 @@ class S3StaticWebsiteTemplate(InfrastructureTemplate):
             .lower()
             .replace('_', '-'))
         
+        import random, string as _string
+        suffix = ''.join(random.choices(_string.ascii_lowercase + _string.digits, k=6))
         bucket_name = namer.s3_bucket(purpose="website", suffix=clean_project)
         # Ensure it starts with archie-guest if required by role (as per original code comment)
         if not bucket_name.startswith("archie-guest"):
              bucket_name = f"archie-guest-{bucket_name}"
+        bucket_name = f"{bucket_name}-{suffix}"
         # S3 bucket names must be <= 63 characters
         if len(bucket_name) > 63:
             bucket_name = bucket_name[:63].rstrip('-')

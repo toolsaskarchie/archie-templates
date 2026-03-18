@@ -574,7 +574,9 @@ class VPCSimpleNonprodTemplate(InfrastructureTemplate):
         
         if self.cfg.enable_flow_logs:
             # Create S3 bucket for flow logs
-            bucket_name = namer.s3_bucket("flowlogs")
+            import random, string
+            suffix = ''.join(random.choices(string.ascii_lowercase + string.digits, k=6))
+            bucket_name = f"{namer.s3_bucket('flowlogs')}-{suffix}"[:63]
             self.flow_logs_bucket = factory.create(
                 "aws:s3:Bucket",
                 bucket_name,
