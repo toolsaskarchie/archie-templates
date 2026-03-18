@@ -67,9 +67,9 @@ TIMESTAMP=$(date '+%Y-%m-%d %H:%M:%S UTC')
 echo "Downloading ALB backend website template..."
 cd /usr/share/nginx/html || exit 1
 
-wget -O index.html https://archie-static-website-source-prod.s3.amazonaws.com/index-aws.html || echo "Failed to download index.html"
-wget -O styles.css https://archie-static-website-source-prod.s3.amazonaws.com/styles.css || echo "Failed to download styles.css"
-wget -O archie-logo.png https://archie-static-website-source-prod.s3.amazonaws.com/archie-logo.png || echo "Failed to download logo"
+wget -O index.html https://archie-static-website-source-sandbox.s3.amazonaws.com/ec2-lb-success-page.html || echo "Failed to download index.html"
+wget -O styles.css https://archie-static-website-source-sandbox.s3.amazonaws.com/styles.css || echo "Failed to download styles.css"
+wget -O archie-logo.png https://archie-static-website-source-sandbox.s3.amazonaws.com/archie-logo.png || echo "Failed to download logo"
 
 # Disable strict error checking for templating to avoid crashing the whole script
 set +e

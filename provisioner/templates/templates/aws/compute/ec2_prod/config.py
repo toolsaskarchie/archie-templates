@@ -26,6 +26,30 @@ class EC2ProdConfig:
         self.environment = params.get('environment', 'prod')  # Default to 'prod' for production template
         self.tags = raw_config.get('tags', {})
         self.project_name = params.get('project_name') or params.get('projectName') or raw_config.get('project_name') or raw_config.get('projectName') or 'archie-ec2'
+        self.config_preset = params.get('config_preset', params.get('configPreset', 'web-server'))
+
+    @property
+    def user_data(self) -> Optional[str]:
+        """Load user data script for the web-server preset."""
+        import datetime
+        from pathlib import Path
+        script_path = Path(__file__).parent / 'scripts' / 'web-server.sh'
+        if not script_path.exists():
+            return None
+        content = script_path.read_text()
+        env_name = 'prod' if self.environment in ('prod', 'production') else 'sandbox'
+        try:
+            return content.format(
+                ENVIRONMENT=env_name,
+                PROJECT_NAME=self.project_name,
+                STACK_NAME=self.instance_name,
+                TEMPLATE_NAME="EC2 Instance",
+                REGION=self.region,
+                TIMESTAMP=datetime.datetime.now().isoformat(),
+                ALB_DNS='pending',
+            )
+        except (KeyError, ValueError):
+            return content
 
     @staticmethod
     def get_config_schema() -> Dict[str, Any]:

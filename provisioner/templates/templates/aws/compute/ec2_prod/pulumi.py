@@ -215,6 +215,7 @@ class EC2ProdTemplate(InfrastructureTemplate):
             vpc_security_group_ids=sgs,
             iam_instance_profile=instance_profile_name,
             key_name=self.cfg.key_name,
+            user_data=self.cfg.user_data,
             tags={**tags, "Name": instance_name},
             monitoring=True,
             ebs_optimized=True,
