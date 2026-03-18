@@ -116,11 +116,27 @@ Key rules:
 
 ## Tools
 
-| Script | Purpose |
-|--------|---------|
-| `validate-templates.py` | Validate all templates against the framework |
-| `seed-marketplace.py` | Seed DynamoDB marketplace from template.yaml files |
-| `pulumi-extractor.py` (backend) | Generate template.yaml from Python source |
+| Script | Location | Purpose |
+|--------|----------|---------|
+| `validate-templates.py` | This repo | Validate all templates against TEMPLATE_FRAMEWORK.md |
+| `seed-marketplace.py` | This repo | Seed DynamoDB marketplace from template.yaml files |
+| `pulumi-extractor.py` | Backend repo (`scripts/new/generate_templates/`) | Scan pulumi.py → generate template.yaml with resources, config, outputs, metadata |
+
+### Development workflow
+
+```
+Write pulumi.py + config.py
+        ↓
+Run pulumi-extractor → generates template.yaml
+        ↓
+Run validate-templates.py → check compliance
+        ↓
+Run seed-marketplace.py → push to DynamoDB
+        ↓
+Test in UI → catalog card, detail, deploy, outputs
+```
+
+See [TEMPLATE_FRAMEWORK.md § 13](TEMPLATE_FRAMEWORK.md) for the full workflow with commands.
 
 ## Well-Architected alignment
 

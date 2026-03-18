@@ -1080,3 +1080,122 @@ factory.create("aws:s3:Bucket", bucket_name,
     tags={...}
 )
 ```
+
+---
+
+## 13. Template Development Workflow
+
+The complete lifecycle for writing, testing, and publishing an Archie template:
+
+```
+1. Write pulumi.py          ← Infrastructure code (source of truth)
+2. Write config.py          ← Configuration class with parameters
+3. Run pulumi-extractor     ← Generates template.yaml from code
+4. Review template.yaml     ← Verify resources, add descriptions
+5. Run validate-templates   ← Check framework compliance
+6. Run seed-marketplace     ← Push to DynamoDB catalog
+7. Test in UI               ← Verify catalog card, detail, deploy form, outputs
+```
+
+### Step 1-2: Write the template
+
+Follow sections 1-10 of this guide. The `pulumi.py` and `config.py` are the **source of truth** for everything.
+
+### Step 3: Run the Pulumi Extractor
+
+The extractor scans your Python source code and generates/updates `template.yaml` with the correct resources list, config fields, outputs, and metadata.
+
+```bash
+# From the archie-backend repo:
+cd archie-backend
+
+# Extract a single template
+python3 scripts/new/generate_templates/pulumi-extractor.py \
+  --template aws-vpc-nonprod --generate-base
+
+# The extractor:
+# 1. Parses pulumi.py AST to find factory.create() calls → resources list
+# 2. Calls get_metadata() → metadata section (title, pillars, cost, etc.)
+# 3. Calls get_config_schema() → configuration section
+# 4. Finds pulumi.export() calls → outputs section
+# 5. Writes everything to template.yaml
+```
+
+**When to run it:** After writing or modifying any template's `pulumi.py` or `config.py`.
+
+**What it generates vs what you write:**
+
+| Field | Auto-extracted | Manual |
+|-------|---------------|--------|
+| `resources` list | ✓ From `factory.create()` calls | Fix names/descriptions if needed |
+| `metadata` (title, description, cost, pillars) | ✓ From `get_metadata()` | Write in `pulumi.py` first |
+| `configuration` fields | ✓ From `get_config_schema()` | Write in `config.py` first |
+| `outputs` | ✓ From `pulumi.export()` calls | Write in `pulumi.py` first |
+| `featured_outputs` | ✗ | Add manually if needed |
+| `next_steps` | ✗ | Add manually if needed |
+| Resource `description` | Partial (generic) | Improve descriptions manually |
+| Resource `category` | ✗ | Added by seed-marketplace.py |
+
+### Step 4: Review template.yaml
+
+After extraction, review the generated `template.yaml`:
+- Are all resources listed?
+- Do resources have meaningful descriptions?
+- Are all 6 pillars present with `description` field?
+- Are config fields correctly typed and grouped?
+- Are outputs listed?
+
+### Step 5: Validate
+
+```bash
+# From the archie-templates repo:
+cd archie-templates
+
+# Validate all templates
+python3 validate-templates.py
+
+# Validate a specific template
+python3 validate-templates.py --template aws-vpc-nonprod
+
+# Show fix suggestions
+python3 validate-templates.py --fix
+```
+
+The validator checks:
+- `get_metadata()` returns a dict with all 6 pillars + `score_color`
+- `template.yaml` has resources and config sections
+- `pulumi.export()` calls exist
+- No direct Pulumi resource calls (all through `factory.create()`)
+- Config class has `environment`, `region`, `tags`, `project_name`
+
+### Step 6: Seed the marketplace
+
+```bash
+# Dry run (see what would be seeded)
+python3 seed-marketplace.py --env prod --dry-run
+
+# Seed production
+python3 seed-marketplace.py --env prod
+
+# Seed sandbox
+python3 seed-marketplace.py --env sandbox
+
+# Seed both
+python3 seed-marketplace.py --env both
+```
+
+The seeder:
+- Reads `template.yaml` for each template
+- Converts resources dict → list with categories (Networking, Compute, IAM, etc.)
+- Converts config properties → list with `label`, `group`, `helpText`
+- Ensures pillars have `description` field
+- Upserts into DynamoDB marketplace table
+
+### Step 7: Test in UI
+
+After seeding, verify in the app:
+1. **Catalog card** — title, description, cloud badge, cost, complexity
+2. **Detail view** — resources grouped by category, config by group, 6 pillars with descriptions
+3. **Deploy form** — config fields render correctly, defaults pre-filled
+4. **Deploy completion** — Quick Access shows `public_ip`, `ssh_command`, URLs; All Outputs collapsible
+5. **Stacks list** — deployed stack appears with correct name, cloud, status
