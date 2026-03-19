@@ -96,7 +96,7 @@ class VPCProdTemplate(InfrastructureTemplate):
         
         # 1. Create VPC
         vpc_name = self.cfg.get('vpc_name')
-        vpc_resource_name = vpc_name or namer.vpc(cidr=cidr_block)
+        vpc_resource_name = vpc_name or namer.vpc()
         self.vpc = factory.create(
             "aws:ec2:Vpc",
             vpc_resource_name,
@@ -304,7 +304,7 @@ class VPCProdTemplate(InfrastructureTemplate):
             
             # PUBLIC SUBNET
             pub_cidr = public_cidrs[i]
-            pub_sub_name = namer.subnet("public", az, cidr=pub_cidr)
+            pub_sub_name = namer.subnet("public", az)
             pub_subnet = factory.create(
                 "aws:ec2:Subnet",
                 pub_sub_name,
@@ -324,7 +324,7 @@ class VPCProdTemplate(InfrastructureTemplate):
             
             # PRIVATE SUBNET
             priv_cidr = private_cidrs[i]
-            priv_sub_name = namer.subnet("private", az, cidr=priv_cidr)
+            priv_sub_name = namer.subnet("private", az)
             priv_subnet = factory.create(
                 "aws:ec2:Subnet",
                 priv_sub_name,
@@ -491,8 +491,8 @@ class VPCProdTemplate(InfrastructureTemplate):
         # 8. Flow Logs to S3 (Production-grade with lifecycle)
         if self.cfg.get('enable_flow_logs', True):
             flow_name = namer.flow_logs("vpc", "all")
-            import random, string
-            suffix = ''.join(random.choices(string.ascii_lowercase + string.digits, k=6))
+            import hashlib
+            suffix = hashlib.sha256(project_name.encode()).hexdigest()[:6]
             bucket_name = f"{namer.s3_bucket('flowlogs')}-{suffix}"[:63]
 
             # Create S3 Bucket for Flow Logs

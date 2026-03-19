@@ -400,7 +400,7 @@ class VPCSimpleNonprodTemplate(InfrastructureTemplate):
             map_public_ip_on_launch=True,
             tags={**tags, "Name": public_subnet_name, "Tier": "public"}
         )
-        
+
         # Private Subnet
         private_subnet_name = namer.subnet("private", az, cidr=private_cidr)
         self.subnets['private'] = factory.create(
@@ -412,7 +412,7 @@ class VPCSimpleNonprodTemplate(InfrastructureTemplate):
             map_public_ip_on_launch=False,
             tags={**tags, "Name": private_subnet_name, "Tier": "private"}
         )
-        
+
         # Isolated Subnet (conditional)
         if self.cfg.enable_isolated_tier:
             isolated_subnet_name = namer.subnet("isolated", az, cidr=isolated_cidr)
@@ -574,8 +574,8 @@ class VPCSimpleNonprodTemplate(InfrastructureTemplate):
         
         if self.cfg.enable_flow_logs:
             # Create S3 bucket for flow logs
-            import random, string
-            suffix = ''.join(random.choices(string.ascii_lowercase + string.digits, k=6))
+            import hashlib
+            suffix = hashlib.sha256(self.name.encode()).hexdigest()[:6]
             bucket_name = f"{namer.s3_bucket('flowlogs')}-{suffix}"[:63]
             self.flow_logs_bucket = factory.create(
                 "aws:s3:Bucket",
