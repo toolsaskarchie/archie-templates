@@ -347,9 +347,11 @@ class EC2NonProdConfig:
     def instance_type(self) -> str:
         """Get EC2 instance type with preset override."""
         user_type = self.get_parameter('instanceType') or self.get_parameter('instance_type')
-        if (not user_type or self.config_preset != 'custom') and self.config_preset in self.PRESETS:
+        if user_type:
+            return user_type
+        if self.config_preset in self.PRESETS:
             return self.PRESETS[self.config_preset]['instance_type']
-        return user_type or 't3.micro'
+        return 't3.micro'
 
     @property
     def ami_os(self) -> str:
