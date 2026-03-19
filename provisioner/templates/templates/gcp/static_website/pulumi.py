@@ -155,9 +155,11 @@ class GCPStaticWebsiteTemplate(InfrastructureTemplate):
         import string
         
         # 1. Prepare bucket name
-        random_suffix = ''.join(random.choices(string.ascii_lowercase + string.digits, k=8))
+        random_suffix = ''.join(random.choices(string.ascii_lowercase + string.digits, k=6))
         safe_name = self.name.lower().replace('_', '-').replace(' ', '-')
-        bucket_name = f"archie-gcp-{safe_name}-{random_suffix}"[:63].strip('-')
+        # GCS bucket names max 63 chars. Pulumi adds ~8 char suffix, so cap at 54.
+        bucket_name = f"gcp-{safe_name}"[:47] + f"-{random_suffix}"
+        bucket_name = bucket_name.strip('-')
         
         # 2. Create Bucket — use bucket_name as Pulumi logical name (also becomes GCP name)
         self.bucket = factory.create(
