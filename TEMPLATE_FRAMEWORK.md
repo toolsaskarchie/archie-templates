@@ -6,6 +6,18 @@ All examples reference the VPC NonProd template (`templates/aws/networking/vpc_n
 
 ---
 
+## Golden Rules
+
+**Rule #1: Always pass complete config.** Never cherry-pick params for child templates. Use `vpc_config = {**self.config}` then override only what the child specifically needs different (like `project_name`). Each consumer reads what it needs, ignores the rest.
+
+**Rule #2: Export everything.** Every generated value — resource names, CIDRs, bucket names, random suffixes — must be exported via `pulumi.export()`. These are injected back as config on upgrade to prevent resource replacement.
+
+**Rule #3: Prefer injected values.** Templates must check config for existing values before generating new ones. `bucket_name = self.cfg.get('flow_logs_bucket') or generate_new_name()`. This makes upgrades safe.
+
+**Rule #4: Use typed getters.** Boolean properties use `self.get_bool()`, integers use `self.get_int()`, never raw `bool()` or `int()`. Values arrive from DynamoDB (Decimal), frontend (string "1"/"true"), or Python (bool). The typed getters handle all sources.
+
+---
+
 ## Table of Contents
 
 1. [Template Anatomy](#1-template-anatomy)
@@ -21,6 +33,7 @@ All examples reference the VPC NonProd template (`templates/aws/networking/vpc_n
 11. [Pre-Publish Checklist](#11-pre-publish-checklist)
 12. [Common Mistakes](#12-common-mistakes)
 13. [Template Development Workflow](#13-template-development-workflow)
+14. [Upgrade Compatibility](#14-upgrade-compatibility)
 
 ---
 

@@ -38,6 +38,15 @@ class VPCProdTemplate(InfrastructureTemplate):
     - Private Service Access: VPC Endpoints for S3 and DynamoDB
     """
     
+    @staticmethod
+    def _to_bool(val) -> bool:
+        """Convert any value to bool. Handles: True, 1, '1', 'true', Decimal(1)."""
+        if isinstance(val, bool): return val
+        if isinstance(val, (int, float)): return val != 0
+        if isinstance(val, str): return val.lower() in ('true', '1', 'yes')
+        try: return int(val) != 0
+        except (TypeError, ValueError): return bool(val)
+
     def __init__(self, name: str = None, config: Dict[str, Any] = None, aws: Dict[str, Any] = None, **kwargs):
         """Initialize VPC Prod template"""
         raw_config = config or aws or kwargs or {}
@@ -101,8 +110,8 @@ class VPCProdTemplate(InfrastructureTemplate):
             "aws:ec2:Vpc",
             vpc_resource_name,
             cidr_block=cidr_block,
-            enable_dns_support=self.get_bool('enable_dns_support', True),
-            enable_dns_hostnames=self.get_bool('enable_dns_hostnames', True),
+            enable_dns_support=self._to_bool(self.config.get('enable_dns_support', self.config.get('parameters', {}).get('enable_dns_support', True))),
+            enable_dns_hostnames=self._to_bool(self.config.get('enable_dns_hostnames', self.config.get('parameters', {}).get('enable_dns_hostnames', True))),
             instance_tenancy=self.cfg.get('instance_tenancy', 'default'),
             tags={
                 "Name": vpc_resource_name,
