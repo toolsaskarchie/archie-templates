@@ -298,13 +298,16 @@ class VPCProdTemplate(InfrastructureTemplate):
         )
         
         # 6. Create 3 AZs worth of subnets
+        # On upgrade (vpc_name injected from outputs), skip CIDR in subnet names
+        # to match existing resource names from the original deploy
+        is_upgrade = bool(vpc_name)
         for i in range(3):
             az = az_list[i]
             idx = i + 1
-            
+
             # PUBLIC SUBNET
             pub_cidr = public_cidrs[i]
-            pub_sub_name = namer.subnet("public", az, cidr=pub_cidr)
+            pub_sub_name = namer.subnet("public", az) if is_upgrade else namer.subnet("public", az, cidr=pub_cidr)
             pub_subnet = factory.create(
                 "aws:ec2:Subnet",
                 pub_sub_name,
@@ -324,7 +327,7 @@ class VPCProdTemplate(InfrastructureTemplate):
             
             # PRIVATE SUBNET
             priv_cidr = private_cidrs[i]
-            priv_sub_name = namer.subnet("private", az, cidr=priv_cidr)
+            priv_sub_name = namer.subnet("private", az) if is_upgrade else namer.subnet("private", az, cidr=priv_cidr)
             priv_subnet = factory.create(
                 "aws:ec2:Subnet",
                 priv_sub_name,
@@ -345,7 +348,7 @@ class VPCProdTemplate(InfrastructureTemplate):
             
             # ISOLATED SUBNET
             iso_cidr = isolated_cidrs[i]
-            iso_sub_name = namer.subnet("isolated", az, cidr=iso_cidr)
+            iso_sub_name = namer.subnet("isolated", az) if is_upgrade else namer.subnet("isolated", az, cidr=iso_cidr)
             iso_subnet = factory.create(
                 "aws:ec2:Subnet",
                 iso_sub_name,
@@ -492,13 +495,15 @@ class VPCProdTemplate(InfrastructureTemplate):
         if self.cfg.get('enable_flow_logs', True):
             flow_name = namer.flow_logs("vpc", "all")
             # Reuse existing bucket name on upgrade, generate deterministic name on first deploy
-            existing_bucket = self.cfg.get('flow_logs_bucket_name', '')
+            existing_bucket = self.cfg.get('flow_logs_bucket_name', '') or self.cfg.get('flow_logs_bucket', '')
             if existing_bucket:
                 bucket_name = existing_bucket
             else:
                 import hashlib
                 suffix = hashlib.sha256(project_name.encode()).hexdigest()[:6]
                 bucket_name = f"{namer.s3_bucket('flowlogs')}-{suffix}"[:63]
+
+            self._flow_logs_bucket_name = bucket_name
 
             # Create S3 Bucket for Flow Logs
             flow_logs_bucket = factory.create(
@@ -558,6 +563,8 @@ class VPCProdTemplate(InfrastructureTemplate):
         pulumi.export("vpc_id", vpc_id)
         pulumi.export("vpc_name", vpc_resource_name)
         pulumi.export("vpc_cidr", cidr_block)
+        if hasattr(self, '_flow_logs_bucket_name'):
+            pulumi.export("flow_logs_bucket", self._flow_logs_bucket_name)
         pulumi.export("public_subnet_ids", [self.subnets[f"public-{i}"].id for i in range(1, 4)])
         pulumi.export("private_subnet_ids", [self.subnets[f"private-{i}"].id for i in range(1, 4)])
         pulumi.export("isolated_subnet_ids", [self.subnets[f"isolated-{i}"].id for i in range(1, 4)])
