@@ -573,10 +573,14 @@ class VPCSimpleNonprodTemplate(InfrastructureTemplate):
         # =================================================================
         
         if self.cfg.enable_flow_logs:
-            # Create S3 bucket for flow logs
-            import hashlib
-            suffix = hashlib.sha256(self.name.encode()).hexdigest()[:6]
-            bucket_name = f"{namer.s3_bucket('flowlogs')}-{suffix}"[:63]
+            # Reuse existing bucket name on upgrade, generate deterministic name on first deploy
+            existing_bucket = self.cfg.get('flow_logs_bucket_name', '')
+            if existing_bucket:
+                bucket_name = existing_bucket
+            else:
+                import hashlib
+                suffix = hashlib.sha256(self.name.encode()).hexdigest()[:6]
+                bucket_name = f"{namer.s3_bucket('flowlogs')}-{suffix}"[:63]
             self.flow_logs_bucket = factory.create(
                 "aws:s3:Bucket",
                 bucket_name,

@@ -491,9 +491,14 @@ class VPCProdTemplate(InfrastructureTemplate):
         # 8. Flow Logs to S3 (Production-grade with lifecycle)
         if self.cfg.get('enable_flow_logs', True):
             flow_name = namer.flow_logs("vpc", "all")
-            import hashlib
-            suffix = hashlib.sha256(project_name.encode()).hexdigest()[:6]
-            bucket_name = f"{namer.s3_bucket('flowlogs')}-{suffix}"[:63]
+            # Reuse existing bucket name on upgrade, generate deterministic name on first deploy
+            existing_bucket = self.cfg.get('flow_logs_bucket_name', '')
+            if existing_bucket:
+                bucket_name = existing_bucket
+            else:
+                import hashlib
+                suffix = hashlib.sha256(project_name.encode()).hexdigest()[:6]
+                bucket_name = f"{namer.s3_bucket('flowlogs')}-{suffix}"[:63]
 
             # Create S3 Bucket for Flow Logs
             flow_logs_bucket = factory.create(
