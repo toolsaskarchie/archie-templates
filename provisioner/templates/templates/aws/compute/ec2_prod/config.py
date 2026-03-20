@@ -7,7 +7,7 @@ class EC2ProdConfig:
     """Parsed and validated configuration for EC2 Production Template"""
     
     def __init__(self, raw_config: Dict[str, Any]):
-        params = raw_config.get('parameters', {}).get('aws', {})
+        params = raw_config.get('parameters', {}).get('aws', {}) or raw_config.get('parameters', {})
         self.vpc_mode = params.get('vpc_mode', 'new')
         self.vpc_id = params.get('vpc_id')
         self.vpc_cidr = params.get('vpc_cidr', '10.0.0.0/16')

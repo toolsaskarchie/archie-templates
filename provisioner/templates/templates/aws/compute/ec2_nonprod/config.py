@@ -55,7 +55,7 @@ class EC2NonProdConfig:
 
     def __init__(self, raw_config: Dict[str, Any]):
         self.raw_config = raw_config
-        self.parameters = self.raw_config.get('parameters', {}).get('aws', {})
+        self.parameters = self.raw_config.get('parameters', {}).get('aws', {}) or self.raw_config.get('parameters', {})
         self.environment = 'nonprod'
         self.region = self.raw_config.get('region', 'us-east-1')
         self.tags = self.raw_config.get('tags', {})

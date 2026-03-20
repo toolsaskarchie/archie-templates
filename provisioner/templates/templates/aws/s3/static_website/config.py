@@ -11,7 +11,7 @@ class StaticWebsiteConfig:
     
     def __init__(self, raw_config: Dict[str, Any]):
         self.raw_config = raw_config
-        self.parameters = self.raw_config.get('parameters', {}).get('aws', {})
+        self.parameters = self.raw_config.get('parameters', {}).get('aws', {}) or self.raw_config.get('parameters', {})
         
         # Core attributes accessed directly in pulumi.py
         self.environment = self.raw_config.get('environment', 'nonprod')

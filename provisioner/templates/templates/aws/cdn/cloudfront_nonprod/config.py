@@ -14,7 +14,7 @@ class CloudFrontNonProdConfig:
 
     def __init__(self, raw_config: Dict[str, Any]):
         self.raw_config = raw_config
-        self.parameters = self.raw_config.get('parameters', {}).get('aws', {})
+        self.parameters = self.raw_config.get('parameters', {}).get('aws', {}) or self.raw_config.get('parameters', {})
 
         # Load defaults from YAML file
         template_dir = Path(__file__).parent
@@ -58,8 +58,8 @@ class CloudFrontNonProdConfig:
 
     @property
     def cloudfront_price_class(self) -> str:
-        """Get CloudFront price class from defaults.yaml."""
-        return self.config_loader.get('cloudfront.price_class', 'PriceClass_100')
+        """Get CloudFront price class — checks flat config (governance) then defaults.yaml."""
+        return self.get_parameter('cloudfront_price_class') or self.config_loader.get('cloudfront.price_class', 'PriceClass_100')
 
     @property
     def cloudfront_default_root_object(self) -> str:

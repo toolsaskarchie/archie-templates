@@ -8,7 +8,7 @@ class DynamoDBTableConfig:
     def __init__(self, raw_config: Dict[str, Any]):
         """Parse configuration from user input"""
         self.raw_config = raw_config
-        self.parameters = raw_config.get('parameters', {}).get('aws', {})
+        self.parameters = raw_config.get('parameters', {}).get('aws', {}) or raw_config.get('parameters', {})
 
         # Metadata
         self.environment = raw_config.get('environment', 'dev')

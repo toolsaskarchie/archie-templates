@@ -27,7 +27,7 @@ class RDSPostgresNonProdConfig:
         self.raw_config = raw_config
 
         # Extract AWS-specific parameters
-        self.parameters = self.raw_config.get('parameters', {}).get('aws', {})
+        self.parameters = self.raw_config.get('parameters', {}).get('aws', {}) or self.raw_config.get('parameters', {})
 
         # Core deployment attributes
         self.environment = self.raw_config.get('environment', 'nonprod')
