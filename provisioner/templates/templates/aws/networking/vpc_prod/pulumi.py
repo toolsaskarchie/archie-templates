@@ -106,12 +106,18 @@ class VPCProdTemplate(InfrastructureTemplate):
         # 1. Create VPC
         vpc_name = self.cfg.get('vpc_name')
         vpc_resource_name = vpc_name or namer.vpc()
+        raw_dns_support = self.config.get('enable_dns_support', self.config.get('parameters', {}).get('enable_dns_support', True))
+        raw_dns_hostnames = self.config.get('enable_dns_hostnames', self.config.get('parameters', {}).get('enable_dns_hostnames', True))
+        dns_support = self._to_bool(raw_dns_support)
+        dns_hostnames = self._to_bool(raw_dns_hostnames)
+        print(f"[VPC DEBUG] enable_dns_support: raw={raw_dns_support} ({type(raw_dns_support).__name__}) -> {dns_support} ({type(dns_support).__name__})")
+        print(f"[VPC DEBUG] enable_dns_hostnames: raw={raw_dns_hostnames} ({type(raw_dns_hostnames).__name__}) -> {dns_hostnames} ({type(dns_hostnames).__name__})")
         self.vpc = factory.create(
             "aws:ec2:Vpc",
             vpc_resource_name,
             cidr_block=cidr_block,
-            enable_dns_support=self._to_bool(self.config.get('enable_dns_support', self.config.get('parameters', {}).get('enable_dns_support', True))),
-            enable_dns_hostnames=self._to_bool(self.config.get('enable_dns_hostnames', self.config.get('parameters', {}).get('enable_dns_hostnames', True))),
+            enable_dns_support=dns_support,
+            enable_dns_hostnames=dns_hostnames,
             instance_tenancy=self.cfg.get('instance_tenancy', 'default'),
             tags={
                 "Name": vpc_resource_name,
