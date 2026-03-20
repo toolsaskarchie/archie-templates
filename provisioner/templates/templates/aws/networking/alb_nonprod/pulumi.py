@@ -94,6 +94,12 @@ class ALBNonProdTemplate(InfrastructureTemplate):
                 "environment": self.cfg.environment,
                 "ssh_access_ip": self.cfg.ssh_access_ip or '',
             }
+            # Pass through upgrade outputs so VPC reuses existing resource names
+            raw = self.config.get('parameters', self.config) if isinstance(self.config, dict) else {}
+            for key in ('vpc_name', 'flow_logs_bucket', 'flow_logs_bucket_name', 'enable_dns_support', 'enable_dns_hostnames', 'enable_flow_logs', 'flow_log_retention', 'enable_ssm_endpoints'):
+                val = raw.get(key)
+                if val is not None:
+                    vpc_config[key] = val
             self.vpc_template = VPCProdTemplate(name=f"{self.name}-vpc", config=vpc_config)
             self.vpc_template.create_infrastructure()
             vpc_outputs = self.vpc_template.get_outputs()
