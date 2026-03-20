@@ -128,7 +128,7 @@ class VPCSimpleNonprodTemplate(InfrastructureTemplate):
         # LAYER 1: VPC Core
         # =================================================================
         
-        vpc_name = namer.vpc(cidr=vpc_cidr)
+        vpc_name = self.cfg.get('vpc_name') or namer.vpc(cidr=vpc_cidr)
         self.vpc = factory.create(
             "aws:ec2:Vpc",
             vpc_name,
@@ -583,7 +583,7 @@ class VPCSimpleNonprodTemplate(InfrastructureTemplate):
         
         if self.cfg.enable_flow_logs:
             # Reuse existing bucket name on upgrade, generate deterministic name on first deploy
-            existing_bucket = self.cfg.get('flow_logs_bucket_name', '')
+            existing_bucket = self.cfg.get('flow_logs_bucket_name', '') or self.cfg.get('flow_logs_bucket', '')
             if existing_bucket:
                 bucket_name = existing_bucket
             else:
@@ -630,6 +630,7 @@ class VPCSimpleNonprodTemplate(InfrastructureTemplate):
         # =================================================================
         
         pulumi.export("vpc_id", self.vpc.id)
+        pulumi.export("vpc_name", vpc_name)
         pulumi.export("vpc_cidr", self.vpc.cidr_block)
         pulumi.export("vpc_arn", self.vpc.arn)
         
