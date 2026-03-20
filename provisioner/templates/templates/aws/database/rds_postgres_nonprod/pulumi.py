@@ -231,13 +231,13 @@ class RDSPostgresNonProdTemplate(InfrastructureTemplate):
             vpc_security_group_ids=[sg_id],
             db_name=self.cfg.db_name,
             storage_type="gp3",
-            storage_encrypted=bool(self.cfg.storage_encrypted),
-            publicly_accessible=bool(self.cfg.publicly_accessible),
-            multi_az=bool(self.cfg.multi_az),
+            storage_encrypted=self.get_bool("storage_encrypted", True),
+            publicly_accessible=self.get_bool("publicly_accessible", False),
+            multi_az=self.get_bool("multi_az", False),
             backup_retention_period=self.cfg.backup_retention_days,
             skip_final_snapshot=self.cfg.skip_final_snapshot,
             deletion_protection=self.cfg.deletion_protection_enabled,
-            performance_insights_enabled=bool(self.cfg.enable_performance_insights),
+            performance_insights_enabled=self.get_bool("enable_performance_insights", False),
             tags={**tags, "Name": db_identifier}
         )
 

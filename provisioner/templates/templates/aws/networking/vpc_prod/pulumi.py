@@ -101,8 +101,8 @@ class VPCProdTemplate(InfrastructureTemplate):
             "aws:ec2:Vpc",
             vpc_resource_name,
             cidr_block=cidr_block,
-            enable_dns_support=bool(self.cfg.get('enable_dns_support', True)),
-            enable_dns_hostnames=bool(self.cfg.get('enable_dns_hostnames', True)),
+            enable_dns_support=self.get_bool('enable_dns_support', True),
+            enable_dns_hostnames=self.get_bool('enable_dns_hostnames', True),
             instance_tenancy=self.cfg.get('instance_tenancy', 'default'),
             tags={
                 "Name": vpc_resource_name,

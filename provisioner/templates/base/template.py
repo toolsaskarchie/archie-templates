@@ -146,7 +146,35 @@ class InfrastructureTemplate(ABC):
         
         # 3. Final fallback to top-level config or default
         return self.config.get(key, default)
-        
+
+    def get_bool(self, key: str, default: bool = False) -> bool:
+        """Get a parameter as bool. Handles: True, 1, '1', 'true', Decimal(1)."""
+        val = self.get_parameter(key, default)
+        if isinstance(val, bool):
+            return val
+        if isinstance(val, (int, float)):
+            return val != 0
+        if isinstance(val, str):
+            return val.lower() in ('true', '1', 'yes')
+        # Handle Decimal
+        try:
+            return int(val) != 0
+        except (TypeError, ValueError):
+            return bool(val)
+
+    def get_int(self, key: str, default: int = 0) -> int:
+        """Get a parameter as int. Handles: '30', Decimal(30), 30.0."""
+        val = self.get_parameter(key, default)
+        try:
+            return int(val)
+        except (TypeError, ValueError):
+            return default
+
+    def get_str(self, key: str, default: str = '') -> str:
+        """Get a parameter as string."""
+        val = self.get_parameter(key, default)
+        return str(val) if val is not None else default
+
     @abstractmethod
     def create_infrastructure(self) -> Dict[str, Any]:
         """Create the complete infrastructure"""
