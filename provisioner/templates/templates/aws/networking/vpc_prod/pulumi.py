@@ -304,7 +304,7 @@ class VPCProdTemplate(InfrastructureTemplate):
             
             # PUBLIC SUBNET
             pub_cidr = public_cidrs[i]
-            pub_sub_name = namer.subnet("public", az)
+            pub_sub_name = namer.subnet("public", az, cidr=pub_cidr)
             pub_subnet = factory.create(
                 "aws:ec2:Subnet",
                 pub_sub_name,
@@ -324,7 +324,7 @@ class VPCProdTemplate(InfrastructureTemplate):
             
             # PRIVATE SUBNET
             priv_cidr = private_cidrs[i]
-            priv_sub_name = namer.subnet("private", az)
+            priv_sub_name = namer.subnet("private", az, cidr=priv_cidr)
             priv_subnet = factory.create(
                 "aws:ec2:Subnet",
                 priv_sub_name,
