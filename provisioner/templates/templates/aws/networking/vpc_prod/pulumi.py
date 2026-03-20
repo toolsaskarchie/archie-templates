@@ -363,7 +363,7 @@ class VPCProdTemplate(InfrastructureTemplate):
             
             # ISOLATED SUBNET
             iso_cidr = isolated_cidrs[i]
-            iso_sub_name = namer.subnet("isolated", az) if is_upgrade else namer.subnet("isolated", az, cidr=iso_cidr)
+            iso_sub_name = namer.subnet("isolated", az, cidr=iso_cidr)
             iso_subnet = factory.create(
                 "aws:ec2:Subnet",
                 iso_sub_name,
