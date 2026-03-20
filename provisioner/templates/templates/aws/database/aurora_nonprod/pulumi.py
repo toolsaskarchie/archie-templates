@@ -234,7 +234,7 @@ class AuroraNonProdTemplate(InfrastructureTemplate):
             db_subnet_group_name=db_subnet_group_name,
             vpc_security_group_ids=[sg_id],
             backup_retention_period=self.cfg.backup_retention_days,
-            storage_encrypted=self.cfg.storage_encrypted,
+            storage_encrypted=bool(self.cfg.storage_encrypted),
             availability_zones=availability_zones,
             deletion_protection=self.cfg.deletion_protection_enabled,
             skip_final_snapshot=self.cfg.skip_final_snapshot,
@@ -254,8 +254,8 @@ class AuroraNonProdTemplate(InfrastructureTemplate):
                 instance_class=self.cfg.instance_class,
                 engine=self.cfg.engine,
                 engine_version=self.cfg.engine_version,
-                publicly_accessible=self.cfg.publicly_accessible,
-                performance_insights_enabled=self.cfg.enable_performance_insights,
+                publicly_accessible=bool(self.cfg.publicly_accessible),
+                performance_insights_enabled=bool(self.cfg.enable_performance_insights),
                 tags={**tags, "Name": instance_identifier}
             )
             self.instances.append(instance)
