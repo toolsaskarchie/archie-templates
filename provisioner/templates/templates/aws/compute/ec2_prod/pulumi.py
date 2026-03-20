@@ -93,16 +93,11 @@ class EC2ProdTemplate(InfrastructureTemplate):
             print(f"[EC2-PROD] Calling VPC production template for instance '{instance_name}'")
             vpc_cidr = self.cfg.vpc_cidr or generate_random_vpc_cidr()
             
-            vpc_config = {
-                "parameters": {
-                    "aws": {
-                        "project_name": self.cfg.project_name,
-                        "cidr_block": vpc_cidr,
-                        "environment": self.cfg.environment
-                    }
-                }
-            }
-            
+            vpc_config = {**(self.config if isinstance(self.config, dict) else {})}
+            if 'parameters' in vpc_config: vpc_config.update(vpc_config.pop('parameters'))
+            vpc_config["project_name"] = self.cfg.project_name
+            vpc_config["cidr_block"] = vpc_cidr
+            vpc_config["environment"] = self.cfg.environment
             self.vpc_template = VPCProdTemplate(name=f"{self.name}-vpc", config=vpc_config)
             self.vpc_template.create_infrastructure()
             vpc_outputs = self.vpc_template.get_outputs()

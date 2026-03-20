@@ -111,21 +111,15 @@ class EC2NonProdTemplate(InfrastructureTemplate):
                 vpc_cidr = 'random'
             vpc_cidr = self.cfg.cidr_block or generate_random_vpc_cidr()
             
-            vpc_config = {
-                "parameters": {
-                    "aws": {
-                        "project_name": self.cfg.project_name,
-                        "cidr_block": vpc_cidr,
-                        "environment": self.cfg.environment,
-                        "vpc_name": self.cfg.vpc_name,
-                        "enable_nat_gateway": self.cfg.enable_nat_gateway,
-                        "enable_ssm_endpoints": self.cfg.enable_ssm_endpoints,
-                        "enable_s3_endpoint": self.cfg.enable_s3_endpoint,
-                        "enable_dynamodb_endpoint": self.cfg.enable_dynamodb_endpoint
-                    }
-                }
-            }
-
+            vpc_config = {**(self.config if isinstance(self.config, dict) else {})}
+            if 'parameters' in vpc_config: vpc_config.update(vpc_config.pop('parameters'))
+            vpc_config["project_name"] = self.cfg.project_name
+            vpc_config["cidr_block"] = vpc_cidr
+            vpc_config["environment"] = self.cfg.environment
+            vpc_config["enable_nat_gateway"] = self.cfg.enable_nat_gateway
+            vpc_config["enable_ssm_endpoints"] = self.cfg.enable_ssm_endpoints
+            vpc_config["enable_s3_endpoint"] = self.cfg.enable_s3_endpoint
+            vpc_config["enable_dynamodb_endpoint"] = self.cfg.enable_dynamodb_endpoint
             self.vpc_template = VPCSimpleNonprodTemplate(name=f"{self.name}-vpc", config=vpc_config)
             self.vpc_template.create_infrastructure()
             vpc_outputs = self.vpc_template.get_outputs()

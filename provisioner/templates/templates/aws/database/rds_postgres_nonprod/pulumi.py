@@ -111,12 +111,12 @@ class RDSPostgresNonProdTemplate(InfrastructureTemplate):
             if self.cfg.use_random_vpc_cidr:
                 vpc_cidr = generate_random_vpc_cidr()
             
-            vpc_config = {
-                "project_name": f"{self.name}-vpc",
-                "cidr_block": vpc_cidr,
-                "environment": self.cfg.environment,
-                "az_1": f"{self.cfg.region}a"
-            }
+            vpc_config = {**(self.config if isinstance(self.config, dict) else {})}
+            if "parameters" in vpc_config: vpc_config.update(vpc_config.pop("parameters"))
+            vpc_config["project_name"] = f"{self.name}-vpc"
+            vpc_config["cidr_block"] = vpc_cidr
+            vpc_config["environment"] = self.cfg.environment
+            vpc_config["az_1"] = f"{self.cfg.region}a"
             
             self.vpc_template = VPCProdTemplate(
                 name=f"{self.name}-vpc",

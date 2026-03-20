@@ -105,12 +105,12 @@ class RDSPostgresTemplate(InfrastructureTemplate):
                 vpc_cidr = generate_random_vpc_cidr()
             
             # Call VPC Production Template (Layer 4 template)
-            vpc_config = {
-                "project_name": self.cfg.project_name,
-                "cidr_block": vpc_cidr,
-                "environment": "prod",
-                "ssh_access_ip": self.cfg.get_parameter('ssh_access_ip', '')
-            }
+            vpc_config = {**(self.config if isinstance(self.config, dict) else {})}
+            if 'parameters' in vpc_config: vpc_config.update(vpc_config.pop('parameters'))
+            vpc_config["project_name"] = self.cfg.project_name
+            vpc_config["cidr_block"] = vpc_cidr
+            vpc_config["environment"] = "prod"
+            vpc_config["ssh_access_ip"] = self.cfg.get_parameter('ssh_access_ip', '')
             
             self.vpc_template = VPCProdTemplate(
                 name=f"{self.name}-vpc",

@@ -88,18 +88,15 @@ class ALBNonProdTemplate(InfrastructureTemplate):
         alb_sg_id = None
         
         if self.cfg.vpc_mode == 'new':
-            vpc_config = {
-                "project_name": f"{self.name}-vpc",
-                "cidr_block": self.cfg.vpc_cidr,
-                "environment": self.cfg.environment,
-                "ssh_access_ip": self.cfg.ssh_access_ip or '',
-            }
-            # Pass through upgrade outputs so VPC reuses existing resource names
-            raw = self.config.get('parameters', self.config) if isinstance(self.config, dict) else {}
-            for key in ('vpc_name', 'flow_logs_bucket', 'flow_logs_bucket_name', 'enable_dns_support', 'enable_dns_hostnames', 'enable_flow_logs', 'flow_log_retention', 'enable_ssm_endpoints'):
-                val = raw.get(key)
-                if val is not None:
-                    vpc_config[key] = val
+            # Pass ALL parent config to VPC (includes injected upgrade outputs)
+            # Override only what the child specifically needs different
+            vpc_config = {**(self.config if isinstance(self.config, dict) else {})}
+            if 'parameters' in vpc_config:
+                vpc_config.update(vpc_config.pop('parameters'))
+            vpc_config["project_name"] = f"{self.name}-vpc"
+            vpc_config["cidr_block"] = self.cfg.vpc_cidr
+            vpc_config["environment"] = self.cfg.environment
+            vpc_config["ssh_access_ip"] = self.cfg.ssh_access_ip or ''
             self.vpc_template = VPCProdTemplate(name=f"{self.name}-vpc", config=vpc_config)
             self.vpc_template.create_infrastructure()
             vpc_outputs = self.vpc_template.get_outputs()
