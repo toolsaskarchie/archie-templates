@@ -313,16 +313,14 @@ class VPCProdTemplate(InfrastructureTemplate):
         )
         
         # 6. Create 3 AZs worth of subnets
-        # On upgrade (vpc_name injected from outputs), skip CIDR in subnet names
-        # to match existing resource names from the original deploy
-        is_upgrade = bool(vpc_name)
+        # Always use CIDR in subnet names — must match the original deploy's resource names
         for i in range(3):
             az = az_list[i]
             idx = i + 1
 
             # PUBLIC SUBNET
             pub_cidr = public_cidrs[i]
-            pub_sub_name = namer.subnet("public", az) if is_upgrade else namer.subnet("public", az, cidr=pub_cidr)
+            pub_sub_name = namer.subnet("public", az, cidr=pub_cidr)
             pub_subnet = factory.create(
                 "aws:ec2:Subnet",
                 pub_sub_name,
@@ -339,10 +337,10 @@ class VPCProdTemplate(InfrastructureTemplate):
                 }
             )
             self.subnets[f"public-{idx}"] = pub_subnet
-            
+
             # PRIVATE SUBNET
             priv_cidr = private_cidrs[i]
-            priv_sub_name = namer.subnet("private", az) if is_upgrade else namer.subnet("private", az, cidr=priv_cidr)
+            priv_sub_name = namer.subnet("private", az, cidr=priv_cidr)
             priv_subnet = factory.create(
                 "aws:ec2:Subnet",
                 priv_sub_name,
