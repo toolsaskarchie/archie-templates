@@ -103,8 +103,7 @@ class VPCSimpleNonprodTemplate(InfrastructureTemplate):
         
         # DEBUG: what does the template actually see?
         print(f"[VPC-DEBUG] raw config keys: {list(self.config.keys()) if isinstance(self.config, dict) else 'NOT DICT'}")
-        print(f"[VPC-DEBUG] cfg.parameters: {self.cfg.parameters}")
-        print(f"[VPC-DEBUG] use_custom_cidr={self.cfg.get('use_custom_cidr')}, custom_cidr_block={self.cfg.get('custom_cidr_block')}, vpc_cidr={self.cfg.get('vpc_cidr')}, vpc_name={self.cfg.get('vpc_name')}")
+        print(f"[VPC-DEBUG] use_custom_cidr={self.cfg.get('use_custom_cidr')}, custom_cidr_block={self.cfg.get('custom_cidr_block')}, vpc_name={self.cfg.get('vpc_name')}")
 
         # Generate random CIDR or use custom CIDR based on configuration
         use_custom = self.cfg.get('use_custom_cidr', False)
