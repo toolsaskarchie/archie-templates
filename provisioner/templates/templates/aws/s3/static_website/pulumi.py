@@ -168,7 +168,7 @@ class S3StaticWebsiteTemplate(InfrastructureTemplate):
         import random, string as _string
         suffix = ''.join(random.choices(_string.ascii_lowercase + _string.digits, k=6))
         # Reuse existing bucket name on upgrade (has random suffix — can't regenerate)
-        existing_bucket = self.config.get('s3_bucket_name') or self.config.get('bucket_name')
+        existing_bucket = (self.config.get('s3_bucket_name') or self.config.get('parameters', {}).get('s3_bucket_name')) or self.config.get('bucket_name')
         if existing_bucket:
             bucket_name = existing_bucket
         else:

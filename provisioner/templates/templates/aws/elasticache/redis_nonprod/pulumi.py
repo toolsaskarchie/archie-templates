@@ -84,7 +84,7 @@ class RedisNonProdTemplate(InfrastructureTemplate):
         tags.update(self.cfg.resource_tags)
 
         # 1. SECURITY GROUP
-        sg_name = self.config.get('redis_sg_name') or f"{self.name}-sg"
+        sg_name = (self.config.get('redis_sg_name') or self.config.get('parameters', {}).get('redis_sg_name')) or f"{self.name}-sg"
         self.security_group = factory.create(
             "aws:ec2:SecurityGroup",
             sg_name,
@@ -112,7 +112,7 @@ class RedisNonProdTemplate(InfrastructureTemplate):
         )
 
         # 2. SUBNET GROUP
-        subnet_group_name = self.config.get('redis_subnet_group_name') or f"{self.name}-subnet-group"
+        subnet_group_name = (self.config.get('redis_subnet_group_name') or self.config.get('parameters', {}).get('redis_subnet_group_name')) or f"{self.name}-subnet-group"
         self.subnet_group = factory.create(
             "aws:elasticache:SubnetGroup",
             subnet_group_name,
@@ -122,7 +122,7 @@ class RedisNonProdTemplate(InfrastructureTemplate):
         )
 
         # 3. REDIS CLUSTER
-        redis_cluster_name = self.config.get('redis_cluster_resource_name') or f"{self.name}-cluster"
+        redis_cluster_name = (self.config.get('redis_cluster_resource_name') or self.config.get('parameters', {}).get('redis_cluster_resource_name')) or f"{self.name}-cluster"
         self.cluster = factory.create(
             "aws:elasticache:Cluster",
             redis_cluster_name,

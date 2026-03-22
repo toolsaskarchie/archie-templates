@@ -61,7 +61,7 @@ class EC2ProdTemplate(InfrastructureTemplate):
         )
         
         # Instance Name Resolution
-        instance_name = self.config.get('instance_name') or self.cfg.instance_name or namer.ec2_instance(preset="prod")
+        instance_name = (self.config.get('instance_name') or self.config.get('parameters', {}).get('instance_name')) or self.cfg.instance_name or namer.ec2_instance(preset="prod")
         if isinstance(instance_name, str) and '(' in instance_name:
             instance_name = instance_name.split('(')[0].strip()
         pulumi.export("instance_name", instance_name)
@@ -140,7 +140,7 @@ class EC2ProdTemplate(InfrastructureTemplate):
                         "cidr_blocks": [cidr_ip], "description": f"SSH from {cidr_ip}"
                     })
                 
-                sg_name = self.config.get('ssh_sg_name') or f"{self.name}-ssh"
+                sg_name = (self.config.get('ssh_sg_name') or self.config.get('parameters', {}).get('ssh_sg_name')) or f"{self.name}-ssh"
                 pulumi.export("ssh_sg_name", sg_name)
                 self.access_sg = factory.create(
                     "aws:ec2:SecurityGroup",
@@ -175,7 +175,7 @@ class EC2ProdTemplate(InfrastructureTemplate):
         # IAM & Instance
         instance_profile_name = None
         if self.cfg.enable_ssm:
-            role_name = self.config.get('iam_role_name') or namer.iam_role("ec2", instance_name)
+            role_name = (self.config.get('iam_role_name') or self.config.get('parameters', {}).get('iam_role_name')) or namer.iam_role("ec2", instance_name)
             pulumi.export("iam_role_name", role_name)
             self.iam_role = factory.create(
                 "aws:iam:Role",
@@ -188,7 +188,7 @@ class EC2ProdTemplate(InfrastructureTemplate):
                 tags={**tags, "Name": role_name}
             )
             
-            profile_name = self.config.get('iam_profile_name') or namer.iam_profile("ec2", instance_name)
+            profile_name = (self.config.get('iam_profile_name') or self.config.get('parameters', {}).get('iam_profile_name')) or namer.iam_profile("ec2", instance_name)
             pulumi.export("iam_profile_name", profile_name)
             self.instance_profile = factory.create(
                 "aws:iam:InstanceProfile",
@@ -205,7 +205,7 @@ class EC2ProdTemplate(InfrastructureTemplate):
         tier_sg = preset_sg_map.get(preset, vpc_app_sg)
         if tier_sg: sgs.append(tier_sg)
 
-        ec2_resource_name = self.config.get('ec2_resource_name') or namer.ec2_instance(instance_name)
+        ec2_resource_name = (self.config.get('ec2_resource_name') or self.config.get('parameters', {}).get('ec2_resource_name')) or namer.ec2_instance(instance_name)
         pulumi.export("ec2_resource_name", ec2_resource_name)
         self.ec2_instance = factory.create(
             "aws:ec2:Instance",

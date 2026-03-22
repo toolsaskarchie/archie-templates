@@ -127,7 +127,7 @@ class CloudFrontNonProdTemplate(InfrastructureTemplate):
             "max_ttl": 31536000
         }
 
-        distribution_name = self.config.get('cloudfront_distribution_name') or f"{self.name}-distribution"
+        distribution_name = (self.config.get('cloudfront_distribution_name') or self.config.get('parameters', {}).get('cloudfront_distribution_name')) or f"{self.name}-distribution"
         self.distribution = factory.create(
             "aws:cloudfront:Distribution",
             distribution_name,

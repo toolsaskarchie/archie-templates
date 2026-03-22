@@ -217,7 +217,8 @@ class ALBNonProdTemplate(InfrastructureTemplate):
         # STEP 5: TARGET GROUP
         # ========================================
         # Reuse existing TG name on upgrade/remediate to avoid destroy+create
-        existing_tg_name = self.config.get('target_group_name', '')
+        params = self.config.get('parameters', {})
+        existing_tg_name = self.config.get('target_group_name') or params.get('target_group_name') or ''
         tg_name = existing_tg_name or sanitize_name(f"tg-{namer.project}-nonprod", 24)
         self.target_group = factory.create(
             "aws:lb:TargetGroup",

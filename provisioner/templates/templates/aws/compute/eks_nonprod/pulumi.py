@@ -101,7 +101,7 @@ class EKSNonProdTemplate(InfrastructureTemplate):
         # STEP 2: IAM ROLES
         # ========================================
         # Cluster Role
-        cluster_role_name = self.config.get('eks_cluster_role_name') or namer.iam_role("eks", purpose="cluster")
+        cluster_role_name = (self.config.get('eks_cluster_role_name') or self.config.get('parameters', {}).get('eks_cluster_role_name')) or namer.iam_role("eks", purpose="cluster")
         self.cluster_role = factory.create(
             "aws:iam:Role",
             cluster_role_name,
@@ -121,7 +121,7 @@ class EKSNonProdTemplate(InfrastructureTemplate):
         )
 
         # Node Role
-        node_role_name = self.config.get('eks_node_role_name') or namer.iam_role("eks", purpose="nodes")
+        node_role_name = (self.config.get('eks_node_role_name') or self.config.get('parameters', {}).get('eks_node_role_name')) or namer.iam_role("eks", purpose="nodes")
         self.node_role = factory.create(
             "aws:iam:Role",
             node_role_name,
@@ -142,7 +142,7 @@ class EKSNonProdTemplate(InfrastructureTemplate):
         )
 
         # Instance Profile
-        profile_name = self.config.get('eks_instance_profile_name') or f"instance-profile-nodes-{namer.project}-nonprod-{namer.region_short}"
+        profile_name = (self.config.get('eks_instance_profile_name') or self.config.get('parameters', {}).get('eks_instance_profile_name')) or f"instance-profile-nodes-{namer.project}-nonprod-{namer.region_short}"
         self.instance_profile = factory.create(
             "aws:iam:InstanceProfile",
             profile_name,
