@@ -16,11 +16,13 @@ All examples reference the VPC NonProd template (`templates/aws/networking/vpc_n
 
 **Rule #4: Use typed getters.** Boolean properties use `self.get_bool()`, integers use `self.get_int()`, never raw `bool()` or `int()`. Values arrive from DynamoDB (Decimal), frontend (string "1"/"true"), or Python (bool). The typed getters handle all sources.
 
-**Rule #5: Explicitly declare ALL security-sensitive attributes.** If Pulumi doesn't know the desired state of an attribute, it can't detect drift or remediate it. Omitting an attribute = "I don't care" = manual changes survive remediation. Always declare:
-- **Security Groups**: `ingress=[]` and `egress=[...]` — even if rules are added via separate `SecurityGroupRule` resources
-- **S3 Buckets**: `policy`, `acl`, `versioning`, `encryption` explicitly
-- **IAM Roles**: `inline_policy=[]` if no inline policies intended
+**Rule #5: Explicitly declare ALL security-sensitive attributes — but never mix inline and separate rule resources.**
+- **Security Groups**: Use `ingress=[...]` inline ONLY if no child template adds `SecurityGroupRule` to the same SG. Inline `ingress` and `SecurityGroupRule` on the same SG conflict — they fight each other on every `pulumi up`.
+  - SGs fully owned by one template (web SG, access SG, ALB SG): use inline `ingress=[...]` ✓
+  - SGs targeted by child `SecurityGroupRule` (app SG, db SG): do NOT set `ingress` — accept the limitation that manual rules won't be auto-remediated
+- **S3 Buckets**: always set `policy`, `acl`, `versioning`, `encryption` explicitly
 - **NACLs / Route Tables**: declare rules/routes explicitly, don't rely on AWS defaults
+- **Known limitation**: manual rules on app/db SGs survive remediation because these SGs can't use inline ingress (child templates add rules via SecurityGroupRule)
 
 **Rule #6: Read injected names from both config levels.** Outputs are injected into `config.parameters`, not root config. Always check both:
 ```python

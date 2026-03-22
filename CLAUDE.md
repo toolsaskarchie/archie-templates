@@ -95,13 +95,12 @@ Generates deterministic, self-documenting resource names:
 3. **Prefer injected values** over generating new ones (for upgrade/remediate idempotency)
 4. **Use typed getters** (`get_bool`, `get_int`, `get_str`) — never raw `bool()`
 5. **Always use CIDR suffix** in subnet names — no `is_upgrade` conditional
-6. **Explicitly declare ALL security-sensitive attributes**, even if empty. If Pulumi doesn't know the desired state, it can't remediate drift. Examples:
-   - SGs: always set `ingress=[]` even if rules are added via separate `SecurityGroupRule` resources
+6. **Explicitly declare ALL security-sensitive attributes**, even if empty — but **never mix inline and separate rule resources on the same SG**:
+   - SGs with NO child `SecurityGroupRule` targeting them: set `ingress=[...]` inline (web SG, access SG)
+   - SGs WITH child `SecurityGroupRule` targeting them: do NOT set `ingress` (app SG, db SG) — inline and separate rules conflict in Pulumi/Terraform
    - S3: always set `policy`, `acl`, `versioning`, `encryption` explicitly
-   - IAM roles: declare `inline_policy=[]` if no inline policies are intended
-   - NACLs: declare rules explicitly, don't rely on AWS defaults
-   - Route tables: declare routes explicitly
-   - **Why**: Pulumi only manages attributes it knows about. Omitting an attribute = "I don't care" = manual changes persist through remediation
+   - **Why**: Pulumi only manages attributes it knows about. Omitting = "I don't care" = manual changes survive remediation
+   - **Known limitation**: app/db SGs can't have inline ingress because child templates (ALB, RDS) add rules via SecurityGroupRule. Manual rules on these SGs won't be auto-remediated.
 7. **Read injected names from both config levels**: `(self.config.get('key') or self.config.get('parameters', {}).get('key'))` — outputs are injected into `parameters`, not root config
 
 ## Config Classes

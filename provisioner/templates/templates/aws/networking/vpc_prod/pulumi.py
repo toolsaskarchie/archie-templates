@@ -249,14 +249,15 @@ class VPCProdTemplate(InfrastructureTemplate):
             }
         )
         
-        # App SG - Application tier (ingress=[] so Pulumi manages it — removes unauthorized rules)
+        # App SG - Application tier
+        # NOTE: Do NOT set ingress=[] here — child templates (ALB, EC2) add rules via SecurityGroupRule.
+        # Inline ingress and SecurityGroupRule on the same SG conflict in Pulumi/Terraform.
         app_sg_name = namer.security_group('app')
         self.security_groups['app'] = factory.create(
             "aws:ec2:SecurityGroup",
             app_sg_name,
             vpc_id=vpc_id,
             description="Security group for application tier",
-            ingress=[],
             egress=[{"protocol": "-1", "from_port": 0, "to_port": 0, "cidr_blocks": ["0.0.0.0/0"]}],
             tags={
                 "Name": app_sg_name,
@@ -267,14 +268,14 @@ class VPCProdTemplate(InfrastructureTemplate):
             }
         )
         
-        # DB SG - Database tier (ingress=[] so Pulumi manages it — removes unauthorized rules)
+        # DB SG - Database tier
+        # NOTE: Do NOT set ingress=[] here — child templates (RDS, Aurora) add rules via SecurityGroupRule.
         db_sg_name = namer.security_group('db')
         self.security_groups['db'] = factory.create(
             "aws:ec2:SecurityGroup",
             db_sg_name,
             vpc_id=vpc_id,
             description="Security group for database tier",
-            ingress=[],
             egress=[{"protocol": "-1", "from_port": 0, "to_port": 0, "cidr_blocks": ["0.0.0.0/0"]}],
             tags={
                 "Name": db_sg_name,
