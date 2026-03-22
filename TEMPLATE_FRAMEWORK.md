@@ -16,6 +16,19 @@ All examples reference the VPC NonProd template (`templates/aws/networking/vpc_n
 
 **Rule #4: Use typed getters.** Boolean properties use `self.get_bool()`, integers use `self.get_int()`, never raw `bool()` or `int()`. Values arrive from DynamoDB (Decimal), frontend (string "1"/"true"), or Python (bool). The typed getters handle all sources.
 
+**Rule #5: Explicitly declare ALL security-sensitive attributes.** If Pulumi doesn't know the desired state of an attribute, it can't detect drift or remediate it. Omitting an attribute = "I don't care" = manual changes survive remediation. Always declare:
+- **Security Groups**: `ingress=[]` and `egress=[...]` — even if rules are added via separate `SecurityGroupRule` resources
+- **S3 Buckets**: `policy`, `acl`, `versioning`, `encryption` explicitly
+- **IAM Roles**: `inline_policy=[]` if no inline policies intended
+- **NACLs / Route Tables**: declare rules/routes explicitly, don't rely on AWS defaults
+
+**Rule #6: Read injected names from both config levels.** Outputs are injected into `config.parameters`, not root config. Always check both:
+```python
+name = (self.config.get('key') or self.config.get('parameters', {}).get('key')) or namer.generate()
+```
+
+**Rule #7: Export generated resource names.** Every namer-generated name must be exported via `pulumi.export()`. On upgrade/remediate, these are injected back so the template reuses the same Pulumi logical names — no destroy+create.
+
 ---
 
 ## Table of Contents

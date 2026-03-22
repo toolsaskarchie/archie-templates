@@ -95,6 +95,14 @@ Generates deterministic, self-documenting resource names:
 3. **Prefer injected values** over generating new ones (for upgrade/remediate idempotency)
 4. **Use typed getters** (`get_bool`, `get_int`, `get_str`) — never raw `bool()`
 5. **Always use CIDR suffix** in subnet names — no `is_upgrade` conditional
+6. **Explicitly declare ALL security-sensitive attributes**, even if empty. If Pulumi doesn't know the desired state, it can't remediate drift. Examples:
+   - SGs: always set `ingress=[]` even if rules are added via separate `SecurityGroupRule` resources
+   - S3: always set `policy`, `acl`, `versioning`, `encryption` explicitly
+   - IAM roles: declare `inline_policy=[]` if no inline policies are intended
+   - NACLs: declare rules explicitly, don't rely on AWS defaults
+   - Route tables: declare routes explicitly
+   - **Why**: Pulumi only manages attributes it knows about. Omitting an attribute = "I don't care" = manual changes persist through remediation
+7. **Read injected names from both config levels**: `(self.config.get('key') or self.config.get('parameters', {}).get('key'))` — outputs are injected into `parameters`, not root config
 
 ## Config Classes
 Each composed template has a `config.py` with a dataclass:
