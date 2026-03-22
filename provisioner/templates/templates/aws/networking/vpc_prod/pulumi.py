@@ -250,14 +250,26 @@ class VPCProdTemplate(InfrastructureTemplate):
         )
         
         # App SG - Application tier
-        # NOTE: Do NOT set ingress=[] here — child templates (ALB, EC2) add rules via SecurityGroupRule.
-        # Inline ingress and SecurityGroupRule on the same SG conflict in Pulumi/Terraform.
+        # Ingress is managed inline so Pulumi can remediate unauthorized rules.
+        # Child templates pass config flags (e.g. app_sg_allow_from_web=True) instead of SecurityGroupRule.
+        app_sg_ingress = []
+        app_sg_allow_from_web = self.config.get('app_sg_allow_from_web') or self.config.get('parameters', {}).get('app_sg_allow_from_web')
+        app_sg_port = int(self.config.get('app_sg_port') or self.config.get('parameters', {}).get('app_sg_port') or self.config.get('target_port') or self.config.get('parameters', {}).get('target_port') or 80)
+        if app_sg_allow_from_web:
+            app_sg_ingress.append({
+                "protocol": "tcp",
+                "from_port": app_sg_port,
+                "to_port": app_sg_port,
+                "security_groups": [self.security_groups['web'].id],
+                "description": "Allow traffic from ALB/web tier"
+            })
         app_sg_name = namer.security_group('app')
         self.security_groups['app'] = factory.create(
             "aws:ec2:SecurityGroup",
             app_sg_name,
             vpc_id=vpc_id,
             description="Security group for application tier",
+            ingress=app_sg_ingress,
             egress=[{"protocol": "-1", "from_port": 0, "to_port": 0, "cidr_blocks": ["0.0.0.0/0"]}],
             tags={
                 "Name": app_sg_name,
@@ -267,15 +279,27 @@ class VPCProdTemplate(InfrastructureTemplate):
                 "ManagedBy": "Archie"
             }
         )
-        
+
         # DB SG - Database tier
-        # NOTE: Do NOT set ingress=[] here — child templates (RDS, Aurora) add rules via SecurityGroupRule.
+        # Ingress is managed inline so Pulumi can remediate unauthorized rules.
+        db_sg_ingress = []
+        db_sg_allow_from_app = self.config.get('db_sg_allow_from_app') or self.config.get('parameters', {}).get('db_sg_allow_from_app')
+        db_sg_port = int(self.config.get('db_sg_port') or self.config.get('parameters', {}).get('db_sg_port') or 5432)
+        if db_sg_allow_from_app:
+            db_sg_ingress.append({
+                "protocol": "tcp",
+                "from_port": db_sg_port,
+                "to_port": db_sg_port,
+                "security_groups": [self.security_groups['app'].id],
+                "description": "Allow traffic from app tier"
+            })
         db_sg_name = namer.security_group('db')
         self.security_groups['db'] = factory.create(
             "aws:ec2:SecurityGroup",
             db_sg_name,
             vpc_id=vpc_id,
             description="Security group for database tier",
+            ingress=db_sg_ingress,
             egress=[{"protocol": "-1", "from_port": 0, "to_port": 0, "cidr_blocks": ["0.0.0.0/0"]}],
             tags={
                 "Name": db_sg_name,

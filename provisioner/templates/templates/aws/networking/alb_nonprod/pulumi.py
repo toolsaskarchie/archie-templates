@@ -97,6 +97,8 @@ class ALBNonProdTemplate(InfrastructureTemplate):
             vpc_config["cidr_block"] = self.cfg.vpc_cidr
             vpc_config["environment"] = self.cfg.environment
             vpc_config["ssh_access_ip"] = self.cfg.ssh_access_ip or ''
+            vpc_config["app_sg_allow_from_web"] = True
+            vpc_config["app_sg_port"] = self.cfg.target_port
             self.vpc_template = VPCProdTemplate(name=f"{self.name}-vpc", config=vpc_config)
             self.vpc_template.create_infrastructure()
             vpc_outputs = self.vpc_template.get_outputs()
@@ -132,23 +134,12 @@ class ALBNonProdTemplate(InfrastructureTemplate):
             alb_sg_id = alb_sg.id
 
         # Target Security Group (backend instances)
+        # When vpc_mode='new', the VPC template creates the app SG with inline ingress
+        # (we passed app_sg_allow_from_web=True above). No separate SecurityGroupRule needed.
         target_sg_id = None
         if self.cfg.vpc_mode == 'new' and self.vpc_template:
             vpc_outputs = self.vpc_template.get_outputs()
             target_sg_id = vpc_outputs.get('app_security_group_id')
-            
-            # Allow traffic from ALB to Target SG
-            factory.create(
-                "aws:ec2:SecurityGroupRule",
-                f"{self.name}-alb-to-target",
-                type="ingress",
-                security_group_id=target_sg_id,
-                protocol="tcp",
-                from_port=self.cfg.target_port,
-                to_port=self.cfg.target_port,
-                source_security_group_id=alb_sg_id,
-                description="Allow traffic from ALB"
-            )
         
         if not target_sg_id:
             sg_name = namer.security_group(purpose="backend", ports=[self.cfg.target_port])

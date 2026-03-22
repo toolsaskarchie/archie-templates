@@ -117,7 +117,9 @@ class RDSPostgresNonProdTemplate(InfrastructureTemplate):
             vpc_config["cidr_block"] = vpc_cidr
             vpc_config["environment"] = self.cfg.environment
             vpc_config["az_1"] = f"{self.cfg.region}a"
-            
+            vpc_config["db_sg_allow_from_app"] = True
+            vpc_config["db_sg_port"] = 5432
+
             self.vpc_template = VPCProdTemplate(
                 name=f"{self.name}-vpc",
                 config=vpc_config
@@ -149,13 +151,20 @@ class RDSPostgresNonProdTemplate(InfrastructureTemplate):
             sg_id = vpc_outputs.get('db_security_group_id')
         
         if not sg_id:
-            # Create dedicated SG
+            # Create dedicated SG with inline ingress (fully managed — remediation removes unauthorized rules)
             sg_name = (self.config.get('db_security_group_name') or self.config.get('parameters', {}).get('db_security_group_name')) or namer.security_group(purpose="db", ports=[5432], service="postgres")
             fallback_sg = factory.create(
                 "aws:ec2:SecurityGroup",
                 sg_name,
                 vpc_id=vpc_id,
                 description=f"PostgreSQL access for {self.cfg.environment}",
+                ingress=[{
+                    "protocol": "tcp",
+                    "from_port": 5432,
+                    "to_port": 5432,
+                    "cidr_blocks": self.cfg.allowed_cidr_blocks,
+                    "description": f"PostgreSQL access for {db_identifier}"
+                }],
                 egress=[{
                     "protocol": "-1",
                     "from_port": 0,
@@ -167,19 +176,6 @@ class RDSPostgresNonProdTemplate(InfrastructureTemplate):
             )
             self.security_groups.append(fallback_sg)
             sg_id = fallback_sg.id
-        
-        # Add ingress rule
-        self.postgres_ingress_rule = factory.create(
-            "aws:ec2:SecurityGroupRule",
-            f"{self.name}-postgres-ingress",
-            type="ingress",
-            security_group_id=sg_id,
-            protocol="tcp",
-            from_port=5432,
-            to_port=5432,
-            cidr_blocks=self.cfg.allowed_cidr_blocks,
-            description=f"PostgreSQL access for {db_identifier} ({self.cfg.environment})"
-        )
 
         # ========================================
         # STEP 4: DB SUBNET GROUP
