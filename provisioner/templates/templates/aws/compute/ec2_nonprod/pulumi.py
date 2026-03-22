@@ -131,27 +131,10 @@ class EC2NonProdTemplate(InfrastructureTemplate):
             vpc_web_sg = vpc_outputs.get('web_security_group_id')
             vpc_db_sg = vpc_outputs.get('db_security_group_id')
             
-            if self.cfg.ssh_access_ip and 'access_security_group_id' in vpc_outputs:
-                access_sg_id = vpc_outputs['access_security_group_id']
-                base_security_groups.append(access_sg_id)
-                
-                remote_port = 3389 if ami_os == 'windows-2022' else 22
-                remote_proto = "RDP" if ami_os == 'windows-2022' else "SSH"
-                
-                allowed_ips = [self.cfg.ssh_access_ip] if isinstance(self.cfg.ssh_access_ip, str) else self.cfg.ssh_access_ip
-                for idx, ip in enumerate(allowed_ips):
-                    cidr_ip = ip if '/' in ip else f"{ip}/32"
-                    factory.create(
-                        "aws:ec2:SecurityGroupRule",
-                        f"{self.name}-{remote_proto.lower()}-rule-{idx}",
-                        type="ingress",
-                        security_group_id=access_sg_id,
-                        protocol="tcp",
-                        from_port=remote_port,
-                        to_port=remote_port,
-                        cidr_blocks=[cidr_ip],
-                        description=f"{remote_proto} from {cidr_ip}"
-                    )
+            if 'access_security_group_id' in vpc_outputs:
+                # VPC template already creates access SG with SSH/RDP rules inline
+                # Just attach the instance to the SG — no separate SecurityGroupRule needed
+                base_security_groups.append(vpc_outputs['access_security_group_id'])
         else:
             vpc_id = self.cfg.vpc_id
             subnet_id = self.cfg.subnet_id

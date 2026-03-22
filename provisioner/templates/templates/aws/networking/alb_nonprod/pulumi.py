@@ -193,7 +193,7 @@ class ALBNonProdTemplate(InfrastructureTemplate):
         # ========================================
         # STEP 4: LOAD BALANCER
         # ========================================
-        alb_aws_name = sanitize_name(self.name, 24)
+        alb_aws_name = (self.config.get('alb_resource_name') or self.config.get('parameters', {}).get('alb_resource_name')) or sanitize_name(self.name, 24)
         self.alb = factory.create(
             "aws:lb:LoadBalancer",
             alb_aws_name,
@@ -233,9 +233,10 @@ class ALBNonProdTemplate(InfrastructureTemplate):
         # STEP 6: LISTENERS
         # ========================================
         # HTTP Listener
+        http_listener_name = (self.config.get('http_listener_name') or self.config.get('parameters', {}).get('http_listener_name')) or f"{alb_aws_name}-http"
         self.listeners.append(factory.create(
             "aws:lb:Listener",
-            f"{self.name}-http",
+            http_listener_name,
             load_balancer_arn=self.alb.arn,
             port=80,
             protocol="HTTP",
@@ -247,9 +248,10 @@ class ALBNonProdTemplate(InfrastructureTemplate):
 
         # HTTPS Listener
         if self.cfg.enable_https and self.cfg.certificate_arn:
+            https_listener_name = (self.config.get('https_listener_name') or self.config.get('parameters', {}).get('https_listener_name')) or f"{alb_aws_name}-https"
             self.listeners.append(factory.create(
                 "aws:lb:Listener",
-                f"{self.name}-https",
+                https_listener_name,
                 load_balancer_arn=self.alb.arn,
                 port=443,
                 protocol="HTTPS",
@@ -276,6 +278,8 @@ class ALBNonProdTemplate(InfrastructureTemplate):
         # Exports
         pulumi.export("alb_dns_name", self.alb.dns_name)
         pulumi.export("alb_arn", self.alb.arn)
+        pulumi.export("alb_resource_name", alb_aws_name)
+        pulumi.export("http_listener_name", http_listener_name)
         pulumi.export("target_group_arn", self.target_group.arn)
         pulumi.export("target_group_name", tg_name)
         pulumi.export("alb_url", pulumi.Output.concat("http://", self.alb.dns_name))
