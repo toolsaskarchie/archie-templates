@@ -216,7 +216,9 @@ class ALBNonProdTemplate(InfrastructureTemplate):
         # ========================================
         # STEP 5: TARGET GROUP
         # ========================================
-        tg_name = sanitize_name(f"tg-{namer.project}-nonprod", 24)
+        # Reuse existing TG name on upgrade/remediate to avoid destroy+create
+        existing_tg_name = self.config.get('target_group_name', '')
+        tg_name = existing_tg_name or sanitize_name(f"tg-{namer.project}-nonprod", 24)
         self.target_group = factory.create(
             "aws:lb:TargetGroup",
             tg_name,
@@ -283,6 +285,7 @@ class ALBNonProdTemplate(InfrastructureTemplate):
         pulumi.export("alb_dns_name", self.alb.dns_name)
         pulumi.export("alb_arn", self.alb.arn)
         pulumi.export("target_group_arn", self.target_group.arn)
+        pulumi.export("target_group_name", tg_name)
         pulumi.export("alb_url", pulumi.Output.concat("http://", self.alb.dns_name))
         if vpc_id:
             pulumi.export("vpc_id", vpc_id)
