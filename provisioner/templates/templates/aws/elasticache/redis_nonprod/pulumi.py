@@ -84,9 +84,10 @@ class RedisNonProdTemplate(InfrastructureTemplate):
         tags.update(self.cfg.resource_tags)
 
         # 1. SECURITY GROUP
+        sg_name = self.config.get('redis_sg_name') or f"{self.name}-sg"
         self.security_group = factory.create(
             "aws:ec2:SecurityGroup",
-            f"{self.name}-sg",
+            sg_name,
             description=f'Security group for {cluster_name} Redis cluster',
             vpc_id=self.cfg.vpc_id,
             ingress=[
@@ -111,18 +112,20 @@ class RedisNonProdTemplate(InfrastructureTemplate):
         )
 
         # 2. SUBNET GROUP
+        subnet_group_name = self.config.get('redis_subnet_group_name') or f"{self.name}-subnet-group"
         self.subnet_group = factory.create(
             "aws:elasticache:SubnetGroup",
-            f"{self.name}-subnet-group",
+            subnet_group_name,
             description=f'Subnet group for {cluster_name} Redis cluster',
             subnet_ids=self.cfg.subnet_ids,
             tags=tags
         )
 
         # 3. REDIS CLUSTER
+        redis_cluster_name = self.config.get('redis_cluster_resource_name') or f"{self.name}-cluster"
         self.cluster = factory.create(
             "aws:elasticache:Cluster",
-            f"{self.name}-cluster",
+            redis_cluster_name,
             cluster_id=cluster_name,
             engine='redis',
             engine_version=self.cfg.engine_version,
@@ -145,6 +148,9 @@ class RedisNonProdTemplate(InfrastructureTemplate):
         pulumi.export('endpoint', self.cluster.cache_nodes[0].address)
         pulumi.export('port', self.cfg.port)
         pulumi.export('connection_string', connection_string)
+        pulumi.export('redis_sg_name', sg_name)
+        pulumi.export('redis_subnet_group_name', subnet_group_name)
+        pulumi.export('redis_cluster_resource_name', redis_cluster_name)
 
         return self.get_outputs()
 

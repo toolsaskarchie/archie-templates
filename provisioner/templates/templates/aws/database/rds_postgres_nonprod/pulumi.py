@@ -87,8 +87,8 @@ class RDSPostgresNonProdTemplate(InfrastructureTemplate):
             template="aws-rds-postgres-nonprod"
         )
         
-        # Generate names
-        db_identifier = namer.rds(engine="postgres", identifier=self.cfg.db_name)
+        # Generate names (upgrade-safe: reuse existing names if available)
+        db_identifier = self.config.get('rds_instance_name') or namer.rds(engine="postgres", identifier=self.cfg.db_name)
         
         # Generate standard tags
         tags = get_standard_tags(
@@ -142,6 +142,7 @@ class RDSPostgresNonProdTemplate(InfrastructureTemplate):
         # STEP 3: SECURITY GROUPS
         # ========================================
         sg_id = None
+        sg_name = None
         if self.cfg.vpc_mode == 'new' and self.vpc_template:
             vpc_outputs = self.vpc_template.get_outputs()
             # Try to get flattened key first
@@ -149,7 +150,7 @@ class RDSPostgresNonProdTemplate(InfrastructureTemplate):
         
         if not sg_id:
             # Create dedicated SG
-            sg_name = namer.security_group(purpose="db", ports=[5432], service="postgres")
+            sg_name = self.config.get('db_security_group_name') or namer.security_group(purpose="db", ports=[5432], service="postgres")
             fallback_sg = factory.create(
                 "aws:ec2:SecurityGroup",
                 sg_name,
@@ -185,7 +186,7 @@ class RDSPostgresNonProdTemplate(InfrastructureTemplate):
         # ========================================
         db_subnet_group_name = None
         if subnet_ids and len(subnet_ids) >= 2:
-            sng_name = f"sng-db-{namer.project}-main-nonprod-{namer.region_short}"
+            sng_name = self.config.get('db_subnet_group_name') or f"sng-db-{namer.project}-main-nonprod-{namer.region_short}"
             self.db_subnet_group = factory.create(
                 "aws:rds:SubnetGroup",
                 sng_name,
@@ -201,7 +202,7 @@ class RDSPostgresNonProdTemplate(InfrastructureTemplate):
         self.db_password_secret = factory.create(
             "aws:secretsmanager:Secret",
             f"{self.name}-password",
-            name=f"secret-db-{namer.project}-password-nonprod-{namer.region_short}",
+            name=self.config.get('db_secret_name') or f"secret-db-{namer.project}-password-nonprod-{namer.region_short}",
             description=f"Master password for {db_identifier}",
             recovery_window_in_days=7,
             tags=tags
@@ -249,6 +250,12 @@ class RDSPostgresNonProdTemplate(InfrastructureTemplate):
             self.db_instance.port.apply(str), "/", self.cfg.db_name
         )
 
+        pulumi.export("rds_instance_name", db_identifier)
+        if sg_name:
+            pulumi.export("db_security_group_name", sg_name)
+        if db_subnet_group_name:
+            pulumi.export("db_subnet_group_name", db_subnet_group_name)
+        pulumi.export("db_secret_name", self.db_password_secret.name)
         pulumi.export("db_instance_id", self.db_instance.id)
         pulumi.export("db_address", self.db_instance.address)
         pulumi.export("db_port", self.db_instance.port)

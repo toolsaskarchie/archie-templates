@@ -127,9 +127,10 @@ class CloudFrontNonProdTemplate(InfrastructureTemplate):
             "max_ttl": 31536000
         }
 
+        distribution_name = self.config.get('cloudfront_distribution_name') or f"{self.name}-distribution"
         self.distribution = factory.create(
             "aws:cloudfront:Distribution",
-            f"{self.name}-distribution",
+            distribution_name,
             origins=origins,
             default_cache_behavior=default_cache_behavior,
             enabled=self.cfg.cloudfront_enabled,
@@ -161,6 +162,7 @@ class CloudFrontNonProdTemplate(InfrastructureTemplate):
         pulumi.export("cloudfront_domain", cloudfront_domain)
         pulumi.export("cloudfront_url", cloudfront_url)
         pulumi.export("s3_bucket_name", s3_bucket_name)
+        pulumi.export("cloudfront_distribution_name", distribution_name)
 
         return {
             "distribution_id": self.distribution.id,

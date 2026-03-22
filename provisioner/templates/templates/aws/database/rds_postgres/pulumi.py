@@ -79,7 +79,7 @@ class RDSPostgresTemplate(InfrastructureTemplate):
         )
         
         # Generate names
-        db_identifier = namer.rds(engine="postgres", identifier=self.cfg.db_name)
+        db_identifier = self.config.get('rds_instance_name') or namer.rds(engine="postgres", identifier=self.cfg.db_name)
         
         # Generate standard tags
         tags = get_standard_tags(
@@ -136,7 +136,7 @@ class RDSPostgresTemplate(InfrastructureTemplate):
         
         if not sg_id:
             # Create dedicated SG
-            sg_name = namer.security_group(purpose="db", ports=[5432], service="postgres")
+            sg_name = self.config.get('db_sg_name') or namer.security_group(purpose="db", ports=[5432], service="postgres")
             fallback_sg = factory.create(
                 "aws:ec2:SecurityGroup",
                 sg_name,
@@ -247,6 +247,8 @@ class RDSPostgresTemplate(InfrastructureTemplate):
         pulumi.export("db_port", self.db_instance.port)
         pulumi.export("connection_string", connection_string)
         pulumi.export("db_password_secret_arn", self.db_password_secret.arn)
+        pulumi.export("rds_instance_name", db_identifier)
+        pulumi.export("db_sg_name", sg_name if 'sg_name' in dir() else "")
         
         return self.get_outputs()
     

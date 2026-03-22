@@ -172,7 +172,7 @@ class EC2NonProdTemplate(InfrastructureTemplate):
                         "description": f"{remote_proto} from {cidr_ip}"
                     })
                 
-                access_sg_name = namer.security_group(purpose="access")
+                access_sg_name = self.config.get('access_sg_name') or namer.security_group(purpose="access")
                 access_sg = factory.create(
                     "aws:ec2:SecurityGroup",
                     access_sg_name,
@@ -211,7 +211,7 @@ class EC2NonProdTemplate(InfrastructureTemplate):
         # IAM & Instances
         instance_profile_name = None
         if self.cfg.enable_ssm:
-            role_name = namer.iam_role("ec2", preset_for_naming)
+            role_name = self.config.get('iam_role_name') or namer.iam_role("ec2", preset_for_naming)
             iam_role = factory.create(
                 "aws:iam:Role",
                 role_name,
@@ -224,7 +224,7 @@ class EC2NonProdTemplate(InfrastructureTemplate):
             )
             self.iam_roles.append(iam_role)
             
-            profile_name = namer.iam_profile("ec2", preset_for_naming)
+            profile_name = self.config.get('iam_profile_name') or namer.iam_profile("ec2", preset_for_naming)
             instance_profile = factory.create(
                 "aws:iam:InstanceProfile",
                 profile_name,
@@ -236,7 +236,11 @@ class EC2NonProdTemplate(InfrastructureTemplate):
 
         # Create Instances
         for idx in range(1, self.cfg.instance_count + 1):
-            name_final = namer.ec2_instance(preset_for_naming, sequence=idx if self.cfg.instance_count > 1 else None)
+            # For single instance, reuse injected name; for multi-instance, always generate
+            if self.cfg.instance_count == 1 and self.config.get('instance_name_generated'):
+                name_final = self.config.get('instance_name_generated')
+            else:
+                name_final = namer.ec2_instance(preset_for_naming, sequence=idx if self.cfg.instance_count > 1 else None)
             sgs = [s for s in base_security_groups + (self.cfg.security_group_ids or []) if s]
             # Assign the right SG tier based on preset
             preset_sg_map = {"web-server": vpc_web_sg, "alb-backend": vpc_app_sg, "mysql": vpc_db_sg, "wordpress": vpc_web_sg}
@@ -274,6 +278,10 @@ class EC2NonProdTemplate(InfrastructureTemplate):
         pulumi.export("ssh_command", first_ec2.public_ip.apply(
             lambda ip: f"ssh -i key.pem ec2-user@{ip}" if ip else "N/A (no public IP)"
         ))
+        pulumi.export("access_sg_name", access_sg_name if 'access_sg_name' in dir() else "")
+        pulumi.export("iam_role_name", role_name if self.cfg.enable_ssm else "")
+        pulumi.export("iam_profile_name", profile_name if self.cfg.enable_ssm else "")
+        pulumi.export("instance_name_generated", name_final)
 
         return self.get_outputs()
     
