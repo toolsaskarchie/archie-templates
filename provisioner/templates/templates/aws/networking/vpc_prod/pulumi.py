@@ -249,13 +249,14 @@ class VPCProdTemplate(InfrastructureTemplate):
             }
         )
         
-        # App SG - Application tier
+        # App SG - Application tier (ingress=[] so Pulumi manages it — removes unauthorized rules)
         app_sg_name = namer.security_group('app')
         self.security_groups['app'] = factory.create(
             "aws:ec2:SecurityGroup",
             app_sg_name,
             vpc_id=vpc_id,
             description="Security group for application tier",
+            ingress=[],
             egress=[{"protocol": "-1", "from_port": 0, "to_port": 0, "cidr_blocks": ["0.0.0.0/0"]}],
             tags={
                 "Name": app_sg_name,
@@ -266,13 +267,14 @@ class VPCProdTemplate(InfrastructureTemplate):
             }
         )
         
-        # DB SG - Database tier
+        # DB SG - Database tier (ingress=[] so Pulumi manages it — removes unauthorized rules)
         db_sg_name = namer.security_group('db')
         self.security_groups['db'] = factory.create(
             "aws:ec2:SecurityGroup",
             db_sg_name,
             vpc_id=vpc_id,
             description="Security group for database tier",
+            ingress=[],
             egress=[{"protocol": "-1", "from_port": 0, "to_port": 0, "cidr_blocks": ["0.0.0.0/0"]}],
             tags={
                 "Name": db_sg_name,
