@@ -101,13 +101,14 @@ class VPCSimpleNonprodTemplate(InfrastructureTemplate):
         project_name = self.cfg.project_name
         region_short = self.cfg.region.replace('-', '')
         
-        # DEBUG: what does the template actually see?
-        print(f"[VPC-DEBUG] raw config keys: {list(self.config.keys()) if isinstance(self.config, dict) else 'NOT DICT'}")
-        print(f"[VPC-DEBUG] use_custom_cidr={self.cfg.get('use_custom_cidr')}, custom_cidr_block={self.cfg.get('custom_cidr_block')}, vpc_name={self.cfg.get('vpc_name')}")
-
-        # Generate random CIDR or use custom CIDR based on configuration
+        # Reuse existing CIDR from outputs on upgrade, or use custom, or generate random
+        params = self.config.get('parameters', {}) if isinstance(self.config, dict) else {}
+        existing_cidr = self.config.get('vpc_cidr') or params.get('vpc_cidr') or self.config.get('cidr_block') or params.get('cidr_block')
         use_custom = self.cfg.get('use_custom_cidr', False)
-        if use_custom and self.cfg.get('custom_cidr_block'):
+        if existing_cidr and isinstance(existing_cidr, str) and '/' in existing_cidr:
+            vpc_cidr = existing_cidr
+            print(f"[VPC TEMPLATE] Reusing existing VPC CIDR: {vpc_cidr}")
+        elif use_custom and self.cfg.get('custom_cidr_block'):
             vpc_cidr = self.cfg.custom_cidr_block
             print(f"[VPC TEMPLATE] Using custom VPC CIDR: {vpc_cidr}")
         else:
