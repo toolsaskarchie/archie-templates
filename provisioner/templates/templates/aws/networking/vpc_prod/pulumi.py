@@ -569,10 +569,8 @@ class VPCProdTemplate(InfrastructureTemplate):
                     {
                         "id": f"limit-lifespan-of-objects-{retention_days}-days",
                         "status": "Enabled",
-                        "filter": {},
                         "expiration": {
                             "days": retention_days,
-                            "expired_object_delete_marker": True
                         }
                     }
                 ]
