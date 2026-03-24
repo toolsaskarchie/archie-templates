@@ -17,12 +17,14 @@ class GCPStaticWebsiteConfig:
         self.environment = self.raw_config.get('environment', 'nonprod')
         self.region = self.raw_config.get('region', 'us-central1')
         
-        # For this beginner template, use default project ID
-        # Other GCP templates should require project in UI
+        # Project ID: check config, parameters, credentials SA, then fallback
         self.project = (
-            self.raw_config.get('project') or 
-            self.parameters.get('project', '') or 
-            'archie-demo-480815'  # Default for static website demo
+            self.raw_config.get('project') or
+            self.raw_config.get('project_id') or
+            self.parameters.get('project', '') or
+            self.parameters.get('project_id', '') or
+            self.raw_config.get('credentials', {}).get('gcp', {}).get('project_id', '') or
+            ''
         )
         
         # Labels (GCP equivalent of tags)
@@ -36,8 +38,7 @@ class GCPStaticWebsiteConfig:
         """Validate configuration"""
         # Static website template uses default project if not provided
         if not self.project:
-            print("[CONFIG WARNING] No project ID provided, using default: archie-demo-480815")
-            self.project = 'archie-demo-480815'
+            print("[CONFIG WARNING] No GCP project ID provided — deploy will use SA default")
     
     def get_parameter(self, key: str, default: Any = None) -> Any:
         """Get a parameter from the configuration."""
