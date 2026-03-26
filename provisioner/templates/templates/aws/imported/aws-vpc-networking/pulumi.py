@@ -13,13 +13,18 @@ class AwsVpcNetworking(InfrastructureTemplate):
         super().__init__(name, raw_config)
 
     def create_infrastructure(self):
-        project = self.config.get('project_name', 'proj')
-        env = self.config.get('environment', 'prod')
-        region = self.config.get('region', 'us-east-1')
+        project = cfg('project_name', 'proj')
+        env = cfg('environment', 'prod')
+        region = cfg('region', 'us-east-1')
+        # Config values nested in parameters — check both levels (Rule #6)
+        params = self.config.get('parameters', {})
+        def cfg(key, default=None):
+            return self.config.get(key) or params.get(key) or default
+
         tags = get_standard_tags(project=project, environment=env, template='aws-vpc-networking')
 
         self.vpc = factory.create('aws:ec2:Vpc', f'vpc-{project}-{env}',
-            cidr_block=self.config.get('vpc_cidr', '10.111.0.0/16'),
+            cidr_block=cfg('vpc_cidr', '10.111.0.0/16'),
             enable_dns_support=True,
             enable_dns_hostnames=True,
             tags={**tags, 'Name': f'vpc-{project}-{env}'}
@@ -27,16 +32,16 @@ class AwsVpcNetworking(InfrastructureTemplate):
 
         self.public_subnet = factory.create('aws:ec2:Subnet', f'public-subnet-{project}-{env}',
             vpc_id=self.vpc.id,
-            cidr_block=self.config.get('public_subnet_cidr', '10.111.1.0/24'),
-            availability_zone=self.config.get('availability_zone', 'us-east-1a'),
+            cidr_block=cfg('public_subnet_cidr', '10.111.1.0/24'),
+            availability_zone=cfg('availability_zone', 'us-east-1a'),
             map_public_ip_on_launch=True,
             tags={**tags, 'Name': 'public-subnet', 'Tier': 'public'}
         )
 
         self.private_subnet = factory.create('aws:ec2:Subnet', f'private-subnet-{project}-{env}',
             vpc_id=self.vpc.id,
-            cidr_block=self.config.get('private_subnet_cidr', '10.111.2.0/24'),
-            availability_zone=self.config.get('availability_zone', 'us-east-1a'),
+            cidr_block=cfg('private_subnet_cidr', '10.111.2.0/24'),
+            availability_zone=cfg('availability_zone', 'us-east-1a'),
             tags={**tags, 'Name': 'private-subnet', 'Tier': 'private'}
         )
 
