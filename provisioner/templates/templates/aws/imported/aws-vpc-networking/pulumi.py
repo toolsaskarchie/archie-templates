@@ -21,11 +21,6 @@ class AwsVpcNetworking(InfrastructureTemplate):
         def cfg(key, default=None):
             return self.config.get(key) or params.get(key) or default
 
-        print(f"[IMPORTED-TEMPLATE-DEBUG] self.config type: {type(self.config)}")
-        print(f"[IMPORTED-TEMPLATE-DEBUG] self.config keys: {list(self.config.keys()) if isinstance(self.config, dict) else 'NOT DICT'}")
-        print(f"[IMPORTED-TEMPLATE-DEBUG] params keys: {list(params.keys())}")
-        print(f"[IMPORTED-TEMPLATE-DEBUG] cfg('vpc_cidr'): {cfg('vpc_cidr', 'DEFAULT')}")
-        print(f"[IMPORTED-TEMPLATE-DEBUG] cfg('project_name'): {cfg('project_name', 'DEFAULT')}")
         tags = get_standard_tags(project=project, environment=env, template='aws-vpc-networking')
 
         self.vpc = factory.create('aws:ec2:Vpc', f'vpc-{project}-{env}',
