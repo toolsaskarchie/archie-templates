@@ -13,14 +13,14 @@ class AwsVpcNetworking(InfrastructureTemplate):
         super().__init__(name, raw_config)
 
     def create_infrastructure(self):
-        project = cfg('project_name', 'proj')
-        env = cfg('environment', 'prod')
-        region = cfg('region', 'us-east-1')
         # Config values nested in parameters — check both levels (Rule #6)
         params = self.config.get('parameters', {})
         def cfg(key, default=None):
             return self.config.get(key) or params.get(key) or default
 
+        project = cfg('project_name', 'proj')
+        env = cfg('environment', 'prod')
+        region = cfg('region', 'us-east-1')
         tags = get_standard_tags(project=project, environment=env, template='aws-vpc-networking')
 
         self.vpc = factory.create('aws:ec2:Vpc', f'vpc-{project}-{env}',
