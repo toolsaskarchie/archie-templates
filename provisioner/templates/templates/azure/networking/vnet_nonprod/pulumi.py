@@ -46,21 +46,14 @@ class AzureVNetNonProdTemplate(InfrastructureTemplate):
         enable_nat = cfg('enable_nat_gateway', 'true')
         if isinstance(enable_nat, str):
             enable_nat = enable_nat.lower() in ('true', '1', 'yes')
-        import json as _json
-        print(f"[VNET-DEBUG] FULL self.config keys: {list(self.config.keys())}")
-        print(f"[VNET-DEBUG] self.config.get('team_name'): '{self.config.get('team_name', 'MISSING')}'")
-        print(f"[VNET-DEBUG] params.get('team_name'): '{params.get('team_name', 'MISSING')}'")
-        print(f"[VNET-DEBUG] params keys: {list(params.keys())}")
         team_name = cfg('team_name', '')
-        print(f"[VNET-DEBUG] cfg('team_name') resolved to: '{team_name}'")
 
         tags = {
             'Project': project,
             'Environment': env,
             'ManagedBy': 'Archie',
+            'Team': team_name or 'unassigned',
         }
-        if team_name:
-            tags['Team'] = team_name
 
         # Rule #7: Reuse resource names from outputs on upgrade
         rg_name = cfg('resource_group_name') or f'rg-{project}-{env}'
