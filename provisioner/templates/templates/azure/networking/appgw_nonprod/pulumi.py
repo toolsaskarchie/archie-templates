@@ -122,7 +122,46 @@ class AzureAppGatewayNonProdTemplate(InfrastructureTemplate):
             tags=tags,
         )
 
-        # 6. Backend VMs
+        # 6. Backend VMs with nginx demo page
+        import base64
+        cloud_init = base64.b64encode(f"""#!/bin/bash
+apt-get update -y && apt-get install -y nginx
+HOSTNAME=$(hostname)
+cat > /var/www/html/index.html << 'HTMLEOF'
+<!DOCTYPE html>
+<html><head><title>Archie - Application Gateway Demo</title>
+<style>
+body {{ font-family: -apple-system, sans-serif; background: #0a0b0f; color: #e4e5e9; display: flex; align-items: center; justify-content: center; min-height: 100vh; margin: 0; }}
+.card {{ background: #12141a; border: 1px solid #1e2130; border-radius: 16px; padding: 48px; max-width: 520px; text-align: center; }}
+.logo {{ width: 48px; height: 48px; background: #4f8ff7; border-radius: 12px; display: flex; align-items: center; justify-content: center; margin: 0 auto 24px; font-weight: bold; color: #fff; font-size: 20px; }}
+h1 {{ font-size: 24px; margin: 0 0 8px; }}
+.sub {{ color: #8b8fa3; font-size: 14px; margin-bottom: 24px; }}
+.info {{ background: #1a1d25; border-radius: 8px; padding: 16px; text-align: left; font-size: 13px; }}
+.row {{ display: flex; justify-content: space-between; padding: 6px 0; border-bottom: 1px solid #1e2130; }}
+.row:last-child {{ border: none; }}
+.label {{ color: #8b8fa3; }}
+.value {{ color: #4f8ff7; font-family: monospace; }}
+.badge {{ display: inline-block; padding: 4px 12px; border-radius: 20px; background: #34d39912; color: #34d399; font-size: 11px; font-weight: 600; margin-top: 16px; }}
+</style></head><body>
+<div class="card">
+<div class="logo">A</div>
+<h1>Load Balancing Active</h1>
+<p class="sub">Azure Application Gateway is distributing traffic across backend VMs</p>
+<div class="info">
+<div class="row"><span class="label">Project</span><span class="value">{project}</span></div>
+<div class="row"><span class="label">Environment</span><span class="value">{env}</span></div>
+<div class="row"><span class="label">Backend VM</span><span class="value">HOSTNAME_PLACEHOLDER</span></div>
+<div class="row"><span class="label">Region</span><span class="value">{location}</span></div>
+<div class="row"><span class="label">VM Size</span><span class="value">{vm_size}</span></div>
+<div class="row"><span class="label">Managed By</span><span class="value">Archie IDP</span></div>
+</div>
+<span class="badge">Deployed via AskArchie</span>
+</div></body></html>
+HTMLEOF
+sed -i "s/HOSTNAME_PLACEHOLDER/$HOSTNAME/g" /var/www/html/index.html
+systemctl enable nginx && systemctl restart nginx
+""".encode()).decode()
+
         self.vms = []
         self.nics = []
         for i in range(1, instance_count + 1):
@@ -153,6 +192,7 @@ class AzureAppGatewayNonProdTemplate(InfrastructureTemplate):
                     'computer_name': f'backend{i}',
                     'admin_username': 'azureuser',
                     'admin_password': f'Archie-{project}-2026!',
+                    'custom_data': cloud_init,
                     'linux_configuration': {
                         'disable_password_authentication': False,
                     },
