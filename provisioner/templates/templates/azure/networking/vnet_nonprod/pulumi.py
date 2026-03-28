@@ -167,6 +167,7 @@ class AzureVNetNonProdTemplate(InfrastructureTemplate):
             )
 
         # Exports — Rule #7: export all generated names for upgrade reuse
+        pulumi.export('team_name', team_name)
         pulumi.export('resource_group_name', rg_name)
         pulumi.export('vnet_name', vnet_name)
         pulumi.export('vnet_id', self.vnet.id)
