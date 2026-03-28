@@ -34,8 +34,8 @@ class AzureVMNonProdTemplate(InfrastructureTemplate):
 
         project = cfg('project_name', 'myproject')
         env = cfg('environment', 'dev')
-        location = cfg('location', 'eastus')
-        vm_size = cfg('vm_size', 'Standard_DS1_v2')
+        location = cfg('location', 'centralus')
+        vm_size = cfg('vm_size', 'Standard_D2s_v3')
         admin_username = cfg('admin_username', 'azureuser')
         ssh_key = cfg('ssh_public_key', '')
         disk_size = int(cfg('disk_size_gb', '30'))

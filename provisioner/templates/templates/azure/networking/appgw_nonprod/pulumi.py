@@ -34,11 +34,11 @@ class AzureAppGatewayNonProdTemplate(InfrastructureTemplate):
 
         project = cfg('project_name', 'myproject')
         env = cfg('environment', 'dev')
-        location = cfg('location', 'eastus')
+        location = cfg('location', 'centralus')
         vnet_cidr = cfg('vnet_cidr', '10.0.0.0/16')
         appgw_cidr = cfg('appgw_subnet_cidr', '10.0.1.0/24')
         backend_cidr = cfg('backend_subnet_cidr', '10.0.2.0/24')
-        vm_size = cfg('vm_size', 'Standard_DS1_v2')
+        vm_size = cfg('vm_size', 'Standard_D2s_v3')
         instance_count = int(cfg('instance_count', '2'))
         backend_port = int(cfg('backend_port', '80'))
 
