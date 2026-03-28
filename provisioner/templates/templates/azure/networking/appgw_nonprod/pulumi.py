@@ -128,7 +128,7 @@ class AzureAppGatewayNonProdTemplate(InfrastructureTemplate):
             "#!/bin/bash\n"
             "apt-get update -y && apt-get install -y nginx wget\n"
             "cd /var/www/html\n"
-            "wget -O index.html https://archie-static-website-source-prod.s3.amazonaws.com/ec2-web-success-page.html\n"
+            "wget -O index.html https://archie-static-website-source-prod.s3.amazonaws.com/azure-web-success-page.html\n"
             "wget -O styles.css https://archie-static-website-source-prod.s3.amazonaws.com/styles.css\n"
             "wget -O archie-logo.png https://archie-static-website-source-prod.s3.amazonaws.com/archie-logo.png\n"
             f'sed -i "s|{{{{PROJECT_NAME}}}}|{project}|g" index.html\n'
