@@ -40,14 +40,14 @@ class AzureVNetProdTemplate(InfrastructureTemplate):
 
         tags = {'Project': project, 'Environment': env, 'ManagedBy': 'Archie'}
 
-        # 1. Resource Group
-        rg_name = f'rg-{project}-{env}'
+        # Rule #7: Reuse resource names from outputs on upgrade
+        rg_name = cfg('resource_group_name') or f'rg-{project}-{env}'
         self.resource_group = factory.create('azure-native:resources:ResourceGroup', rg_name,
             resource_group_name=rg_name, location=location, tags=tags,
         )
 
         # 2. Virtual Network
-        vnet_name = f'vnet-{project}-{env}'
+        vnet_name = cfg('vnet_name') or f'vnet-{project}-{env}'
         self.vnet = factory.create('azure-native:network:VirtualNetwork', vnet_name,
             virtual_network_name=vnet_name,
             resource_group_name=self.resource_group.name,
@@ -68,7 +68,7 @@ class AzureVNetProdTemplate(InfrastructureTemplate):
             ('app', []),
             ('db', []),
         ]:
-            nsg_name = f'nsg-{tier}-{project}-{env}'
+            nsg_name = cfg(f'{tier}_nsg_name') or f'nsg-{tier}-{project}-{env}'
             self.nsgs[tier] = factory.create('azure-native:network:NetworkSecurityGroup', nsg_name,
                 network_security_group_name=nsg_name,
                 resource_group_name=self.resource_group.name,
@@ -85,7 +85,7 @@ class AzureVNetProdTemplate(InfrastructureTemplate):
             for i, zone in enumerate(zone_suffixes):
                 octet = base_octets[tier] + i
                 cidr = f'10.0.{octet}.0/24'
-                subnet_name = f'snet-{tier}-{project}-{env}-{zone}'
+                subnet_name = cfg(f'subnet_{tier}_{zone}_name') or f'snet-{tier}-{project}-{env}-{zone}'
                 svc_endpoints = []
                 if tier in ('private', 'isolated'):
                     svc_endpoints = [
@@ -106,7 +106,7 @@ class AzureVNetProdTemplate(InfrastructureTemplate):
         self.nat_gateways = {}
         self.nat_pips = {}
         for zone in zone_suffixes:
-            pip_name = f'pip-nat-{project}-{env}-{zone}'
+            pip_name = cfg(f'nat_pip_{zone}_name') or f'pip-nat-{project}-{env}-{zone}'
             self.nat_pips[zone] = factory.create('azure-native:network:PublicIPAddress', pip_name,
                 public_ip_address_name=pip_name,
                 resource_group_name=self.resource_group.name,
@@ -116,7 +116,7 @@ class AzureVNetProdTemplate(InfrastructureTemplate):
                 zones=[zone],
                 tags=tags,
             )
-            nat_name = f'nat-{project}-{env}-{zone}'
+            nat_name = cfg(f'nat_gateway_{zone}_name') or f'nat-{project}-{env}-{zone}'
             self.nat_gateways[zone] = factory.create('azure-native:network:NatGateway', nat_name,
                 nat_gateway_name=nat_name,
                 resource_group_name=self.resource_group.name,
@@ -127,16 +127,21 @@ class AzureVNetProdTemplate(InfrastructureTemplate):
                 tags=tags,
             )
 
-        # Exports
-        pulumi.export('resource_group_name', self.resource_group.name)
-        pulumi.export('vnet_id', self.vnet.id)
+        # Exports — Rule #7: export all generated names for upgrade reuse
+        pulumi.export('resource_group_name', rg_name)
         pulumi.export('vnet_name', vnet_name)
+        pulumi.export('vnet_id', self.vnet.id)
         pulumi.export('vnet_cidr', vnet_cidr)
-        pulumi.export('web_nsg_id', self.nsgs['web'].id)
-        pulumi.export('app_nsg_id', self.nsgs['app'].id)
-        pulumi.export('db_nsg_id', self.nsgs['db'].id)
+        for tier_key in ['web', 'app', 'db']:
+            pulumi.export(f'{tier_key}_nsg_name', cfg(f'{tier_key}_nsg_name') or f'nsg-{tier_key}-{project}-{env}')
+            pulumi.export(f'{tier_key}_nsg_id', self.nsgs[tier_key].id)
         for key, subnet in self.subnets.items():
-            pulumi.export(f'subnet_{key.replace("-", "_")}_id', subnet.id)
+            safe_key = key.replace("-", "_")
+            pulumi.export(f'subnet_{safe_key}_name', cfg(f'subnet_{safe_key}_name') or f'snet-{key}-{project}-{env}')
+            pulumi.export(f'subnet_{safe_key}_id', subnet.id)
+        for zone in zone_suffixes:
+            pulumi.export(f'nat_pip_{zone}_name', cfg(f'nat_pip_{zone}_name') or f'pip-nat-{project}-{env}-{zone}')
+            pulumi.export(f'nat_gateway_{zone}_name', cfg(f'nat_gateway_{zone}_name') or f'nat-{project}-{env}-{zone}')
 
         return self.get_outputs()
 
@@ -157,7 +162,7 @@ class AzureVNetProdTemplate(InfrastructureTemplate):
     def get_metadata(cls):
         return {
             'name': 'azure-vnet-prod',
-            'title': '3-Tier Enterprise Azure Network',
+            'title': '3-Tier Enterprise Network',
             'description': 'Enterprise-grade Azure networking with 3-AZ VNet, public/private/isolated subnets, HA NAT Gateways, and tiered NSGs.',
             'category': 'networking',
             'cloud': 'azure',

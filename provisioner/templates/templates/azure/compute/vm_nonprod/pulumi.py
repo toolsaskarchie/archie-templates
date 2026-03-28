@@ -46,14 +46,14 @@ class AzureVMNonProdTemplate(InfrastructureTemplate):
 
         tags = {'Project': project, 'Environment': env, 'ManagedBy': 'Archie'}
 
-        # 1. Resource Group
-        rg_name = f'rg-{project}-{env}'
+        # Rule #7: Reuse resource names from outputs on upgrade
+        rg_name = cfg('resource_group_name') or f'rg-{project}-{env}'
         self.resource_group = factory.create('azure-native:resources:ResourceGroup', rg_name,
             resource_group_name=rg_name, location=location, tags=tags,
         )
 
         # 2. Virtual Network
-        vnet_name = f'vnet-{project}-{env}'
+        vnet_name = cfg('vnet_name') or f'vnet-{project}-{env}'
         self.vnet = factory.create('azure-native:network:VirtualNetwork', vnet_name,
             virtual_network_name=vnet_name,
             resource_group_name=self.resource_group.name,
@@ -63,7 +63,7 @@ class AzureVMNonProdTemplate(InfrastructureTemplate):
         )
 
         # 3. Subnet
-        subnet_name = f'snet-{project}-{env}'
+        subnet_name = cfg('subnet_name') or f'snet-{project}-{env}'
         self.subnet = factory.create('azure-native:network:Subnet', subnet_name,
             subnet_name=subnet_name,
             resource_group_name=self.resource_group.name,
@@ -72,7 +72,7 @@ class AzureVMNonProdTemplate(InfrastructureTemplate):
         )
 
         # 4. NSG with SSH access
-        nsg_name = f'nsg-{project}-{env}'
+        nsg_name = cfg('nsg_name') or f'nsg-{project}-{env}'
         ssh_rules = [
             {
                 'name': 'AllowSSH',
@@ -96,7 +96,7 @@ class AzureVMNonProdTemplate(InfrastructureTemplate):
 
         # 5. Public IP (optional)
         if enable_pip:
-            pip_name = f'pip-{project}-{env}'
+            pip_name = cfg('pip_name') or f'pip-{project}-{env}'
             self.public_ip = factory.create('azure-native:network:PublicIPAddress', pip_name,
                 public_ip_address_name=pip_name,
                 resource_group_name=self.resource_group.name,
@@ -107,7 +107,7 @@ class AzureVMNonProdTemplate(InfrastructureTemplate):
             )
 
         # 6. Network Interface
-        nic_name = f'nic-{project}-{env}'
+        nic_name = cfg('nic_name') or f'nic-{project}-{env}'
         ip_config = {
             'name': 'ipconfig1',
             'subnet': {'id': self.subnet.id},
@@ -126,7 +126,7 @@ class AzureVMNonProdTemplate(InfrastructureTemplate):
         )
 
         # 7. Virtual Machine
-        vm_name = f'vm-{project}-{env}'
+        vm_name = cfg('vm_name') or f'vm-{project}-{env}'
         vm_args = {
             'vm_name': vm_name,
             'resource_group_name': self.resource_group.name,
@@ -171,17 +171,22 @@ class AzureVMNonProdTemplate(InfrastructureTemplate):
 
         self.vm = factory.create('azure-native:compute:VirtualMachine', vm_name, **vm_args)
 
-        # Exports
-        pulumi.export('resource_group_name', self.resource_group.name)
-        pulumi.export('vm_id', self.vm.id)
+        # Exports — Rule #7: export all generated names for upgrade reuse
+        pulumi.export('resource_group_name', rg_name)
+        pulumi.export('vnet_name', vnet_name)
+        pulumi.export('vnet_id', self.vnet.id)
+        pulumi.export('subnet_name', subnet_name)
+        pulumi.export('nsg_name', nsg_name)
+        pulumi.export('nic_name', nic_name)
         pulumi.export('vm_name', vm_name)
+        pulumi.export('vm_id', self.vm.id)
         pulumi.export('private_ip', self.nic.ip_configurations.apply(lambda ips: ips[0].private_ip_address if ips else ''))
         if enable_pip:
+            pulumi.export('pip_name', pip_name)
             pulumi.export('public_ip', self.public_ip.ip_address)
             pulumi.export('ssh_command', self.public_ip.ip_address.apply(
                 lambda ip: f'ssh {admin_username}@{ip}' if ip else 'N/A (no public IP)'
             ))
-        pulumi.export('vnet_id', self.vnet.id)
 
         return self.get_outputs()
 
@@ -197,7 +202,7 @@ class AzureVMNonProdTemplate(InfrastructureTemplate):
     def get_metadata(cls):
         return {
             'name': 'azure-vm-nonprod',
-            'title': 'Azure Virtual Machine (Non-Prod)',
+            'title': 'Virtual Machine',
             'description': 'Cost-optimized Azure VM with VNet, NSG, managed identity, and optional public IP. For dev/staging workloads.',
             'category': 'compute',
             'cloud': 'azure',

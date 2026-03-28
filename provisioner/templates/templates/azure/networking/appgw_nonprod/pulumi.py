@@ -45,13 +45,13 @@ class AzureAppGatewayNonProdTemplate(InfrastructureTemplate):
         tags = {'Project': project, 'Environment': env, 'ManagedBy': 'Archie'}
 
         # 1. Resource Group
-        rg_name = f'rg-{project}-{env}'
+        rg_name = cfg('resource_group_name') or f'rg-{project}-{env}'
         self.resource_group = factory.create('azure-native:resources:ResourceGroup', rg_name,
             resource_group_name=rg_name, location=location, tags=tags,
         )
 
         # 2. Virtual Network
-        vnet_name = f'vnet-{project}-{env}'
+        vnet_name = cfg('vnet_name') or f'vnet-{project}-{env}'
         self.vnet = factory.create('azure-native:network:VirtualNetwork', vnet_name,
             virtual_network_name=vnet_name,
             resource_group_name=self.resource_group.name,
@@ -61,7 +61,7 @@ class AzureAppGatewayNonProdTemplate(InfrastructureTemplate):
         )
 
         # 3. App Gateway Subnet (dedicated — no other resources allowed)
-        appgw_subnet_name = f'snet-appgw-{project}-{env}'
+        appgw_subnet_name = cfg('appgw_subnet_name') or f'snet-appgw-{project}-{env}'
         self.appgw_subnet = factory.create('azure-native:network:Subnet', appgw_subnet_name,
             subnet_name=appgw_subnet_name,
             resource_group_name=self.resource_group.name,
@@ -70,7 +70,7 @@ class AzureAppGatewayNonProdTemplate(InfrastructureTemplate):
         )
 
         # 4. Backend Subnet + NSG
-        backend_nsg_name = f'nsg-backend-{project}-{env}'
+        backend_nsg_name = cfg('backend_nsg_name') or f'nsg-backend-{project}-{env}'
         self.backend_nsg = factory.create('azure-native:network:NetworkSecurityGroup', backend_nsg_name,
             network_security_group_name=backend_nsg_name,
             resource_group_name=self.resource_group.name,
@@ -102,7 +102,7 @@ class AzureAppGatewayNonProdTemplate(InfrastructureTemplate):
             tags=tags,
         )
 
-        backend_subnet_name = f'snet-backend-{project}-{env}'
+        backend_subnet_name = cfg('backend_subnet_name') or f'snet-backend-{project}-{env}'
         self.backend_subnet = factory.create('azure-native:network:Subnet', backend_subnet_name,
             subnet_name=backend_subnet_name,
             resource_group_name=self.resource_group.name,
@@ -112,7 +112,7 @@ class AzureAppGatewayNonProdTemplate(InfrastructureTemplate):
         )
 
         # 5. Public IP for App Gateway
-        pip_name = f'pip-appgw-{project}-{env}'
+        pip_name = cfg('appgw_pip_name') or f'pip-appgw-{project}-{env}'
         self.appgw_pip = factory.create('azure-native:network:PublicIPAddress', pip_name,
             public_ip_address_name=pip_name,
             resource_group_name=self.resource_group.name,
@@ -126,7 +126,7 @@ class AzureAppGatewayNonProdTemplate(InfrastructureTemplate):
         self.vms = []
         self.nics = []
         for i in range(1, instance_count + 1):
-            nic_name = f'nic-backend-{project}-{env}-{i}'
+            nic_name = cfg(f'nic_backend_{i}_name') or f'nic-backend-{project}-{env}-{i}'
             nic = factory.create('azure-native:network:NetworkInterface', nic_name,
                 network_interface_name=nic_name,
                 resource_group_name=self.resource_group.name,
@@ -140,7 +140,7 @@ class AzureAppGatewayNonProdTemplate(InfrastructureTemplate):
             )
             self.nics.append(nic)
 
-            vm_name = f'vm-backend-{project}-{env}-{i}'
+            vm_name = cfg(f'vm_backend_{i}_name') or f'vm-backend-{project}-{env}-{i}'
             vm = factory.create('azure-native:compute:VirtualMachine', vm_name,
                 vm_name=vm_name,
                 resource_group_name=self.resource_group.name,
@@ -175,7 +175,7 @@ class AzureAppGatewayNonProdTemplate(InfrastructureTemplate):
             self.vms.append(vm)
 
         # 7. Application Gateway
-        appgw_name = f'appgw-{project}-{env}'
+        appgw_name = cfg('appgw_name') or f'appgw-{project}-{env}'
         backend_addresses = [{'ip_address': nic.ip_configurations.apply(lambda ips: ips[0].private_ip_address)} for nic in self.nics]
 
         self.appgw = factory.create('azure-native:network:ApplicationGateway', appgw_name,
@@ -261,13 +261,22 @@ class AzureAppGatewayNonProdTemplate(InfrastructureTemplate):
             tags=tags,
         )
 
-        # Exports
-        pulumi.export('resource_group_name', self.resource_group.name)
+        # Exports — Rule #7: export all generated names for upgrade reuse
+        pulumi.export('resource_group_name', rg_name)
+        pulumi.export('vnet_name', vnet_name)
+        pulumi.export('vnet_id', self.vnet.id)
+        pulumi.export('appgw_subnet_name', appgw_subnet_name)
+        pulumi.export('backend_subnet_name', backend_subnet_name)
+        pulumi.export('backend_nsg_name', backend_nsg_name)
+        pulumi.export('appgw_pip_name', pip_name)
+        pulumi.export('appgw_name', appgw_name)
         pulumi.export('appgw_id', self.appgw.id)
         pulumi.export('appgw_public_ip', self.appgw_pip.ip_address)
         pulumi.export('appgw_url', self.appgw_pip.ip_address.apply(lambda ip: f'http://{ip}'))
-        pulumi.export('vnet_id', self.vnet.id)
         pulumi.export('backend_subnet_id', self.backend_subnet.id)
+        for i in range(instance_count):
+            pulumi.export(f'nic_backend_{i}_name', cfg(f'nic_backend_{i}_name') or f'nic-backend-{project}-{env}-{i}')
+            pulumi.export(f'vm_backend_{i}_name', cfg(f'vm_backend_{i}_name') or f'vm-backend-{project}-{env}-{i}')
 
         return self.get_outputs()
 
@@ -283,7 +292,7 @@ class AzureAppGatewayNonProdTemplate(InfrastructureTemplate):
     def get_metadata(cls):
         return {
             'name': 'azure-appgw-nonprod',
-            'title': 'Azure Application Gateway with Backend VMs',
+            'title': 'Application Gateway with Backend VMs',
             'description': 'L7 load balancer with VNet, backend VMs, NSG isolation, and HTTP routing. Azure equivalent of AWS ALB.',
             'category': 'networking',
             'cloud': 'azure',

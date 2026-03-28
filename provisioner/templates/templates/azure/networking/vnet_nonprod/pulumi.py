@@ -53,8 +53,17 @@ class AzureVNetNonProdTemplate(InfrastructureTemplate):
             'ManagedBy': 'Archie',
         }
 
+        # Rule #7: Reuse resource names from outputs on upgrade
+        rg_name = cfg('resource_group_name') or f'rg-{project}-{env}'
+        vnet_name = cfg('vnet_name') or f'vnet-{project}-{env}'
+        web_nsg_name = cfg('web_nsg_name') or f'nsg-web-{project}-{env}'
+        app_nsg_name = cfg('app_nsg_name') or f'nsg-app-{project}-{env}'
+        public_subnet_name = cfg('public_subnet_name') or f'snet-public-{project}-{env}'
+        private_subnet_name = cfg('private_subnet_name') or f'snet-private-{project}-{env}'
+        pip_name = cfg('nat_pip_name') or f'pip-nat-{project}-{env}'
+        nat_name = cfg('nat_gateway_name') or f'nat-{project}-{env}'
+
         # 1. Resource Group
-        rg_name = f'rg-{project}-{env}'
         self.resource_group = factory.create('azure-native:resources:ResourceGroup', rg_name,
             resource_group_name=rg_name,
             location=location,
@@ -62,7 +71,6 @@ class AzureVNetNonProdTemplate(InfrastructureTemplate):
         )
 
         # 2. Virtual Network
-        vnet_name = f'vnet-{project}-{env}'
         self.vnet = factory.create('azure-native:network:VirtualNetwork', vnet_name,
             virtual_network_name=vnet_name,
             resource_group_name=self.resource_group.name,
@@ -72,7 +80,6 @@ class AzureVNetNonProdTemplate(InfrastructureTemplate):
         )
 
         # 3. NSG — Web Tier (HTTP/HTTPS from internet)
-        web_nsg_name = f'nsg-web-{project}-{env}'
         self.web_nsg = factory.create('azure-native:network:NetworkSecurityGroup', web_nsg_name,
             network_security_group_name=web_nsg_name,
             resource_group_name=self.resource_group.name,
@@ -105,7 +112,6 @@ class AzureVNetNonProdTemplate(InfrastructureTemplate):
         )
 
         # 4. NSG — App Tier (no inbound by default — App Gateway adds rules)
-        app_nsg_name = f'nsg-app-{project}-{env}'
         self.app_nsg = factory.create('azure-native:network:NetworkSecurityGroup', app_nsg_name,
             network_security_group_name=app_nsg_name,
             resource_group_name=self.resource_group.name,
@@ -115,7 +121,6 @@ class AzureVNetNonProdTemplate(InfrastructureTemplate):
         )
 
         # 5. Public Subnet
-        public_subnet_name = f'snet-public-{project}-{env}'
         self.public_subnet = factory.create('azure-native:network:Subnet', public_subnet_name,
             subnet_name=public_subnet_name,
             resource_group_name=self.resource_group.name,
@@ -125,7 +130,6 @@ class AzureVNetNonProdTemplate(InfrastructureTemplate):
         )
 
         # 6. Private Subnet
-        private_subnet_name = f'snet-private-{project}-{env}'
         self.private_subnet = factory.create('azure-native:network:Subnet', private_subnet_name,
             subnet_name=private_subnet_name,
             resource_group_name=self.resource_group.name,
@@ -141,7 +145,6 @@ class AzureVNetNonProdTemplate(InfrastructureTemplate):
 
         # 7. NAT Gateway (optional)
         if enable_nat:
-            pip_name = f'pip-nat-{project}-{env}'
             self.nat_pip = factory.create('azure-native:network:PublicIPAddress', pip_name,
                 public_ip_address_name=pip_name,
                 resource_group_name=self.resource_group.name,
@@ -151,7 +154,6 @@ class AzureVNetNonProdTemplate(InfrastructureTemplate):
                 tags=tags,
             )
 
-            nat_name = f'nat-{project}-{env}'
             self.nat_gateway = factory.create('azure-native:network:NatGateway', nat_name,
                 nat_gateway_name=nat_name,
                 resource_group_name=self.resource_group.name,
@@ -161,16 +163,22 @@ class AzureVNetNonProdTemplate(InfrastructureTemplate):
                 tags=tags,
             )
 
-        # Exports
-        pulumi.export('resource_group_name', self.resource_group.name)
-        pulumi.export('vnet_id', self.vnet.id)
+        # Exports — Rule #7: export all generated names for upgrade reuse
+        pulumi.export('resource_group_name', rg_name)
         pulumi.export('vnet_name', vnet_name)
+        pulumi.export('vnet_id', self.vnet.id)
         pulumi.export('vnet_cidr', vnet_cidr)
-        pulumi.export('public_subnet_id', self.public_subnet.id)
-        pulumi.export('private_subnet_id', self.private_subnet.id)
+        pulumi.export('web_nsg_name', web_nsg_name)
+        pulumi.export('app_nsg_name', app_nsg_name)
         pulumi.export('web_nsg_id', self.web_nsg.id)
         pulumi.export('app_nsg_id', self.app_nsg.id)
+        pulumi.export('public_subnet_name', public_subnet_name)
+        pulumi.export('private_subnet_name', private_subnet_name)
+        pulumi.export('public_subnet_id', self.public_subnet.id)
+        pulumi.export('private_subnet_id', self.private_subnet.id)
         if enable_nat:
+            pulumi.export('nat_pip_name', pip_name)
+            pulumi.export('nat_gateway_name', nat_name)
             pulumi.export('nat_gateway_id', self.nat_gateway.id)
             pulumi.export('nat_public_ip', self.nat_pip.ip_address)
 
@@ -190,7 +198,7 @@ class AzureVNetNonProdTemplate(InfrastructureTemplate):
     def get_metadata(cls):
         return {
             'name': 'azure-vnet-nonprod',
-            'title': 'Azure Virtual Network (Non-Prod)',
+            'title': 'Virtual Network',
             'description': 'Cost-optimized Azure networking with VNet, subnets, NSGs, and optional NAT Gateway. Single region for dev/staging.',
             'category': 'networking',
             'cloud': 'azure',
