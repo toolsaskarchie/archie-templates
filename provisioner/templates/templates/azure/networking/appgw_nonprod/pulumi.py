@@ -236,6 +236,7 @@ class AzureAppGatewayNonProdTemplate(InfrastructureTemplate):
             }],
             backend_address_pools=[{
                 'name': 'backendPool',
+                'backend_addresses': [{'ip_address': nic.ip_configurations.apply(lambda ips: ips[0].private_ip_address)} for nic in self.nics],
             }],
             backend_http_settings_collection=[{
                 'name': 'httpSettings',
