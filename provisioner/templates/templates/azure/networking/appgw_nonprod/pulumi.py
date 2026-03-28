@@ -7,7 +7,7 @@ Creates VNet + Application Gateway + backend VMs.
 Base cost (~$90-130/mo):
 - Application Gateway Standard_v2 (~$60/mo base + capacity units)
 - Public IP Standard (~$3/mo)
-- 2x Standard_B2s VMs (~$60/mo)
+- 2x Standard_B2s_v2 VMs (~$60/mo)
 - VNet + NSGs (free)
 """
 
@@ -38,7 +38,7 @@ class AzureAppGatewayNonProdTemplate(InfrastructureTemplate):
         vnet_cidr = cfg('vnet_cidr', '10.0.0.0/16')
         appgw_cidr = cfg('appgw_subnet_cidr', '10.0.1.0/24')
         backend_cidr = cfg('backend_subnet_cidr', '10.0.2.0/24')
-        vm_size = cfg('vm_size', 'Standard_B2s')
+        vm_size = cfg('vm_size', 'Standard_B2s_v2')
         instance_count = int(cfg('instance_count', '2'))
         backend_port = int(cfg('backend_port', '80'))
 

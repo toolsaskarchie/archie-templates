@@ -5,7 +5,7 @@ Cost-optimized Azure VM for development and staging.
 Creates VNet + NSG + VM with managed identity.
 
 Base cost (~$35-60/mo):
-- Standard_B2s VM (~$30/mo)
+- Standard_B2s_v2 VM (~$30/mo)
 - 30GB managed disk (~$2/mo)
 - Public IP (~$3/mo)
 - VNet + NSG (free)
@@ -35,7 +35,7 @@ class AzureVMNonProdTemplate(InfrastructureTemplate):
         project = cfg('project_name', 'myproject')
         env = cfg('environment', 'dev')
         location = cfg('location', 'eastus')
-        vm_size = cfg('vm_size', 'Standard_B2s')
+        vm_size = cfg('vm_size', 'Standard_B2s_v2')
         admin_username = cfg('admin_username', 'azureuser')
         ssh_key = cfg('ssh_public_key', '')
         disk_size = int(cfg('disk_size_gb', '30'))
