@@ -46,12 +46,15 @@ class AzureVNetNonProdTemplate(InfrastructureTemplate):
         enable_nat = cfg('enable_nat_gateway', 'true')
         if isinstance(enable_nat, str):
             enable_nat = enable_nat.lower() in ('true', '1', 'yes')
+        team_name = cfg('team_name', '')
 
         tags = {
             'Project': project,
             'Environment': env,
             'ManagedBy': 'Archie',
         }
+        if team_name:
+            tags['Team'] = team_name
 
         # Rule #7: Reuse resource names from outputs on upgrade
         rg_name = cfg('resource_group_name') or f'rg-{project}-{env}'
