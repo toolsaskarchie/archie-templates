@@ -46,7 +46,13 @@ class AzureVNetNonProdTemplate(InfrastructureTemplate):
         enable_nat = cfg('enable_nat_gateway', 'true')
         if isinstance(enable_nat, str):
             enable_nat = enable_nat.lower() in ('true', '1', 'yes')
+        import json as _json
+        print(f"[VNET-DEBUG] FULL self.config keys: {list(self.config.keys())}")
+        print(f"[VNET-DEBUG] self.config.get('team_name'): '{self.config.get('team_name', 'MISSING')}'")
+        print(f"[VNET-DEBUG] params.get('team_name'): '{params.get('team_name', 'MISSING')}'")
+        print(f"[VNET-DEBUG] params keys: {list(params.keys())}")
         team_name = cfg('team_name', '')
+        print(f"[VNET-DEBUG] cfg('team_name') resolved to: '{team_name}'")
 
         tags = {
             'Project': project,
