@@ -152,6 +152,7 @@ class AzureAppGatewayNonProdTemplate(InfrastructureTemplate):
                 os_profile={
                     'computer_name': f'backend{i}',
                     'admin_username': 'azureuser',
+                    'admin_password': f'Archie-{project}-2026!',
                     'linux_configuration': {
                         'disable_password_authentication': False,
                     },
