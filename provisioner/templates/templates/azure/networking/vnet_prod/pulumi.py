@@ -15,6 +15,7 @@ Base cost (~$130/mo):
 from typing import Any, Dict, Optional
 import pulumi
 
+from pulumi import ResourceOptions
 from provisioner.templates.base import InfrastructureTemplate, template_registry
 from provisioner.templates.atomic_factory import PulumiAtomicFactory as factory
 
@@ -81,6 +82,7 @@ class AzureVNetProdTemplate(InfrastructureTemplate):
         base_octets = {'public': 1, 'private': 4, 'isolated': 7}
         nsg_map = {'public': 'web', 'private': 'app', 'isolated': 'db'}
 
+        prev_subnet = None  # Chain subnets — Azure can't create them concurrently
         for tier in ['public', 'private', 'isolated']:
             for i, zone in enumerate(zone_suffixes):
                 octet = base_octets[tier] + i
@@ -100,7 +102,9 @@ class AzureVNetProdTemplate(InfrastructureTemplate):
                     address_prefix=cidr,
                     network_security_group={'id': self.nsgs[nsg_map[tier]].id},
                     service_endpoints=svc_endpoints if svc_endpoints else None,
+                    **({"opts": ResourceOptions(depends_on=[prev_subnet])} if prev_subnet else {}),
                 )
+                prev_subnet = self.subnets[f'{tier}-{zone}']
 
         # 5. NAT Gateways — one per zone for HA
         self.nat_gateways = {}

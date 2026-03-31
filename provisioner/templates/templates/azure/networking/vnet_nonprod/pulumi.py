@@ -17,6 +17,7 @@ Optional features:
 
 from typing import Any, Dict, Optional
 import pulumi
+from pulumi import ResourceOptions
 
 from provisioner.templates.base import InfrastructureTemplate, template_registry
 from provisioner.templates.atomic_factory import PulumiAtomicFactory as factory
@@ -131,7 +132,7 @@ class AzureVNetNonProdTemplate(InfrastructureTemplate):
             network_security_group={'id': self.web_nsg.id},
         )
 
-        # 6. Private Subnet
+        # 6. Private Subnet (depends on public subnet — Azure can't create subnets concurrently)
         self.private_subnet = factory.create('azure-native:network:Subnet', private_subnet_name,
             subnet_name=private_subnet_name,
             resource_group_name=self.resource_group.name,
@@ -143,6 +144,7 @@ class AzureVNetNonProdTemplate(InfrastructureTemplate):
                 {'service': 'Microsoft.Sql'},
                 {'service': 'Microsoft.KeyVault'},
             ],
+            opts=ResourceOptions(depends_on=[self.public_subnet]),
         )
 
         # 7. NAT Gateway (optional)
