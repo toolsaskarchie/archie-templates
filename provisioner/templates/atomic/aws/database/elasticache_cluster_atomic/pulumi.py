@@ -65,6 +65,12 @@ class ElastiCacheClusterAtomicTemplate(AtomicTemplate):
             tags=self.config.get('tags', {})
         )
         
+        # Export resource IDs, names, ARNs, and endpoints (Rule #7)
+        pulumi.export(f"{self.name}_cluster_id", self.cluster.cluster_id)
+        pulumi.export(f"{self.name}_endpoint", self.cluster.cache_nodes[0].address)
+        pulumi.export(f"{self.name}_port", self.cluster.port)
+        pulumi.export(f"{self.name}_arn", self.cluster.arn)
+
         return {
             'cluster_id': self.cluster.cluster_id,
             'endpoint': self.cluster.cache_nodes[0].address,

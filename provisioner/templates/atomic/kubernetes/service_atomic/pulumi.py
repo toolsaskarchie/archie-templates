@@ -65,7 +65,9 @@ class K8sServiceAtomicTemplate(AtomicTemplate):
         )
         
         pulumi.export(f"{self.name}_service_name", self.service.metadata.name)
-        
+        pulumi.export(f"{self.name}_namespace", self.service.metadata.namespace)
+        pulumi.export(f"{self.name}_cluster_ip", self.service.spec.cluster_ip)
+
         return self.get_outputs()
     
     def get_outputs(self) -> Dict[str, Any]:

@@ -38,15 +38,6 @@ class VPCProdTemplate(InfrastructureTemplate):
     - Private Service Access: VPC Endpoints for S3 and DynamoDB
     """
     
-    @staticmethod
-    def _to_bool(val) -> bool:
-        """Convert any value to bool. Handles: True, 1, '1', 'true', Decimal(1)."""
-        if isinstance(val, bool): return val
-        if isinstance(val, (int, float)): return val != 0
-        if isinstance(val, str): return val.lower() in ('true', '1', 'yes')
-        try: return int(val) != 0
-        except (TypeError, ValueError): return bool(val)
-
     def __init__(self, name: str = None, config: Dict[str, Any] = None, aws: Dict[str, Any] = None, **kwargs):
         """Initialize VPC Prod template"""
         raw_config = config or aws or kwargs or {}
@@ -106,12 +97,8 @@ class VPCProdTemplate(InfrastructureTemplate):
         # 1. Create VPC
         vpc_name = self.cfg.get('vpc_name')
         vpc_resource_name = vpc_name or namer.vpc()
-        raw_dns_support = self.config.get('enable_dns_support', self.config.get('parameters', {}).get('enable_dns_support', True))
-        raw_dns_hostnames = self.config.get('enable_dns_hostnames', self.config.get('parameters', {}).get('enable_dns_hostnames', True))
-        dns_support = self._to_bool(raw_dns_support)
-        dns_hostnames = self._to_bool(raw_dns_hostnames)
-        print(f"[VPC DEBUG] enable_dns_support: raw={raw_dns_support} ({type(raw_dns_support).__name__}) -> {dns_support} ({type(dns_support).__name__})")
-        print(f"[VPC DEBUG] enable_dns_hostnames: raw={raw_dns_hostnames} ({type(raw_dns_hostnames).__name__}) -> {dns_hostnames} ({type(dns_hostnames).__name__})")
+        dns_support = self.get_bool('enable_dns_support', True)
+        dns_hostnames = self.get_bool('enable_dns_hostnames', True)
         self.vpc = factory.create(
             "aws:ec2:Vpc",
             vpc_resource_name,
@@ -601,15 +588,32 @@ class VPCProdTemplate(InfrastructureTemplate):
         pulumi.export("vpc_id", vpc_id)
         pulumi.export("vpc_name", vpc_resource_name)
         pulumi.export("vpc_cidr", cidr_block)
-        if hasattr(self, '_flow_logs_bucket_name'):
-            pulumi.export("flow_logs_bucket", self._flow_logs_bucket_name)
+        pulumi.export("vpc_arn", self.vpc.arn)
+
+        pulumi.export("internet_gateway_id", self.igw.id)
+        if self.nat_gateways:
+            pulumi.export("nat_gateway_ids", [gw.id for gw in self.nat_gateways])
+
         pulumi.export("public_subnet_ids", [self.subnets[f"public-{i}"].id for i in range(1, 4)])
         pulumi.export("private_subnet_ids", [self.subnets[f"private-{i}"].id for i in range(1, 4)])
         pulumi.export("isolated_subnet_ids", [self.subnets[f"isolated-{i}"].id for i in range(1, 4)])
+
+        pulumi.export("public_route_table_id", public_rt.id)
+        pulumi.export("private_route_table_ids", [rt.id for rt in private_rts])
+
         pulumi.export("web_security_group_id", self.security_groups['web'].id)
         pulumi.export("app_security_group_id", self.security_groups['app'].id)
         pulumi.export("db_security_group_id", self.security_groups['db'].id)
         pulumi.export("access_security_group_id", self.security_groups['access'].id)
+
+        pulumi.export("vpc_endpoint_s3_id", self.vpc_endpoints['s3'].id)
+        pulumi.export("vpc_endpoint_dynamodb_id", self.vpc_endpoints['dynamodb'].id)
+
+        if hasattr(self, '_flow_logs_bucket_name'):
+            pulumi.export("flow_logs_bucket", self._flow_logs_bucket_name)
+            pulumi.export("flow_logs_bucket_name", self._flow_logs_bucket_name)
+        if self.flow_logs:
+            pulumi.export("flow_log_id", self.flow_logs.id)
         
         return self.get_outputs()
     

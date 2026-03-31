@@ -43,15 +43,6 @@ class VPCSimpleNonprodTemplate(InfrastructureTemplate):
     All resources created via factory pattern - no atomics, no ui-manifest.
     """
     
-    @staticmethod
-    def _to_bool(val) -> bool:
-        """Convert any value to bool. Handles: True, 1, '1', 'true', Decimal(1)."""
-        if isinstance(val, bool): return val
-        if isinstance(val, (int, float)): return val != 0
-        if isinstance(val, str): return val.lower() in ('true', '1', 'yes')
-        try: return int(val) != 0
-        except (TypeError, ValueError): return bool(val)
-
     def __init__(self, name: str = None, config: Dict[str, Any] = None, aws: Dict[str, Any] = None, **kwargs):
         """Initialize VPC Simple Nonprod template"""
         raw_config = config or aws or kwargs or {}
@@ -138,8 +129,8 @@ class VPCSimpleNonprodTemplate(InfrastructureTemplate):
             "aws:ec2:Vpc",
             vpc_name,
             cidr_block=vpc_cidr,
-            enable_dns_support=self._to_bool(self.config.get('enable_dns_support', self.config.get('parameters', {}).get('enable_dns_support', True))),
-            enable_dns_hostnames=self._to_bool(self.config.get('enable_dns_hostnames', self.config.get('parameters', {}).get('enable_dns_hostnames', True))),
+            enable_dns_support=self.get_bool('enable_dns_support', True),
+            enable_dns_hostnames=self.get_bool('enable_dns_hostnames', True),
             instance_tenancy=self.cfg.instance_tenancy,
             tags={**tags, "Name": vpc_name}
         )
@@ -638,29 +629,33 @@ class VPCSimpleNonprodTemplate(InfrastructureTemplate):
         pulumi.export("vpc_name", vpc_name)
         pulumi.export("vpc_cidr", self.vpc.cidr_block)
         pulumi.export("vpc_arn", self.vpc.arn)
-        
+
         pulumi.export("internet_gateway_id", self.igw.id)
-        pulumi.export("nat_gateway_id", self.nat_gateway.id)
-        
+        if self.nat_gateway:
+            pulumi.export("nat_gateway_id", self.nat_gateway.id)
+
         pulumi.export("public_subnet_id", self.subnets['public'].id)
         pulumi.export("private_subnet_id", self.subnets['private'].id)
         if self.cfg.enable_isolated_tier:
             pulumi.export("isolated_subnet_id", self.subnets['isolated'].id)
-        
+
         pulumi.export("public_route_table_id", self.route_tables['public'].id)
         pulumi.export("private_route_table_id", self.route_tables['private'].id)
         if self.cfg.enable_isolated_tier:
             pulumi.export("isolated_route_table_id", self.route_tables['isolated'].id)
-        
+
         pulumi.export("security_group_web_id", self.security_groups['web'].id)
         pulumi.export("security_group_app_id", self.security_groups['app'].id)
         pulumi.export("security_group_db_id", self.security_groups['db'].id)
-        
+        if 'access' in self.security_groups:
+            pulumi.export("security_group_access_id", self.security_groups['access'].id)
+
         pulumi.export("vpc_endpoint_s3_id", self.vpc_endpoints['s3'].id)
         pulumi.export("vpc_endpoint_dynamodb_id", self.vpc_endpoints['dynamodb'].id)
-        
+
         if self.cfg.enable_flow_logs:
             pulumi.export("flow_logs_bucket", self.flow_logs_bucket.id)
+            pulumi.export("flow_logs_bucket_name", self.flow_logs_bucket.bucket)
             pulumi.export("flow_log_id", self.flow_log.id)
         
         return {
