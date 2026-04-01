@@ -38,8 +38,12 @@ class AzureVNetProdTemplate(InfrastructureTemplate):
         env = cfg('environment', 'prod')
         location = cfg('location', 'eastus')
         vnet_cidr = cfg('vnet_cidr', '10.0.0.0/16')
+        team_name = cfg('team_name', '')
+        enable_deletion_protection = cfg('enable_deletion_protection', 'true')
+        if isinstance(enable_deletion_protection, str):
+            enable_deletion_protection = enable_deletion_protection.lower() in ('true', '1', 'yes')
 
-        tags = {'Project': project, 'Environment': env, 'ManagedBy': 'Archie'}
+        tags = {'Project': project, 'Environment': env, 'ManagedBy': 'Archie', 'Team': team_name or 'unassigned'}
 
         # Rule #7: Reuse resource names from outputs on upgrade
         rg_name = cfg('resource_group_name') or f'rg-{project}-{env}'
