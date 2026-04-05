@@ -54,9 +54,17 @@ class AzureContainerAppNonProdTemplate(InfrastructureTemplate):
         cae_name = cfg('container_env_name') or f'cae-{project}-{env}'
         ca_name = cfg('container_app_name') or f'ca-{project}-{env}'
 
-        # 1. Resource Group
-        self.rg = factory.create('azure-native:resources:ResourceGroup', rg_name,
-            resource_group_name=rg_name, location=location, tags=tags)
+        # 1. Resource Group (brownfield: use existing if provided)
+        existing_rg = cfg('existing_resource_group', '')
+
+        if existing_rg:
+            import pulumi_azure_native as azure_native
+            self.rg = azure_native.resources.ResourceGroup.get(
+                'existing-rg', id=f'/subscriptions/{cfg("azure_subscription_id", "")}/resourceGroups/{existing_rg}')
+            rg_name = existing_rg
+        else:
+            self.rg = factory.create('azure-native:resources:ResourceGroup', rg_name,
+                resource_group_name=rg_name, location=location, tags=tags)
 
         # 2. Log Analytics Workspace
         self.law = factory.create('azure-native:operationalinsights:Workspace', law_name,
@@ -115,6 +123,7 @@ class AzureContainerAppNonProdTemplate(InfrastructureTemplate):
         pulumi.export('container_app_name', ca_name)
         pulumi.export('container_app_url', self.ca.latest_revision_fqdn if hasattr(self.ca, 'latest_revision_fqdn') else None)
         pulumi.export('team_name', team_name)
+        pulumi.export('deployment_mode', 'brownfield' if existing_rg else 'greenfield')
 
         return self.get_outputs()
 
@@ -144,6 +153,23 @@ class AzureContainerAppNonProdTemplate(InfrastructureTemplate):
                 'Log Analytics Workspace for centralized logging',
                 'Configurable CPU/memory and replica count',
                 'Standard tagging and naming conventions',
+                'Deploy into existing resource group (brownfield)',
             ],
-            'tags': ['azure', 'container', 'containerapp', 'nonprod'],
+            'tags': ['azure', 'container', 'containerapp', 'nonprod', 'brownfield'],
+            'config_fields': [
+                {'key': 'project_name', 'label': 'Project Name', 'type': 'text', 'default': 'myapp', 'required': True, 'group': 'Basic'},
+                {'key': 'environment', 'label': 'Environment', 'type': 'select', 'default': 'dev', 'options': ['dev', 'staging'], 'required': True, 'group': 'Basic'},
+                {'key': 'location', 'label': 'Azure Region', 'type': 'text', 'default': 'eastus', 'required': True, 'group': 'Basic'},
+                {'key': 'team_name', 'label': 'Team Name', 'type': 'text', 'default': '', 'group': 'Basic'},
+                {'key': 'container_image', 'label': 'Container Image', 'type': 'text', 'default': 'mcr.microsoft.com/azuredocs/containerapps-helloworld:latest', 'group': 'Basic'},
+                {'key': 'target_port', 'label': 'Target Port', 'type': 'number', 'default': '80', 'group': 'Basic'},
+                {'key': 'cpu', 'label': 'CPU (cores)', 'type': 'text', 'default': '0.25', 'group': 'Basic'},
+                {'key': 'memory', 'label': 'Memory', 'type': 'text', 'default': '0.5Gi', 'group': 'Basic'},
+                {'key': 'min_replicas', 'label': 'Min Replicas', 'type': 'number', 'default': '0', 'group': 'Basic'},
+                {'key': 'max_replicas', 'label': 'Max Replicas', 'type': 'number', 'default': '3', 'group': 'Basic'},
+                {'key': 'existing_resource_group', 'label': 'Existing Resource Group', 'type': 'text', 'default': '', 'group': 'Existing Infrastructure',
+                 'description': 'Name of an existing resource group to deploy into. Leave empty to create a new one.'},
+                {'key': 'azure_subscription_id', 'label': 'Azure Subscription ID', 'type': 'text', 'default': '', 'group': 'Existing Infrastructure',
+                 'description': 'Required when using an existing resource group.'},
+            ],
         }

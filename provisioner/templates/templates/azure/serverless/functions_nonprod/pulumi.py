@@ -51,9 +51,17 @@ class AzureFunctionsNonProdTemplate(InfrastructureTemplate):
         insights_name = cfg('app_insights_name') or f'ai-{project}-{env}'
         identity_name = cfg('identity_name') or f'id-{project}-{env}'
 
-        # 1. Resource Group
-        self.rg = factory.create('azure-native:resources:ResourceGroup', rg_name,
-            resource_group_name=rg_name, location=location, tags=tags)
+        # 1. Resource Group (brownfield: use existing if provided)
+        existing_rg = cfg('existing_resource_group', '')
+
+        if existing_rg:
+            import pulumi_azure_native as azure_native
+            self.rg = azure_native.resources.ResourceGroup.get(
+                'existing-rg', id=f'/subscriptions/{cfg("azure_subscription_id", "")}/resourceGroups/{existing_rg}')
+            rg_name = existing_rg
+        else:
+            self.rg = factory.create('azure-native:resources:ResourceGroup', rg_name,
+                resource_group_name=rg_name, location=location, tags=tags)
 
         # 2. Storage Account (required by Functions)
         self.storage = factory.create('azure-native:storage:StorageAccount', storage_name,
@@ -118,6 +126,7 @@ class AzureFunctionsNonProdTemplate(InfrastructureTemplate):
         pulumi.export('app_insights_key', self.insights.instrumentation_key)
         pulumi.export('identity_id', self.identity.id)
         pulumi.export('team_name', team_name)
+        pulumi.export('deployment_mode', 'brownfield' if existing_rg else 'greenfield')
 
         return self.get_outputs()
 
@@ -147,6 +156,7 @@ class AzureFunctionsNonProdTemplate(InfrastructureTemplate):
                 'User-Assigned Managed Identity for secure access',
                 'Support for Node.js, Python, and .NET runtimes',
                 'HTTPS-only enforcement',
+                'Deploy into existing resource group (brownfield)',
             ],
             'tags': ['azure', 'serverless', 'functions', 'nonprod'],
         }

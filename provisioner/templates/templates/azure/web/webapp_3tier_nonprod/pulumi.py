@@ -42,6 +42,11 @@ class AzureWebApp3TierNonProdTemplate(InfrastructureTemplate):
         sku = cfg('sku_tier', 'B1')
         runtime = cfg('runtime_stack', 'NODE|18-lts')
 
+        # Brownfield — reference existing infrastructure instead of creating new
+        existing_rg = cfg('existing_resource_group', '')
+        existing_vnet_id = cfg('existing_vnet_id', '')
+        existing_subnet_id = cfg('existing_subnet_id', '')
+
         tags = {
             'Project': project, 'Environment': env,
             'ManagedBy': 'Archie', 'Team': team_name or 'unassigned',
@@ -57,8 +62,15 @@ class AzureWebApp3TierNonProdTemplate(InfrastructureTemplate):
         insights_name = cfg('app_insights_name') or f'ai-{project}-{env}'
 
         # 1. Resource Group
-        self.rg = factory.create('azure-native:resources:ResourceGroup', rg_name,
-            resource_group_name=rg_name, location=location, tags=tags)
+        if existing_rg:
+            # Reference existing — Pulumi does NOT own this, won't destroy it
+            import pulumi_azure_native as azure_native
+            self.rg = azure_native.resources.ResourceGroup.get(
+                'existing-rg', id=f'/subscriptions/{cfg("azure_subscription_id", "")}/resourceGroups/{existing_rg}')
+            rg_name = existing_rg
+        else:
+            self.rg = factory.create('azure-native:resources:ResourceGroup', rg_name,
+                resource_group_name=rg_name, location=location, tags=tags)
 
         # 2. Managed Identity
         self.identity = factory.create('azure-native:managedidentity:UserAssignedIdentity', identity_name,
@@ -150,6 +162,11 @@ class AzureWebApp3TierNonProdTemplate(InfrastructureTemplate):
         pulumi.export('app_insights_key', self.insights.instrumentation_key)
         pulumi.export('identity_id', self.identity.id)
         pulumi.export('team_name', team_name)
+        pulumi.export('deployment_mode', 'brownfield' if existing_rg else 'greenfield')
+        if existing_vnet_id:
+            pulumi.export('existing_vnet_id', existing_vnet_id)
+        if existing_subnet_id:
+            pulumi.export('existing_subnet_id', existing_subnet_id)
 
         return self.get_outputs()
 
@@ -182,4 +199,26 @@ class AzureWebApp3TierNonProdTemplate(InfrastructureTemplate):
                 'HTTPS-only with FTPS disabled',
             ],
             'tags': ['azure', 'web', 'appservice', 'sql', 'keyvault', 'nonprod'],
+            'config_fields': [
+                {'key': 'project_name', 'label': 'Project Name', 'type': 'text', 'required': True, 'group': 'Basic'},
+                {'key': 'environment', 'label': 'Environment', 'type': 'select', 'options': ['dev', 'staging'], 'default': 'dev', 'group': 'Basic'},
+                {'key': 'location', 'label': 'Azure Region', 'type': 'text', 'default': 'eastus', 'group': 'Basic'},
+                {'key': 'team_name', 'label': 'Team Name', 'type': 'text', 'group': 'Basic'},
+                {'key': 'sku_tier', 'label': 'App Service SKU', 'type': 'select', 'options': ['B1', 'B2', 'S1', 'S2'], 'default': 'B1', 'group': 'Compute'},
+                {'key': 'runtime_stack', 'label': 'Runtime Stack', 'type': 'select', 'options': ['NODE|18-lts', 'NODE|20-lts', 'PYTHON|3.11', 'DOTNETCORE|8.0'], 'default': 'NODE|18-lts', 'group': 'Compute'},
+                {'key': 'sql_admin_password', 'label': 'SQL Admin Password', 'type': 'text', 'required': True, 'group': 'Database'},
+                {'key': 'resource_group_name', 'label': 'Resource Group Name', 'type': 'text', 'group': 'Naming'},
+                {'key': 'app_service_plan_name', 'label': 'App Service Plan Name', 'type': 'text', 'group': 'Naming'},
+                {'key': 'web_app_name', 'label': 'Web App Name', 'type': 'text', 'group': 'Naming'},
+                {'key': 'sql_server_name', 'label': 'SQL Server Name', 'type': 'text', 'group': 'Naming'},
+                {'key': 'database_name', 'label': 'Database Name', 'type': 'text', 'group': 'Naming'},
+                {'key': 'vault_name', 'label': 'Key Vault Name', 'type': 'text', 'group': 'Naming'},
+                {'key': 'identity_name', 'label': 'Managed Identity Name', 'type': 'text', 'group': 'Naming'},
+                {'key': 'app_insights_name', 'label': 'App Insights Name', 'type': 'text', 'group': 'Naming'},
+                {'key': 'azure_tenant_id', 'label': 'Azure Tenant ID', 'type': 'text', 'group': 'Security'},
+                {'key': 'azure_subscription_id', 'label': 'Azure Subscription ID', 'type': 'text', 'group': 'Security'},
+                {'key': 'existing_resource_group', 'label': 'Existing Resource Group', 'type': 'text', 'group': 'Existing Infrastructure', 'description': 'Use an existing RG instead of creating one. Leave blank for greenfield.'},
+                {'key': 'existing_vnet_id', 'label': 'Existing VNet ID', 'type': 'text', 'group': 'Existing Infrastructure', 'description': 'Reference an existing VNet (future use). Full resource ID.'},
+                {'key': 'existing_subnet_id', 'label': 'Existing Subnet ID', 'type': 'text', 'group': 'Existing Infrastructure', 'description': 'Reference an existing Subnet (future use). Full resource ID.'},
+            ],
         }

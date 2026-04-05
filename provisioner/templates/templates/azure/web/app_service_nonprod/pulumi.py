@@ -59,12 +59,21 @@ class AzureAppServiceNonProdTemplate(InfrastructureTemplate):
         app_name = cfg('web_app_name') or f'app-{project}-{env}'
         identity_name = cfg('identity_name') or f'id-{project}-{env}'
 
-        # 1. Resource Group
-        self.resource_group = factory.create('azure-native:resources:ResourceGroup', rg_name,
-            resource_group_name=rg_name,
-            location=location,
-            tags=tags,
-        )
+        # 1. Resource Group (brownfield: use existing if provided)
+        existing_rg = cfg('existing_resource_group', '')
+
+        if existing_rg:
+            import pulumi_azure_native as azure_native
+            sub_id = cfg('azure_subscription_id') or self.config.get('credentials', {}).get('subscription_id', '')
+            self.resource_group = azure_native.resources.ResourceGroup.get(
+                'existing-rg', id=f'/subscriptions/{sub_id}/resourceGroups/{existing_rg}')
+            rg_name = existing_rg
+        else:
+            self.resource_group = factory.create('azure-native:resources:ResourceGroup', rg_name,
+                resource_group_name=rg_name,
+                location=location,
+                tags=tags,
+            )
 
         # 2. User-Assigned Managed Identity
         self.identity = factory.create('azure-native:managedidentity:UserAssignedIdentity', identity_name,
@@ -127,6 +136,7 @@ class AzureAppServiceNonProdTemplate(InfrastructureTemplate):
         pulumi.export('identity_name', identity_name)
         pulumi.export('identity_id', self.identity.id)
         pulumi.export('team_name', team_name)
+        pulumi.export('deployment_mode', 'brownfield' if existing_rg else 'greenfield')
 
         return self.get_outputs()
 
@@ -157,6 +167,7 @@ class AzureAppServiceNonProdTemplate(InfrastructureTemplate):
                 'HTTPS-only with TLS 1.2 minimum',
                 'FTPS disabled for security',
                 'Always-on configurable for dev cost savings',
+                'Deploy into existing resource group (brownfield)',
             ],
             'tags': ['azure', 'web', 'appservice', 'nonprod'],
         }
