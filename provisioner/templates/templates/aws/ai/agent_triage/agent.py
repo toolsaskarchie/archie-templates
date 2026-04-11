@@ -1,6 +1,6 @@
 """
-Archie Auditor — compliance scanning and security reporting.
-"Are all my stacks SOC2 compliant?" / "Generate a security report"
+Archie Triage — incident investigation and cross-stack correlation.
+"Something's wrong with production" / "Why is my ALB unhealthy?"
 """
 import os, json, urllib.request, urllib.error, boto3
 from http.server import HTTPServer, BaseHTTPRequestHandler
@@ -9,44 +9,43 @@ MODEL_ID = os.environ.get("MODEL_ID", "us.anthropic.claude-sonnet-4-20250514-v1:
 ARCHIE_API = os.environ.get("ARCHIE_API", "https://9eumbz9bog.execute-api.us-east-1.amazonaws.com")
 ARCHIE_TOKEN = os.environ.get("ARCHIE_TOKEN", "")
 
-SYSTEM_PROMPT = os.environ.get("SYSTEM_PROMPT", """You are Archie Auditor — a compliance and security assessment agent.
+SYSTEM_PROMPT = os.environ.get("SYSTEM_PROMPT", """You are Archie Triage — an incident investigation agent. When something breaks, you investigate across all stacks and find the root cause.
 
-Your job: scan all infrastructure for security gaps, compliance violations, and best-practice deviations. Generate reports that an auditor or CISO would find useful.
+How you investigate:
+1. Check ALL stacks for failed/degraded status
+2. Check ALL stacks for drift (unmanaged changes often cause incidents)
+3. Correlate: did drift in stack A break stack B? (e.g. VPC SG change → ALB health check fail)
+4. Check recent deployments — did a recent deploy cause the issue?
+5. Build a timeline: what changed, when, in what order
 
-What you check:
-- Encryption at rest (S3, RDS, EBS, DynamoDB)
-- Encryption in transit (HTTPS listeners, TLS)
-- Public access (S3 buckets, security groups with 0.0.0.0/0)
-- IAM least privilege (wildcard actions, overly broad resources)
-- Logging enabled (VPC flow logs, CloudTrail, access logs)
-- Drift status (unmanaged changes = compliance risk)
-- Tagging compliance (required tags: Team, Environment, ManagedBy)
-- Network segmentation (private subnets for databases, no direct internet)
+Your investigation pattern:
+- Start broad: list all stacks, scan for any failures or drift
+- Narrow down: focus on affected stacks and their dependencies
+- Correlate: trace which change likely caused the issue
+- Report: root cause, affected resources, recommended fix
 
-How you report:
-- Start with an executive summary: N stacks, N compliant, N issues
-- Group findings by severity: CRITICAL / WARNING / INFO
-- For each finding: stack name, resource, what's wrong, how to fix
-- End with a compliance score (percentage of checks passing)
-- Format as a structured report suitable for SOC2/ISO27001 evidence
+When reporting:
+- Lead with the root cause (or most likely cause)
+- Show the chain of events: "VPC security group drifted → ALB lost connectivity → health checks failing"
+- Classify severity: P1 (production down), P2 (degraded), P3 (warning)
+- Suggest specific fix steps
+- Flag any stacks that need immediate attention
 
-You are READ-ONLY. You assess and report — you don't fix. Recommend remediation steps.""")
+You are investigative — think like an SRE. Don't just list facts, connect the dots.""")
 
 bedrock = boto3.client("bedrock-runtime", region_name=os.environ.get("AWS_REGION", "us-east-1"))
 
 TOOLS = [
-    {"name": "list_stacks", "description": "List all deployed stacks with status, cloud, template, and drift status.",
+    {"name": "list_stacks", "description": "List all stacks with status, drift status, cloud, and resource count. First step in any investigation.",
      "input_schema": {"type": "object", "properties": {}, "required": []}},
-    {"name": "get_stack", "description": "Get full stack details including outputs, config parameters, and template info.",
+    {"name": "get_stack", "description": "Get full stack details: status, outputs, config, recent changes.",
      "input_schema": {"type": "object", "properties": {"stack_id": {"type": "string"}}, "required": ["stack_id"]}},
-    {"name": "get_stack_resources", "description": "Get all resources in a stack with types and properties for compliance checking.",
+    {"name": "get_stack_resources", "description": "Get all resources in a stack — check for failed or missing resources.",
      "input_schema": {"type": "object", "properties": {"stack_id": {"type": "string"}}, "required": ["stack_id"]}},
-    {"name": "get_drift", "description": "Get drift status — unmanaged changes are a compliance risk.",
+    {"name": "get_drift", "description": "Get drift details: which resources changed, what fields, expected vs actual. Drift is the #1 cause of incidents.",
      "input_schema": {"type": "object", "properties": {"stack_id": {"type": "string"}}, "required": ["stack_id"]}},
-    {"name": "compliance_check", "description": "Run Archie's built-in compliance engine (23 rules across AWS/Azure/GCP) against a template's source code.",
-     "input_schema": {"type": "object", "properties": {"template_name": {"type": "string", "description": "Template action_name to scan"}}, "required": ["template_name"]}},
-    {"name": "list_blueprints", "description": "List blueprints to check governance config (locked fields, required fields).",
-     "input_schema": {"type": "object", "properties": {}, "required": []}},
+    {"name": "check_drift", "description": "Trigger a fresh drift check on a stack. Use when drift status is 'unknown' or stale.",
+     "input_schema": {"type": "object", "properties": {"stack_id": {"type": "string"}}, "required": ["stack_id"]}},
 ]
 
 
@@ -69,7 +68,8 @@ def execute_tool(name, inp):
             return {"stacks": [{"id": s.get("deploymentId",""), "name": s.get("display_name") or s.get("stack_name",""),
                 "template": s.get("template_name",""), "status": s.get("status",""), "cloud": s.get("cloud","aws"),
                 "environment": s.get("environment",""), "drift_status": s.get("drift_status","unknown"),
-                "resource_count": s.get("resource_count",0)} for s in result], "total": len(result)}
+                "drifted_count": s.get("drifted_count",0), "resource_count": s.get("resource_count",0),
+                "created_at": s.get("created_at","")} for s in result], "total": len(result)}
         return result
     elif name == "get_stack":
         return call_api(f"/stacks/{inp.get('stack_id','')}")
@@ -78,18 +78,14 @@ def execute_tool(name, inp):
     elif name == "get_drift":
         result = call_api(f"/stacks/{inp.get('stack_id','')}/drift")
         if isinstance(result, dict) and "error" not in result:
-            return {"drift_status": result.get("driftStatus","unknown"), "drifted_count": len(result.get("driftedResources",[])),
-                "drifted_resources": [{"name": r.get("name",""), "type": r.get("type",""), "changes": r.get("changes",[])}
+            return {"drift_status": result.get("driftStatus","unknown"),
+                "drifted_count": len(result.get("driftedResources",[])),
+                "drifted_resources": [{"name": r.get("name",""), "type": r.get("type",""),
+                    "status": r.get("status",""), "changes": r.get("changes",[])}
                     for r in result.get("driftedResources",[])[:10]]}
         return result
-    elif name == "compliance_check":
-        return call_api("/stacks/compliance-check", method="POST", body={"template_name": inp.get("template_name","")})
-    elif name == "list_blueprints":
-        result = call_api("/marketplace/templates")
-        if isinstance(result, list):
-            return {"blueprints": [{"name": b.get("action_name",""), "title": b.get("title",""),
-                "cloud": b.get("cloud",""), "category": b.get("category","")} for b in result[:30]], "total": len(result)}
-        return result
+    elif name == "check_drift":
+        return call_api(f"/stacks/{inp.get('stack_id','')}/drift/check", method="POST")
     return {"error": f"Unknown tool: {name}"}
 
 
@@ -125,7 +121,7 @@ class H(BaseHTTPRequestHandler):
         self.wfile.write(json.dumps({"output": reply}).encode())
     def do_GET(self):
         self.send_response(200); self.send_header("Content-Type", "application/json"); self.end_headers()
-        self.wfile.write(json.dumps({"status": "healthy", "agent": "archie-auditor"}).encode())
+        self.wfile.write(json.dumps({"status": "healthy", "agent": "archie-triage"}).encode())
     def log_message(self, *a): pass
 
 if __name__ == "__main__":
