@@ -170,9 +170,9 @@ class BedrockAgentCoreTemplate(InfrastructureTemplate):
                     "container_uri": container_uri,
                 },
             },
-            network_configuration={
-                "network_mode": "PUBLIC",
-            },
+            network_configuration=aws.bedrock.AgentcoreAgentRuntimeNetworkConfigurationArgs(
+                network_mode="PUBLIC",
+            ),
             environment_variables={
                 "MODEL_ID": model_id,
                 "SYSTEM_PROMPT": system_prompt,
@@ -222,7 +222,7 @@ class BedrockAgentCoreTemplate(InfrastructureTemplate):
         """Get template metadata (SOURCE OF TRUTH for extractor)"""
         return {
             "name": "aws-bedrock-agentcore",
-            "title": "AI Agent Runtime (AgentCore)",
+            "title": "Agent Runtime Lite (AgentCore)",
             "description": "Deploy a managed AI agent using AWS Bedrock AgentCore with IAM roles, runtime endpoint, and CloudWatch observability. Pay-per-invocation, no idle compute.",
             "category": "ai",
             "version": "1.0.0",

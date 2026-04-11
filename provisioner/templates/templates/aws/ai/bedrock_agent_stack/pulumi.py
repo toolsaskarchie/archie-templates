@@ -210,9 +210,9 @@ class BedrockAgentStackTemplate(InfrastructureTemplate):
                     "container_uri": container_uri,
                 },
             },
-            network_configuration={
-                "network_mode": "PUBLIC",
-            },
+            network_configuration=aws.bedrock.AgentcoreAgentRuntimeNetworkConfigurationArgs(
+                network_mode="PUBLIC",
+            ),
             environment_variables={
                 "MODEL_ID": model_id,
                 "SYSTEM_PROMPT": system_prompt,
@@ -291,7 +291,7 @@ class BedrockAgentStackTemplate(InfrastructureTemplate):
         """Get template metadata (SOURCE OF TRUTH for extractor)"""
         return {
             "name": "aws-bedrock-agent-stack",
-            "title": "Full Agent Stack (AgentCore)",
+            "title": "Agent Runtime (AgentCore)",
             "description": "Complete AI agent infrastructure: AgentCore Runtime with custom containers, conversation memory, code interpreter, ECR, IAM, and CloudWatch.",
             "category": "ai",
             "version": "1.0.0",
