@@ -1,18 +1,22 @@
 """
 Multi-Cloud Kubernetes App Template
 
-Composed template: EKS / AKS / GKE managed cluster + Deployment + Service + Ingress.
-Config field `cloud` selects the managed Kubernetes service.
+Deploy managed Kubernetes clusters across AWS, Azure, and GCP simultaneously,
+then deploy K8s Deployment + Service + Ingress to ALL selected clusters.
+Toggle which clouds to include — deploy to 1, 2, or all 3 at once.
 
-Base cost: ~$70-150/month (varies by cloud — control plane + node)
-- Managed Kubernetes cluster (EKS / AKS / GKE)
-- Application Deployment with configurable replicas
-- Service for internal or external access
-- Ingress for HTTP routing
+Base cost: ~$70-150/month per cloud
+- AWS: EKS Cluster + Node Group
+- Azure: Resource Group + AKS Cluster
+- GCP: GKE Cluster + Node Pool
+- K8s: Deployment + Service + Ingress on every selected cluster
 """
 
-from typing import Any, Dict, Optional
+from typing import Any, Dict, List, Optional
 import pulumi
+import pulumi_aws as aws_sdk
+import pulumi_azure_native as azure_native
+import pulumi_gcp as gcp
 
 from provisioner.templates.base import template_registry, InfrastructureTemplate
 from provisioner.templates.atomic_factory import PulumiAtomicFactory as factory
@@ -23,10 +27,12 @@ class MultiK8sAppTemplate(InfrastructureTemplate):
     """
     Multi-Cloud Kubernetes App Template
 
-    Creates (based on cloud selection):
-    - AWS: EKS Cluster + Node Group + Deployment + Service + Ingress
-    - Azure: AKS Cluster + Deployment + Service + Ingress
-    - GCP: GKE Cluster + Node Pool + Deployment + Service + Ingress
+    Deploys managed K8s clusters to any combination of:
+    - AWS: EKS Cluster + Node Group
+    - Azure: Resource Group + AKS Cluster
+    - GCP: GKE Cluster + Node Pool
+
+    Then deploys K8s Deployment + Service + Ingress to ALL selected clusters.
     """
 
     def __init__(self, name: str = None, config: Dict[str, Any] = None, **kwargs):
@@ -41,34 +47,54 @@ class MultiK8sAppTemplate(InfrastructureTemplate):
         super().__init__(name, raw_config)
         self.config = raw_config
 
-        # Resource references
-        self.cluster: Optional[object] = None
-        self.node_group: Optional[object] = None
-        self.deployment: Optional[object] = None
-        self.service: Optional[object] = None
-        self.ingress: Optional[object] = None
+        # AWS resource references
+        self.aws_cluster: Optional[object] = None
+        self.aws_node_group: Optional[object] = None
+
+        # Azure resource references
+        self.azure_rg: Optional[object] = None
+        self.azure_cluster: Optional[object] = None
+
+        # GCP resource references
+        self.gcp_cluster: Optional[object] = None
+        self.gcp_node_pool: Optional[object] = None
+
+        # K8s resource references (per cloud)
+        self.aws_deployment: Optional[object] = None
+        self.aws_service: Optional[object] = None
+        self.aws_ingress: Optional[object] = None
+        self.azure_deployment: Optional[object] = None
+        self.azure_service: Optional[object] = None
+        self.azure_ingress: Optional[object] = None
+        self.gcp_deployment: Optional[object] = None
+        self.gcp_service: Optional[object] = None
+        self.gcp_ingress: Optional[object] = None
 
     def _cfg(self, key: str, default=None):
         """Read config from root or parameters (Rule #6)"""
         params = self.config.get('parameters', {})
-        cloud = self.config.get('cloud') or (params.get('cloud') if isinstance(params, dict) else None) or 'aws'
-        cloud_params = params.get(cloud, {}) if isinstance(params, dict) else {}
         return (
             self.config.get(key) or
-            (cloud_params.get(key) if isinstance(cloud_params, dict) else None) or
             (params.get(key) if isinstance(params, dict) else None) or
             default
         )
+
+    def _get_bool(self, key: str, default: bool = False) -> bool:
+        """Read a boolean config value, handling string/bool/Decimal"""
+        val = self._cfg(key, default)
+        if isinstance(val, bool):
+            return val
+        if isinstance(val, str):
+            return val.lower() in ('true', '1', 'yes')
+        return bool(val)
 
     def create_infrastructure(self) -> Dict[str, Any]:
         """Deploy multi-cloud K8s app infrastructure (implements abstract method)"""
         return self.create()
 
     def create(self) -> Dict[str, Any]:
-        """Deploy managed K8s cluster + app to the selected cloud"""
+        """Deploy managed K8s clusters + app to all selected clouds"""
 
-        # Read config
-        cloud = self._cfg('cloud', 'aws')
         project = self._cfg('project_name', 'k8s-app')
         env = self._cfg('environment', 'dev')
         team_name = self._cfg('team_name', '')
@@ -80,23 +106,38 @@ class MultiK8sAppTemplate(InfrastructureTemplate):
         app_image = self._cfg('app_image', 'nginx:latest')
         app_replicas = int(self._cfg('app_replicas', 2))
         app_port = int(self._cfg('app_port', 80))
-        enable_ingress = self._cfg('enable_ingress', True)
-        if isinstance(enable_ingress, str):
-            enable_ingress = enable_ingress.lower() in ('true', '1', 'yes')
+        enable_ingress = self._get_bool('enable_ingress', True)
+
+        deploy_aws = self._get_bool('deploy_aws', True)
+        deploy_azure = self._get_bool('deploy_azure', False)
+        deploy_gcp = self._get_bool('deploy_gcp', False)
 
         prefix = f"{project}-{env}"
+        clouds_deployed: List[str] = []
 
-        if cloud == 'aws':
-            self._create_aws(prefix, project, env, team_name, cluster_name, k8s_version, node_count, node_size, app_name, app_image, app_replicas, app_port, enable_ingress)
-        elif cloud == 'azure':
-            self._create_azure(prefix, project, env, team_name, cluster_name, k8s_version, node_count, node_size, app_name, app_image, app_replicas, app_port, enable_ingress)
-        elif cloud == 'gcp':
-            self._create_gcp(prefix, project, env, team_name, cluster_name, k8s_version, node_count, node_size, app_name, app_image, app_replicas, app_port, enable_ingress)
-        else:
-            raise ValueError(f"Unsupported cloud: {cloud}. Must be aws, azure, or gcp.")
+        if deploy_aws:
+            self._create_aws(prefix, project, env, team_name, cluster_name, k8s_version,
+                             node_count, node_size)
+            self._deploy_k8s_app('aws', app_name, app_image, app_replicas, app_port,
+                                 enable_ingress, project, env, team_name)
+            clouds_deployed.append('aws')
+
+        if deploy_azure:
+            self._create_azure(prefix, project, env, team_name, cluster_name, k8s_version,
+                               node_count, node_size)
+            self._deploy_k8s_app('azure', app_name, app_image, app_replicas, app_port,
+                                 enable_ingress, project, env, team_name)
+            clouds_deployed.append('azure')
+
+        if deploy_gcp:
+            self._create_gcp(prefix, project, env, team_name, cluster_name, k8s_version,
+                             node_count, node_size)
+            self._deploy_k8s_app('gcp', app_name, app_image, app_replicas, app_port,
+                                 enable_ingress, project, env, team_name)
+            clouds_deployed.append('gcp')
 
         # Common exports
-        pulumi.export('cloud', cloud)
+        pulumi.export('clouds_deployed', clouds_deployed)
         pulumi.export('project_name', project)
         pulumi.export('environment', env)
         pulumi.export('cluster_name', cluster_name)
@@ -104,8 +145,9 @@ class MultiK8sAppTemplate(InfrastructureTemplate):
 
         return self.get_outputs()
 
-    def _create_aws(self, prefix, project, env, team_name, cluster_name, k8s_version, node_count, node_size, app_name, app_image, app_replicas, app_port, enable_ingress):
-        """Deploy AWS EKS + app"""
+    def _create_aws(self, prefix, project, env, team_name, cluster_name, k8s_version,
+                    node_count, node_size):
+        """Deploy AWS EKS cluster + node group"""
         tags = {"Project": project, "Environment": env, "ManagedBy": "Archie", "Template": "multi-k8s-app"}
         if team_name:
             tags["Team"] = team_name
@@ -113,7 +155,7 @@ class MultiK8sAppTemplate(InfrastructureTemplate):
         # EKS Cluster Role
         eks_role = factory.create(
             "aws:iam:Role",
-            f"{prefix}-eks-role",
+            f"aws-{prefix}-eks-role",
             assume_role_policy="""{
                 "Version": "2012-10-17",
                 "Statement": [{
@@ -122,7 +164,7 @@ class MultiK8sAppTemplate(InfrastructureTemplate):
                     "Action": "sts:AssumeRole"
                 }]
             }""",
-            tags={**tags, "Name": f"{prefix}-eks-role"},
+            tags={**tags, "Name": f"aws-{prefix}-eks-role"},
         )
 
         # Attach EKS policies
@@ -133,7 +175,7 @@ class MultiK8sAppTemplate(InfrastructureTemplate):
             policy_name = policy_arn.split('/')[-1]
             factory.create(
                 "aws:iam:RolePolicyAttachment",
-                f"{prefix}-{policy_name}",
+                f"aws-{prefix}-{policy_name}",
                 role=eks_role.name,
                 policy_arn=policy_arn,
             )
@@ -141,47 +183,47 @@ class MultiK8sAppTemplate(InfrastructureTemplate):
         # VPC for EKS
         vpc = factory.create(
             "aws:ec2:Vpc",
-            f"{prefix}-vpc",
+            f"aws-{prefix}-vpc",
             cidr_block="10.0.0.0/16",
             enable_dns_support=True,
             enable_dns_hostnames=True,
-            tags={**tags, "Name": f"{prefix}-vpc"},
+            tags={**tags, "Name": f"aws-{prefix}-vpc"},
         )
 
         # Subnets (2 AZs required for EKS)
-        import pulumi_aws as aws_sdk
         azs = aws_sdk.get_availability_zones().names[:2]
         subnets = []
         for i, az in enumerate(azs):
             subnet = factory.create(
                 "aws:ec2:Subnet",
-                f"{prefix}-subnet-{i}",
+                f"aws-{prefix}-subnet-{i}",
                 vpc_id=vpc.id,
                 cidr_block=f"10.0.{i}.0/24",
                 availability_zone=az,
                 map_public_ip_on_launch=True,
-                tags={**tags, "Name": f"{prefix}-subnet-{i}"},
+                tags={**tags, "Name": f"aws-{prefix}-subnet-{i}"},
             )
             subnets.append(subnet)
 
         # EKS Cluster
-        self.cluster = factory.create(
+        aws_cluster_name = f"aws-{cluster_name}"
+        self.aws_cluster = factory.create(
             "aws:eks:Cluster",
-            cluster_name,
-            name=cluster_name,
+            aws_cluster_name,
+            name=aws_cluster_name,
             role_arn=eks_role.arn,
             version=k8s_version,
             vpc_config={
                 "subnet_ids": [s.id for s in subnets],
                 "endpoint_public_access": True,
             },
-            tags={**tags, "Name": cluster_name},
+            tags={**tags, "Name": aws_cluster_name},
         )
 
         # Node Group Role
         node_role = factory.create(
             "aws:iam:Role",
-            f"{prefix}-node-role",
+            f"aws-{prefix}-node-role",
             assume_role_policy="""{
                 "Version": "2012-10-17",
                 "Statement": [{
@@ -190,7 +232,7 @@ class MultiK8sAppTemplate(InfrastructureTemplate):
                     "Action": "sts:AssumeRole"
                 }]
             }""",
-            tags={**tags, "Name": f"{prefix}-node-role"},
+            tags={**tags, "Name": f"aws-{prefix}-node-role"},
         )
 
         for policy_arn in [
@@ -201,17 +243,17 @@ class MultiK8sAppTemplate(InfrastructureTemplate):
             policy_name = policy_arn.split('/')[-1]
             factory.create(
                 "aws:iam:RolePolicyAttachment",
-                f"{prefix}-node-{policy_name}",
+                f"aws-{prefix}-node-{policy_name}",
                 role=node_role.name,
                 policy_arn=policy_arn,
             )
 
         # Node Group
-        self.node_group = factory.create(
+        self.aws_node_group = factory.create(
             "aws:eks:NodeGroup",
-            f"{prefix}-nodes",
-            cluster_name=self.cluster.name,
-            node_group_name=f"{prefix}-nodes",
+            f"aws-{prefix}-nodes",
+            cluster_name=self.aws_cluster.name,
+            node_group_name=f"aws-{prefix}-nodes",
             node_role_arn=node_role.arn,
             subnet_ids=[s.id for s in subnets],
             instance_types=[node_size],
@@ -220,43 +262,42 @@ class MultiK8sAppTemplate(InfrastructureTemplate):
                 "min_size": 1,
                 "max_size": node_count * 2,
             },
-            tags={**tags, "Name": f"{prefix}-nodes"},
+            tags={**tags, "Name": f"aws-{prefix}-nodes"},
         )
 
-        pulumi.export('cluster_endpoint', self.cluster.endpoint)
-        pulumi.export('cluster_arn', self.cluster.arn)
-        pulumi.export('node_group_name', self.node_group.node_group_name)
+        pulumi.export('aws_cluster_endpoint', self.aws_cluster.endpoint)
+        pulumi.export('aws_cluster_arn', self.aws_cluster.arn)
+        pulumi.export('aws_node_group_name', self.aws_node_group.node_group_name)
 
-        # K8s resources deployed after cluster is ready
-        self._deploy_k8s_app(app_name, app_image, app_replicas, app_port, enable_ingress, project, env, team_name)
-
-    def _create_azure(self, prefix, project, env, team_name, cluster_name, k8s_version, node_count, node_size, app_name, app_image, app_replicas, app_port, enable_ingress):
-        """Deploy Azure AKS + app"""
+    def _create_azure(self, prefix, project, env, team_name, cluster_name, k8s_version,
+                      node_count, node_size):
+        """Deploy Azure AKS cluster"""
         tags = {"Project": project, "Environment": env, "ManagedBy": "Archie", "Template": "multi-k8s-app"}
         if team_name:
             tags["Team"] = team_name
 
-        location = self._cfg('region', 'eastus')
+        location = self._cfg('azure_region', 'eastus')
         vm_size = node_size if 'Standard' in node_size else 'Standard_B2s'
 
         # Resource Group
-        rg = factory.create(
+        self.azure_rg = factory.create(
             "azure-native:resources:ResourceGroup",
-            f"{prefix}-k8s-rg",
-            resource_group_name=f"{prefix}-k8s-rg",
+            f"azure-{prefix}-k8s-rg",
+            resource_group_name=f"azure-{prefix}-k8s-rg",
             location=location,
             tags=tags,
         )
 
         # AKS Cluster
-        self.cluster = factory.create(
+        azure_cluster_name = f"azure-{cluster_name}"
+        self.azure_cluster = factory.create(
             "azure-native:containerservice:ManagedCluster",
-            cluster_name,
-            resource_name_=cluster_name,
-            resource_group_name=rg.name,
+            azure_cluster_name,
+            resource_name_=azure_cluster_name,
+            resource_group_name=self.azure_rg.name,
             location=location,
             kubernetes_version=k8s_version,
-            dns_prefix=f"{prefix}-dns",
+            dns_prefix=f"azure-{prefix}-dns",
             agent_pool_profiles=[{
                 "name": "default",
                 "count": node_count,
@@ -268,15 +309,13 @@ class MultiK8sAppTemplate(InfrastructureTemplate):
             tags=tags,
         )
 
-        pulumi.export('cluster_fqdn', self.cluster.fqdn)
-        pulumi.export('cluster_id', self.cluster.id)
+        pulumi.export('azure_cluster_fqdn', self.azure_cluster.fqdn)
+        pulumi.export('azure_cluster_id', self.azure_cluster.id)
 
-        # K8s resources
-        self._deploy_k8s_app(app_name, app_image, app_replicas, app_port, enable_ingress, project, env, team_name)
-
-    def _create_gcp(self, prefix, project, env, team_name, cluster_name, k8s_version, node_count, node_size, app_name, app_image, app_replicas, app_port, enable_ingress):
-        """Deploy GCP GKE + app"""
-        region = self._cfg('region', 'us-central1')
+    def _create_gcp(self, prefix, project, env, team_name, cluster_name, k8s_version,
+                    node_count, node_size):
+        """Deploy GCP GKE cluster + node pool"""
+        region = self._cfg('gcp_region', 'us-central1')
         zone = f"{region}-a"
 
         labels = {
@@ -290,10 +329,11 @@ class MultiK8sAppTemplate(InfrastructureTemplate):
         machine_type = node_size if 'e2-' in node_size or 'n2-' in node_size else 'e2-medium'
 
         # GKE Cluster
-        self.cluster = factory.create(
+        gcp_cluster_name = f"gcp-{cluster_name}"
+        self.gcp_cluster = factory.create(
             "gcp:container:Cluster",
-            cluster_name,
-            name=cluster_name,
+            gcp_cluster_name,
+            name=gcp_cluster_name,
             location=zone,
             min_master_version=k8s_version,
             remove_default_node_pool=True,
@@ -302,11 +342,11 @@ class MultiK8sAppTemplate(InfrastructureTemplate):
         )
 
         # Node Pool
-        self.node_group = factory.create(
+        self.gcp_node_pool = factory.create(
             "gcp:container:NodePool",
-            f"{prefix}-pool",
-            name=f"{prefix}-pool",
-            cluster=self.cluster.name,
+            f"gcp-{prefix}-pool",
+            name=f"gcp-{prefix}-pool",
+            cluster=self.gcp_cluster.name,
             location=zone,
             node_count=node_count,
             node_config={
@@ -321,40 +361,40 @@ class MultiK8sAppTemplate(InfrastructureTemplate):
             },
         )
 
-        pulumi.export('cluster_endpoint', self.cluster.endpoint)
-        pulumi.export('cluster_master_version', self.cluster.master_version)
+        pulumi.export('gcp_cluster_endpoint', self.gcp_cluster.endpoint)
+        pulumi.export('gcp_cluster_master_version', self.gcp_cluster.master_version)
 
-        # K8s resources
-        self._deploy_k8s_app(app_name, app_image, app_replicas, app_port, enable_ingress, project, env, team_name)
-
-    def _deploy_k8s_app(self, app_name, app_image, app_replicas, app_port, enable_ingress, project, env, team_name):
-        """Deploy K8s Deployment + Service + optional Ingress (cloud-agnostic)"""
+    def _deploy_k8s_app(self, cloud: str, app_name, app_image, app_replicas, app_port,
+                        enable_ingress, project, env, team_name):
+        """Deploy K8s Deployment + Service + optional Ingress for a specific cloud"""
 
         labels = {
             "app.kubernetes.io/managed-by": "archie",
             "app.kubernetes.io/name": app_name,
             "archie/environment": env,
             "archie/project": project,
+            "archie/cloud": cloud,
         }
         if team_name:
             labels["archie/team"] = team_name
 
         namespace = self._cfg('app_namespace', 'default')
+        resource_prefix = f"{cloud}-{app_name}"
 
         # Deployment
-        self.deployment = factory.create(
+        deployment = factory.create(
             "kubernetes:apps/v1:Deployment",
-            f"{app_name}-deploy",
+            f"{resource_prefix}-deploy",
             metadata={
-                "name": app_name,
+                "name": f"{cloud}-{app_name}",
                 "namespace": namespace,
                 "labels": labels,
             },
             spec={
                 "replicas": app_replicas,
-                "selector": {"match_labels": {"app.kubernetes.io/name": app_name}},
+                "selector": {"match_labels": {"app.kubernetes.io/name": app_name, "archie/cloud": cloud}},
                 "template": {
-                    "metadata": {"labels": {**labels, "app.kubernetes.io/name": app_name}},
+                    "metadata": {"labels": {**labels, "app.kubernetes.io/name": app_name, "archie/cloud": cloud}},
                     "spec": {
                         "containers": [{
                             "name": app_name,
@@ -371,43 +411,44 @@ class MultiK8sAppTemplate(InfrastructureTemplate):
         )
 
         # Service
-        self.service = factory.create(
+        service = factory.create(
             "kubernetes:core/v1:Service",
-            f"{app_name}-svc",
+            f"{resource_prefix}-svc",
             metadata={
-                "name": f"{app_name}-svc",
+                "name": f"{cloud}-{app_name}-svc",
                 "namespace": namespace,
                 "labels": labels,
             },
             spec={
                 "type": "LoadBalancer",
                 "ports": [{"port": app_port, "target_port": app_port, "protocol": "TCP"}],
-                "selector": {"app.kubernetes.io/name": app_name},
+                "selector": {"app.kubernetes.io/name": app_name, "archie/cloud": cloud},
             },
         )
 
         # Ingress (optional)
+        ingress = None
         if enable_ingress:
             ingress_host = self._cfg('ingress_host', f'{app_name}.example.com')
-            self.ingress = factory.create(
+            ingress = factory.create(
                 "kubernetes:networking.k8s.io/v1:Ingress",
-                f"{app_name}-ingress",
+                f"{resource_prefix}-ingress",
                 metadata={
-                    "name": f"{app_name}-ingress",
+                    "name": f"{cloud}-{app_name}-ingress",
                     "namespace": namespace,
                     "labels": labels,
                     "annotations": {"kubernetes.io/ingress.class": "nginx"},
                 },
                 spec={
                     "rules": [{
-                        "host": ingress_host,
+                        "host": f"{cloud}.{ingress_host}",
                         "http": {
                             "paths": [{
                                 "path": "/",
                                 "path_type": "Prefix",
                                 "backend": {
                                     "service": {
-                                        "name": f"{app_name}-svc",
+                                        "name": f"{cloud}-{app_name}-svc",
                                         "port": {"number": app_port},
                                     },
                                 },
@@ -417,20 +458,55 @@ class MultiK8sAppTemplate(InfrastructureTemplate):
                 },
             )
 
-        pulumi.export('deployment_name', app_name)
-        pulumi.export('service_name', f"{app_name}-svc")
+        pulumi.export(f'{cloud}_deployment_name', f"{cloud}-{app_name}")
+        pulumi.export(f'{cloud}_service_name', f"{cloud}-{app_name}-svc")
+
+        # Store references per cloud
+        if cloud == 'aws':
+            self.aws_deployment = deployment
+            self.aws_service = service
+            self.aws_ingress = ingress
+        elif cloud == 'azure':
+            self.azure_deployment = deployment
+            self.azure_service = service
+            self.azure_ingress = ingress
+        elif cloud == 'gcp':
+            self.gcp_deployment = deployment
+            self.gcp_service = service
+            self.gcp_ingress = ingress
 
     def get_outputs(self) -> Dict[str, Any]:
-        """Get template outputs"""
-        cloud = self._cfg('cloud', 'aws')
-        return {
-            "cloud": cloud,
+        """Get template outputs for all deployed clouds"""
+        outputs: Dict[str, Any] = {
+            "project_name": self._cfg('project_name', 'k8s-app'),
+            "environment": self._cfg('environment', 'dev'),
             "cluster_name": self._cfg('cluster_name', ''),
             "app_name": self._cfg('app_name', 'my-app'),
-            "cluster_id": self.cluster.id if self.cluster else None,
-            "deployment_name": self.deployment.metadata.apply(lambda m: m.name) if self.deployment else None,
-            "service_name": self.service.metadata.apply(lambda m: m.name) if self.service else None,
         }
+
+        # AWS outputs
+        if self.aws_cluster:
+            outputs["aws_cluster_endpoint"] = self.aws_cluster.endpoint
+            outputs["aws_cluster_arn"] = self.aws_cluster.arn
+            outputs["aws_node_group_name"] = self.aws_node_group.node_group_name if self.aws_node_group else None
+            outputs["aws_deployment_name"] = self.aws_deployment.metadata.apply(lambda m: m.name) if self.aws_deployment else None
+            outputs["aws_service_name"] = self.aws_service.metadata.apply(lambda m: m.name) if self.aws_service else None
+
+        # Azure outputs
+        if self.azure_cluster:
+            outputs["azure_cluster_fqdn"] = self.azure_cluster.fqdn
+            outputs["azure_cluster_id"] = self.azure_cluster.id
+            outputs["azure_deployment_name"] = self.azure_deployment.metadata.apply(lambda m: m.name) if self.azure_deployment else None
+            outputs["azure_service_name"] = self.azure_service.metadata.apply(lambda m: m.name) if self.azure_service else None
+
+        # GCP outputs
+        if self.gcp_cluster:
+            outputs["gcp_cluster_endpoint"] = self.gcp_cluster.endpoint
+            outputs["gcp_cluster_master_version"] = self.gcp_cluster.master_version
+            outputs["gcp_deployment_name"] = self.gcp_deployment.metadata.apply(lambda m: m.name) if self.gcp_deployment else None
+            outputs["gcp_service_name"] = self.gcp_service.metadata.apply(lambda m: m.name) if self.gcp_service else None
+
+        return outputs
 
     @classmethod
     def get_metadata(cls) -> Dict[str, Any]:
@@ -438,42 +514,43 @@ class MultiK8sAppTemplate(InfrastructureTemplate):
         return {
             "name": "multi-k8s-app",
             "title": "Multi-Cloud Kubernetes Application",
-            "description": "Deploy a managed Kubernetes cluster (EKS / AKS / GKE) with a containerized application, service, and ingress. One template, three clouds.",
+            "description": "Deploy managed Kubernetes clusters across AWS, Azure, and GCP simultaneously, then deploy your application to all selected clusters. Toggle which clouds to include.",
             "category": "compute",
-            "version": "1.0.0",
+            "version": "2.0.0",
             "author": "Archie",
             "cloud": "multi",
             "environment": "nonprod",
-            "base_cost": "$70-150/month",
+            "base_cost": "$70-150/month per cloud",
             "features": [
-                "Managed K8s cluster on EKS, AKS, or GKE",
-                "Application Deployment with configurable replicas",
-                "LoadBalancer Service for external access",
-                "Optional Ingress for HTTP routing",
-                "Node group with auto-scaling bounds",
-                "Kubernetes version pinning",
+                "Deploy to 1, 2, or all 3 clouds simultaneously",
+                "AWS: EKS Cluster + Node Group with IAM roles",
+                "Azure: AKS Cluster with managed identity",
+                "GCP: GKE Cluster + Node Pool with OAuth scopes",
+                "K8s Deployment + Service + Ingress on every selected cluster",
+                "Cross-cloud Kubernetes with unified governance",
+                "Single deploy creates identical app across clouds",
             ],
-            "tags": ["multi-cloud", "kubernetes", "eks", "aks", "gke", "containers"],
-            "deployment_time": "10-20 minutes",
+            "tags": ["multi-cloud", "kubernetes", "eks", "aks", "gke", "containers", "cross-cloud"],
+            "deployment_time": "10-25 minutes",
             "complexity": "advanced",
             "use_cases": [
-                "Cloud-agnostic container platform",
-                "Multi-cloud Kubernetes strategy",
-                "Quick cluster + app bootstrap for development",
-                "Standardized container infrastructure",
-                "Cross-cloud application portability",
+                "Multi-cloud Kubernetes redundancy",
+                "Disaster recovery across cloud providers",
+                "Cloud migration with parallel clusters",
+                "Vendor lock-in avoidance for container platform",
+                "Cross-cloud application portability testing",
             ],
             "pillars": [
                 {
                     "title": "Operational Excellence",
                     "score": "excellent",
                     "score_color": "#10b981",
-                    "description": "Unified template manages cluster and application across three clouds",
+                    "description": "Single template deploys clusters and applications across three clouds simultaneously",
                     "practices": [
-                        "Single interface for EKS, AKS, and GKE cluster provisioning",
-                        "Kubernetes version pinning for consistency",
-                        "Infrastructure as Code for repeatable cluster setup",
-                        "Application deployment included with cluster",
+                        "One deploy creates K8s clusters on multiple clouds at once",
+                        "Identical application deployment across all selected clusters",
+                        "Kubernetes version pinning for consistency across clouds",
+                        "Infrastructure as Code for repeatable multi-cloud K8s setup",
                         "Labels and tags for resource organization across clouds",
                     ]
                 },
@@ -481,7 +558,7 @@ class MultiK8sAppTemplate(InfrastructureTemplate):
                     "title": "Security",
                     "score": "good",
                     "score_color": "#f59e0b",
-                    "description": "Managed control plane with IAM-based access and resource limits",
+                    "description": "Managed control planes with IAM-based access and resource limits",
                     "practices": [
                         "Cloud-managed control plane security patches",
                         "IAM roles (AWS) / Managed Identity (Azure) / OAuth scopes (GCP)",
@@ -492,49 +569,49 @@ class MultiK8sAppTemplate(InfrastructureTemplate):
                 },
                 {
                     "title": "Reliability",
-                    "score": "good",
-                    "score_color": "#f59e0b",
-                    "description": "Managed control plane with multi-node worker pools",
+                    "score": "excellent",
+                    "score_color": "#10b981",
+                    "description": "Cross-cloud Kubernetes provides ultimate application redundancy",
                     "practices": [
-                        "Cloud-managed control plane with built-in HA",
-                        "Multi-node worker pools with auto-scaling bounds",
+                        "Application runs on clusters across multiple clouds",
+                        "No single cloud is a single point of failure",
+                        "Cloud-managed control plane with built-in HA per cluster",
                         "Kubernetes self-healing restarts failed containers",
-                        "LoadBalancer distributes traffic across pods",
-                        "Multi-replica deployments for application availability",
+                        "Multi-replica deployments on every cluster",
                     ]
                 },
                 {
                     "title": "Performance Efficiency",
                     "score": "good",
                     "score_color": "#f59e0b",
-                    "description": "Right-sized nodes with container resource management",
+                    "description": "Right-sized nodes with container resource management per cloud",
                     "practices": [
                         "Configurable node instance type per cloud",
                         "Container resource requests enable efficient scheduling",
                         "Node auto-scaling prevents under-provisioning",
-                        "LoadBalancer provides optimized traffic distribution",
+                        "LoadBalancer provides optimized traffic distribution per cluster",
                     ]
                 },
                 {
                     "title": "Cost Optimization",
                     "score": "good",
                     "score_color": "#f59e0b",
-                    "description": "Right-sized nodes with auto-scaling to match demand",
+                    "description": "Toggle clouds on/off to control Kubernetes spend",
                     "practices": [
+                        "Deploy only to clouds you need (1, 2, or all 3)",
                         "Configurable node count matches workload needs",
                         "Auto-scaling bounds prevent runaway costs",
                         "AKS control plane is free (Azure advantage)",
-                        "Right-sized instances across cloud providers",
                     ]
                 },
                 {
                     "title": "Sustainability",
                     "score": "good",
                     "score_color": "#f59e0b",
-                    "description": "Managed infrastructure with efficient bin-packing",
+                    "description": "Managed infrastructure with efficient bin-packing across clouds",
                     "practices": [
+                        "Toggle off unused clouds to reduce resource consumption",
                         "Container bin-packing maximizes node utilization",
-                        "Auto-scaling prevents over-provisioned idle nodes",
                         "Managed control plane shares cloud infrastructure",
                         "Right-sized nodes reduce energy waste",
                     ]
@@ -567,21 +644,38 @@ class MultiK8sAppTemplate(InfrastructureTemplate):
                     "group": "Essentials",
                     "isEssential": True,
                 },
-                "cloud": {
-                    "type": "string",
-                    "default": "aws",
-                    "title": "Cloud Provider",
-                    "description": "Managed Kubernetes service provider",
-                    "enum": ["aws", "azure", "gcp"],
+                "deploy_aws": {
+                    "type": "boolean",
+                    "default": True,
+                    "title": "Deploy to AWS",
+                    "description": "Deploy EKS Cluster + Node Group on AWS",
                     "order": 3,
-                    "group": "Essentials",
+                    "group": "Cloud Selection",
+                    "isEssential": True,
+                },
+                "deploy_azure": {
+                    "type": "boolean",
+                    "default": False,
+                    "title": "Deploy to Azure",
+                    "description": "Deploy AKS Cluster on Azure",
+                    "order": 4,
+                    "group": "Cloud Selection",
+                    "isEssential": True,
+                },
+                "deploy_gcp": {
+                    "type": "boolean",
+                    "default": False,
+                    "title": "Deploy to GCP",
+                    "description": "Deploy GKE Cluster + Node Pool on GCP",
+                    "order": 5,
+                    "group": "Cloud Selection",
                     "isEssential": True,
                 },
                 "cluster_name": {
                     "type": "string",
                     "default": "",
                     "title": "Cluster Name",
-                    "description": "Kubernetes cluster name (auto-generated from project + env if empty)",
+                    "description": "Base cluster name (auto-prefixed with cloud name, e.g., aws-mycluster)",
                     "order": 10,
                     "group": "Cluster",
                 },
@@ -589,7 +683,7 @@ class MultiK8sAppTemplate(InfrastructureTemplate):
                     "type": "string",
                     "default": "1.29",
                     "title": "Kubernetes Version",
-                    "description": "Kubernetes control plane version",
+                    "description": "Kubernetes control plane version (same across all clouds)",
                     "enum": ["1.27", "1.28", "1.29", "1.30"],
                     "order": 11,
                     "group": "Cluster",
@@ -598,35 +692,27 @@ class MultiK8sAppTemplate(InfrastructureTemplate):
                     "type": "number",
                     "default": 2,
                     "title": "Node Count",
-                    "description": "Number of worker nodes",
+                    "description": "Number of worker nodes per cloud",
                     "minimum": 1,
                     "maximum": 20,
                     "order": 12,
                     "group": "Cluster",
-                    "cost_impact": "~$30-70/node/month",
+                    "cost_impact": "~$30-70/node/month per cloud",
                 },
                 "node_size": {
                     "type": "string",
                     "default": "t3.medium",
                     "title": "Node Size",
-                    "description": "Worker node instance type (e.g., t3.medium, Standard_B2s, e2-medium)",
+                    "description": "Worker node instance type (e.g., t3.medium for AWS, Standard_B2s for Azure, e2-medium for GCP)",
                     "order": 13,
                     "group": "Cluster",
                     "cost_impact": "~$30-70/node/month",
-                },
-                "region": {
-                    "type": "string",
-                    "default": "us-east-1",
-                    "title": "Region",
-                    "description": "Cloud region (e.g., us-east-1, eastus, us-central1)",
-                    "order": 14,
-                    "group": "Cluster",
                 },
                 "app_name": {
                     "type": "string",
                     "default": "my-app",
                     "title": "Application Name",
-                    "description": "Kubernetes Deployment and Service name",
+                    "description": "Kubernetes Deployment and Service name (deployed to all selected clusters)",
                     "order": 20,
                     "group": "Application",
                 },
@@ -642,7 +728,7 @@ class MultiK8sAppTemplate(InfrastructureTemplate):
                     "type": "number",
                     "default": 2,
                     "title": "App Replicas",
-                    "description": "Number of application pods",
+                    "description": "Number of application pods per cluster",
                     "minimum": 1,
                     "maximum": 20,
                     "order": 22,
@@ -668,7 +754,7 @@ class MultiK8sAppTemplate(InfrastructureTemplate):
                     "type": "boolean",
                     "default": True,
                     "title": "Enable Ingress",
-                    "description": "Create an Ingress resource for HTTP routing",
+                    "description": "Create an Ingress resource for HTTP routing on each cluster",
                     "order": 30,
                     "group": "Architecture Decisions",
                     "cost_impact": "$0/month",
@@ -677,10 +763,28 @@ class MultiK8sAppTemplate(InfrastructureTemplate):
                     "type": "string",
                     "default": "my-app.example.com",
                     "title": "Ingress Hostname",
-                    "description": "DNS hostname for the Ingress rule",
+                    "description": "DNS hostname for the Ingress rule (prefixed with cloud name, e.g., aws.my-app.example.com)",
                     "order": 31,
                     "group": "Architecture Decisions",
                     "conditional": {"field": "enable_ingress"},
+                },
+                "azure_region": {
+                    "type": "string",
+                    "default": "eastus",
+                    "title": "Azure Region",
+                    "description": "Azure region for AKS cluster (e.g., eastus, westus2, westeurope)",
+                    "order": 40,
+                    "group": "Cloud Regions",
+                    "conditional": {"field": "deploy_azure"},
+                },
+                "gcp_region": {
+                    "type": "string",
+                    "default": "us-central1",
+                    "title": "GCP Region",
+                    "description": "GCP region for GKE cluster (e.g., us-central1, us-east1, europe-west1)",
+                    "order": 41,
+                    "group": "Cloud Regions",
+                    "conditional": {"field": "deploy_gcp"},
                 },
                 "team_name": {
                     "type": "string",
@@ -691,5 +795,5 @@ class MultiK8sAppTemplate(InfrastructureTemplate):
                     "group": "Tags",
                 },
             },
-            "required": ["project_name", "cloud", "app_name", "app_image"],
+            "required": ["project_name", "app_name", "app_image"],
         }

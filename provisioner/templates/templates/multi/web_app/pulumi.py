@@ -1,19 +1,20 @@
 """
 Multi-Cloud Web Application Template
 
-Composed template: VPC/VNet/VPC Network + Load Balancer + Compute.
-Config field `cloud` (aws/azure/gcp) selects the right provider resources.
-One template, three clouds, same interface.
+Deploy a web application across AWS, Azure, and GCP simultaneously.
+Toggle which clouds to include — deploy to 1, 2, or all 3 at once.
 
-Base cost: ~$50-80/month (varies by cloud)
-- Network foundation (VPC / VNet / VPC Network)
-- Load balancer (ALB / Azure LB / GCP HTTP LB)
-- Compute instance (EC2 / Azure VM / GCE)
-- Security groups / NSG / Firewall rules
+Base cost: ~$50-80/month per cloud
+- AWS: VPC + ALB + EC2 + Security Groups
+- Azure: Resource Group + VNet + NSG + LB + VM + NIC + Public IP
+- GCP: VPC Network + Subnet + Firewall + Instance + Global Address
 """
 
-from typing import Any, Dict, Optional
+from typing import Any, Dict, List, Optional
 import pulumi
+import pulumi_aws as aws_sdk
+import pulumi_azure_native as azure_native
+import pulumi_gcp as gcp
 
 from provisioner.templates.base import template_registry, InfrastructureTemplate
 from provisioner.templates.atomic_factory import PulumiAtomicFactory as factory
@@ -24,10 +25,10 @@ class MultiWebAppTemplate(InfrastructureTemplate):
     """
     Multi-Cloud Web Application Template
 
-    Creates (based on cloud selection):
+    Deploys web app infrastructure to any combination of:
     - AWS: VPC + ALB + EC2 + Security Groups
-    - Azure: VNet + Load Balancer + VM + NSG
-    - GCP: VPC Network + HTTP LB + GCE Instance + Firewall
+    - Azure: Resource Group + VNet + NSG + LB + VM + NIC + Public IP
+    - GCP: VPC Network + Subnet + Firewall + GCE Instance + Global Address
     """
 
     def __init__(self, name: str = None, config: Dict[str, Any] = None, **kwargs):
@@ -42,57 +43,82 @@ class MultiWebAppTemplate(InfrastructureTemplate):
         super().__init__(name, raw_config)
         self.config = raw_config
 
-        # Resource references (populated per cloud)
-        self.network: Optional[object] = None
-        self.subnet: Optional[object] = None
-        self.security: Optional[object] = None
-        self.lb: Optional[object] = None
-        self.compute: Optional[object] = None
+        # AWS resource references
+        self.aws_vpc: Optional[object] = None
+        self.aws_sg: Optional[object] = None
+        self.aws_alb: Optional[object] = None
+        self.aws_instance: Optional[object] = None
+
+        # Azure resource references
+        self.azure_rg: Optional[object] = None
+        self.azure_vnet: Optional[object] = None
+        self.azure_nsg: Optional[object] = None
+        self.azure_lb: Optional[object] = None
+        self.azure_vm: Optional[object] = None
+        self.azure_pip: Optional[object] = None
+        self.azure_nic: Optional[object] = None
+
+        # GCP resource references
+        self.gcp_network: Optional[object] = None
+        self.gcp_subnet: Optional[object] = None
+        self.gcp_firewall: Optional[object] = None
+        self.gcp_instance: Optional[object] = None
+        self.gcp_address: Optional[object] = None
 
     def _cfg(self, key: str, default=None):
         """Read config from root or parameters (Rule #6)"""
         params = self.config.get('parameters', {})
-        cloud = self.config.get('cloud') or (params.get('cloud') if isinstance(params, dict) else None) or 'aws'
-        cloud_params = params.get(cloud, {}) if isinstance(params, dict) else {}
         return (
             self.config.get(key) or
-            (cloud_params.get(key) if isinstance(cloud_params, dict) else None) or
             (params.get(key) if isinstance(params, dict) else None) or
             default
         )
+
+    def _get_bool(self, key: str, default: bool = False) -> bool:
+        """Read a boolean config value, handling string/bool/Decimal"""
+        val = self._cfg(key, default)
+        if isinstance(val, bool):
+            return val
+        if isinstance(val, str):
+            return val.lower() in ('true', '1', 'yes')
+        return bool(val)
 
     def create_infrastructure(self) -> Dict[str, Any]:
         """Deploy multi-cloud web app infrastructure (implements abstract method)"""
         return self.create()
 
     def create(self) -> Dict[str, Any]:
-        """Deploy web app to the selected cloud provider"""
+        """Deploy web app to all selected cloud providers"""
 
-        # Read config
-        cloud = self._cfg('cloud', 'aws')
         project = self._cfg('project_name', 'web-app')
         env = self._cfg('environment', 'dev')
         team_name = self._cfg('team_name', '')
         instance_type = self._cfg('instance_type', 't3.small')
         cidr_block = self._cfg('cidr_block', '10.0.0.0/16')
         app_port = int(self._cfg('app_port', 80))
-        enable_https = self._cfg('enable_https', True)
-        if isinstance(enable_https, str):
-            enable_https = enable_https.lower() in ('true', '1', 'yes')
+        enable_https = self._get_bool('enable_https', True)
+
+        deploy_aws = self._get_bool('deploy_aws', True)
+        deploy_azure = self._get_bool('deploy_azure', False)
+        deploy_gcp = self._get_bool('deploy_gcp', False)
 
         prefix = f"{project}-{env}"
+        clouds_deployed: List[str] = []
 
-        if cloud == 'aws':
+        if deploy_aws:
             self._create_aws(prefix, project, env, team_name, instance_type, cidr_block, app_port, enable_https)
-        elif cloud == 'azure':
+            clouds_deployed.append('aws')
+
+        if deploy_azure:
             self._create_azure(prefix, project, env, team_name, instance_type, cidr_block, app_port, enable_https)
-        elif cloud == 'gcp':
+            clouds_deployed.append('azure')
+
+        if deploy_gcp:
             self._create_gcp(prefix, project, env, team_name, instance_type, cidr_block, app_port, enable_https)
-        else:
-            raise ValueError(f"Unsupported cloud: {cloud}. Must be aws, azure, or gcp.")
+            clouds_deployed.append('gcp')
 
         # Common exports
-        pulumi.export('cloud', cloud)
+        pulumi.export('clouds_deployed', clouds_deployed)
         pulumi.export('project_name', project)
         pulumi.export('environment', env)
         pulumi.export('app_port', app_port)
@@ -101,8 +127,6 @@ class MultiWebAppTemplate(InfrastructureTemplate):
 
     def _create_aws(self, prefix, project, env, team_name, instance_type, cidr_block, app_port, enable_https):
         """Deploy AWS web app: VPC + ALB + EC2"""
-        import pulumi_aws as aws_sdk
-
         tags = {
             "Project": project,
             "Environment": env,
@@ -113,43 +137,43 @@ class MultiWebAppTemplate(InfrastructureTemplate):
             tags["Team"] = team_name
 
         # VPC
-        self.network = factory.create(
+        self.aws_vpc = factory.create(
             "aws:ec2:Vpc",
-            f"{prefix}-vpc",
+            f"aws-{prefix}-vpc",
             cidr_block=cidr_block,
             enable_dns_support=True,
             enable_dns_hostnames=True,
-            tags={**tags, "Name": f"{prefix}-vpc"},
+            tags={**tags, "Name": f"aws-{prefix}-vpc"},
         )
 
-        # Public Subnet
-        self.subnet = factory.create(
+        # Public Subnet A
+        subnet_a = factory.create(
             "aws:ec2:Subnet",
-            f"{prefix}-subnet-pub",
-            vpc_id=self.network.id,
+            f"aws-{prefix}-subnet-a",
+            vpc_id=self.aws_vpc.id,
             cidr_block="10.0.1.0/24",
             map_public_ip_on_launch=True,
             availability_zone=aws_sdk.get_availability_zones().names[0],
-            tags={**tags, "Name": f"{prefix}-subnet-pub"},
+            tags={**tags, "Name": f"aws-{prefix}-subnet-a"},
         )
 
-        # Second subnet for ALB (requires 2 AZs)
+        # Public Subnet B (ALB requires 2 AZs)
         subnet_b = factory.create(
             "aws:ec2:Subnet",
-            f"{prefix}-subnet-pub-b",
-            vpc_id=self.network.id,
+            f"aws-{prefix}-subnet-b",
+            vpc_id=self.aws_vpc.id,
             cidr_block="10.0.2.0/24",
             map_public_ip_on_launch=True,
             availability_zone=aws_sdk.get_availability_zones().names[1],
-            tags={**tags, "Name": f"{prefix}-subnet-pub-b"},
+            tags={**tags, "Name": f"aws-{prefix}-subnet-b"},
         )
 
         # Internet Gateway
-        igw = factory.create(
+        factory.create(
             "aws:ec2:InternetGateway",
-            f"{prefix}-igw",
-            vpc_id=self.network.id,
-            tags={**tags, "Name": f"{prefix}-igw"},
+            f"aws-{prefix}-igw",
+            vpc_id=self.aws_vpc.id,
+            tags={**tags, "Name": f"aws-{prefix}-igw"},
         )
 
         # Security Group
@@ -157,25 +181,25 @@ class MultiWebAppTemplate(InfrastructureTemplate):
         if enable_https:
             ports.append({"protocol": "tcp", "from_port": 443, "to_port": 443, "cidr_blocks": ["0.0.0.0/0"], "description": "HTTPS"})
 
-        self.security = factory.create(
+        self.aws_sg = factory.create(
             "aws:ec2:SecurityGroup",
-            f"{prefix}-sg",
-            vpc_id=self.network.id,
-            description=f"Web app security group for {project}",
+            f"aws-{prefix}-sg",
+            vpc_id=self.aws_vpc.id,
+            description=f"Web app security group for {project} (AWS)",
             ingress=ports,
             egress=[{"protocol": "-1", "from_port": 0, "to_port": 0, "cidr_blocks": ["0.0.0.0/0"], "description": "All outbound"}],
-            tags={**tags, "Name": f"{prefix}-sg"},
+            tags={**tags, "Name": f"aws-{prefix}-sg"},
         )
 
         # ALB
-        self.lb = factory.create(
+        self.aws_alb = factory.create(
             "aws:lb:LoadBalancer",
-            f"{prefix}-alb",
+            f"aws-{prefix}-alb",
             internal=False,
             load_balancer_type="application",
-            security_groups=[self.security.id],
-            subnets=[self.subnet.id, subnet_b.id],
-            tags={**tags, "Name": f"{prefix}-alb"},
+            security_groups=[self.aws_sg.id],
+            subnets=[subnet_a.id, subnet_b.id],
+            tags={**tags, "Name": f"aws-{prefix}-alb"},
         )
 
         # EC2 Instance
@@ -184,23 +208,23 @@ class MultiWebAppTemplate(InfrastructureTemplate):
             owners=["amazon"],
             filters=[{"name": "name", "values": ["amzn2-ami-hvm-*-x86_64-gp2"]}],
         )
-        self.compute = factory.create(
+        self.aws_instance = factory.create(
             "aws:ec2:Instance",
-            f"{prefix}-instance",
+            f"aws-{prefix}-instance",
             instance_type=instance_type,
             ami=ami.id,
-            subnet_id=self.subnet.id,
-            vpc_security_group_ids=[self.security.id],
-            tags={**tags, "Name": f"{prefix}-instance"},
+            subnet_id=subnet_a.id,
+            vpc_security_group_ids=[self.aws_sg.id],
+            tags={**tags, "Name": f"aws-{prefix}-instance"},
         )
 
-        pulumi.export('vpc_id', self.network.id)
-        pulumi.export('instance_id', self.compute.id)
-        pulumi.export('public_ip', self.compute.public_ip)
-        pulumi.export('lb_dns', self.lb.dns_name)
+        pulumi.export('aws_vpc_id', self.aws_vpc.id)
+        pulumi.export('aws_instance_id', self.aws_instance.id)
+        pulumi.export('aws_public_ip', self.aws_instance.public_ip)
+        pulumi.export('aws_alb_dns', self.aws_alb.dns_name)
 
     def _create_azure(self, prefix, project, env, team_name, instance_type, cidr_block, app_port, enable_https):
-        """Deploy Azure web app: VNet + LB + VM"""
+        """Deploy Azure web app: Resource Group + VNet + NSG + LB + VM + NIC + Public IP"""
         tags = {
             "Project": project,
             "Environment": env,
@@ -210,23 +234,23 @@ class MultiWebAppTemplate(InfrastructureTemplate):
         if team_name:
             tags["Team"] = team_name
 
-        location = self._cfg('region', 'eastus')
+        location = self._cfg('azure_region', 'eastus')
 
         # Resource Group
-        rg = factory.create(
+        self.azure_rg = factory.create(
             "azure-native:resources:ResourceGroup",
-            f"{prefix}-rg",
-            resource_group_name=f"{prefix}-rg",
+            f"azure-{prefix}-rg",
+            resource_group_name=f"azure-{prefix}-rg",
             location=location,
             tags=tags,
         )
 
         # VNet
-        self.network = factory.create(
+        self.azure_vnet = factory.create(
             "azure-native:network:VirtualNetwork",
-            f"{prefix}-vnet",
-            resource_group_name=rg.name,
-            virtual_network_name=f"{prefix}-vnet",
+            f"azure-{prefix}-vnet",
+            resource_group_name=self.azure_rg.name,
+            virtual_network_name=f"azure-{prefix}-vnet",
             location=location,
             address_space={"address_prefixes": [cidr_block]},
             subnets=[{
@@ -237,34 +261,48 @@ class MultiWebAppTemplate(InfrastructureTemplate):
         )
 
         # NSG
-        self.security = factory.create(
+        rules = [
+            {
+                "name": "AllowHTTP",
+                "priority": 100,
+                "direction": "Inbound",
+                "access": "Allow",
+                "protocol": "Tcp",
+                "source_port_range": "*",
+                "destination_port_range": str(app_port),
+                "source_address_prefix": "*",
+                "destination_address_prefix": "*",
+            },
+        ]
+        if enable_https:
+            rules.append({
+                "name": "AllowHTTPS",
+                "priority": 110,
+                "direction": "Inbound",
+                "access": "Allow",
+                "protocol": "Tcp",
+                "source_port_range": "*",
+                "destination_port_range": "443",
+                "source_address_prefix": "*",
+                "destination_address_prefix": "*",
+            })
+
+        self.azure_nsg = factory.create(
             "azure-native:network:NetworkSecurityGroup",
-            f"{prefix}-nsg",
-            resource_group_name=rg.name,
-            network_security_group_name=f"{prefix}-nsg",
+            f"azure-{prefix}-nsg",
+            resource_group_name=self.azure_rg.name,
+            network_security_group_name=f"azure-{prefix}-nsg",
             location=location,
-            security_rules=[
-                {
-                    "name": "AllowHTTP",
-                    "priority": 100,
-                    "direction": "Inbound",
-                    "access": "Allow",
-                    "protocol": "Tcp",
-                    "source_port_range": "*",
-                    "destination_port_range": str(app_port),
-                    "source_address_prefix": "*",
-                    "destination_address_prefix": "*",
-                },
-            ],
+            security_rules=rules,
             tags=tags,
         )
 
         # Public IP
-        public_ip = factory.create(
+        self.azure_pip = factory.create(
             "azure-native:network:PublicIPAddress",
-            f"{prefix}-pip",
-            resource_group_name=rg.name,
-            public_ip_address_name=f"{prefix}-pip",
+            f"azure-{prefix}-pip",
+            resource_group_name=self.azure_rg.name,
+            public_ip_address_name=f"azure-{prefix}-pip",
             location=location,
             sku={"name": "Standard"},
             public_ip_allocation_method="Static",
@@ -272,47 +310,47 @@ class MultiWebAppTemplate(InfrastructureTemplate):
         )
 
         # Load Balancer
-        self.lb = factory.create(
+        self.azure_lb = factory.create(
             "azure-native:network:LoadBalancer",
-            f"{prefix}-lb",
-            resource_group_name=rg.name,
-            load_balancer_name=f"{prefix}-lb",
+            f"azure-{prefix}-lb",
+            resource_group_name=self.azure_rg.name,
+            load_balancer_name=f"azure-{prefix}-lb",
             location=location,
             sku={"name": "Standard"},
             frontend_ip_configurations=[{
                 "name": "frontend",
-                "public_ip_address": {"id": public_ip.id},
+                "public_ip_address": {"id": self.azure_pip.id},
             }],
             tags=tags,
         )
 
         # NIC
-        nic = factory.create(
+        self.azure_nic = factory.create(
             "azure-native:network:NetworkInterface",
-            f"{prefix}-nic",
-            resource_group_name=rg.name,
-            network_interface_name=f"{prefix}-nic",
+            f"azure-{prefix}-nic",
+            resource_group_name=self.azure_rg.name,
+            network_interface_name=f"azure-{prefix}-nic",
             location=location,
             ip_configurations=[{
                 "name": "ipconfig",
-                "subnet": {"id": self.network.subnets.apply(lambda s: s[0].id if s else "")},
+                "subnet": {"id": self.azure_vnet.subnets.apply(lambda s: s[0].id if s else "")},
                 "private_ip_allocation_method": "Dynamic",
             }],
-            network_security_group={"id": self.security.id},
+            network_security_group={"id": self.azure_nsg.id},
             tags=tags,
         )
 
         # VM
         vm_size = instance_type if 'Standard' in instance_type else 'Standard_B2s'
-        self.compute = factory.create(
+        self.azure_vm = factory.create(
             "azure-native:compute:VirtualMachine",
-            f"{prefix}-vm",
-            resource_group_name=rg.name,
-            vm_name=f"{prefix}-vm",
+            f"azure-{prefix}-vm",
+            resource_group_name=self.azure_rg.name,
+            vm_name=f"azure-{prefix}-vm",
             location=location,
             hardware_profile={"vm_size": vm_size},
             os_profile={
-                "computer_name": f"{prefix}-vm",
+                "computer_name": f"azure-{prefix}-vm",
                 "admin_username": "azureuser",
                 "linux_configuration": {
                     "disable_password_authentication": True,
@@ -331,20 +369,19 @@ class MultiWebAppTemplate(InfrastructureTemplate):
                     "managed_disk": {"storage_account_type": "Standard_LRS"},
                 },
             },
-            network_profile={"network_interfaces": [{"id": nic.id}]},
+            network_profile={"network_interfaces": [{"id": self.azure_nic.id}]},
             tags=tags,
         )
 
-        pulumi.export('vnet_id', self.network.id)
-        pulumi.export('vm_id', self.compute.id)
-        pulumi.export('lb_id', self.lb.id)
-        pulumi.export('public_ip_address', public_ip.ip_address)
+        pulumi.export('azure_vnet_id', self.azure_vnet.id)
+        pulumi.export('azure_vm_id', self.azure_vm.id)
+        pulumi.export('azure_lb_id', self.azure_lb.id)
+        pulumi.export('azure_public_ip', self.azure_pip.ip_address)
 
     def _create_gcp(self, prefix, project, env, team_name, instance_type, cidr_block, app_port, enable_https):
-        """Deploy GCP web app: VPC Network + HTTP LB + GCE"""
-        gcp_project = self._cfg('gcp_project', '')
-        region = self._cfg('region', 'us-central1')
-        zone = self._cfg('zone', f'{region}-a')
+        """Deploy GCP web app: VPC Network + Subnet + Firewall + GCE Instance + Global Address"""
+        region = self._cfg('gcp_region', 'us-central1')
+        zone = self._cfg('gcp_zone', f'{region}-a')
 
         labels = {
             "project": project.lower().replace(' ', '-'),
@@ -356,42 +393,44 @@ class MultiWebAppTemplate(InfrastructureTemplate):
             labels["team"] = team_name.lower().replace(' ', '-')
 
         # VPC Network
-        self.network = factory.create(
+        self.gcp_network = factory.create(
             "gcp:compute:Network",
-            f"{prefix}-network",
-            name=f"{prefix}-network",
+            f"gcp-{prefix}-network",
+            name=f"gcp-{prefix}-network",
             auto_create_subnetworks=False,
         )
 
         # Subnet
-        self.subnet = factory.create(
+        self.gcp_subnet = factory.create(
             "gcp:compute:Subnetwork",
-            f"{prefix}-subnet",
-            name=f"{prefix}-subnet",
-            network=self.network.id,
+            f"gcp-{prefix}-subnet",
+            name=f"gcp-{prefix}-subnet",
+            network=self.gcp_network.id,
             ip_cidr_range="10.0.1.0/24",
             region=region,
         )
 
         # Firewall
-        self.security = factory.create(
+        allows = [{"protocol": "tcp", "ports": [str(app_port)]}]
+        if enable_https:
+            allows.append({"protocol": "tcp", "ports": ["443"]})
+
+        self.gcp_firewall = factory.create(
             "gcp:compute:Firewall",
-            f"{prefix}-fw-web",
-            name=f"{prefix}-fw-web",
-            network=self.network.id,
-            allows=[
-                {"protocol": "tcp", "ports": [str(app_port)]},
-            ] + ([{"protocol": "tcp", "ports": ["443"]}] if enable_https else []),
+            f"gcp-{prefix}-fw-web",
+            name=f"gcp-{prefix}-fw-web",
+            network=self.gcp_network.id,
+            allows=allows,
             source_ranges=["0.0.0.0/0"],
             target_tags=["web"],
         )
 
         # GCE Instance
         machine_type = instance_type if 'e2-' in instance_type or 'n2-' in instance_type else 'e2-medium'
-        self.compute = factory.create(
+        self.gcp_instance = factory.create(
             "gcp:compute:Instance",
-            f"{prefix}-instance",
-            name=f"{prefix}-instance",
+            f"gcp-{prefix}-instance",
+            name=f"gcp-{prefix}-instance",
             machine_type=machine_type,
             zone=zone,
             boot_disk={
@@ -401,47 +440,56 @@ class MultiWebAppTemplate(InfrastructureTemplate):
                 },
             },
             network_interfaces=[{
-                "network": self.network.id,
-                "subnetwork": self.subnet.id,
+                "network": self.gcp_network.id,
+                "subnetwork": self.gcp_subnet.id,
                 "access_configs": [{"nat_ip": None}],
             }],
             tags=["web"],
             labels=labels,
         )
 
-        # Static IP for LB
-        static_ip = factory.create(
+        # Global Address (static IP for LB)
+        self.gcp_address = factory.create(
             "gcp:compute:GlobalAddress",
-            f"{prefix}-ip",
-            name=f"{prefix}-ip",
+            f"gcp-{prefix}-ip",
+            name=f"gcp-{prefix}-ip",
         )
 
-        # Health Check
-        health_check = factory.create(
-            "gcp:compute:HealthCheck",
-            f"{prefix}-hc",
-            name=f"{prefix}-hc",
-            http_health_check={"port": app_port},
-        )
-
-        pulumi.export('network_id', self.network.id)
-        pulumi.export('instance_name', self.compute.name)
-        pulumi.export('instance_ip', self.compute.network_interfaces.apply(
+        pulumi.export('gcp_network_id', self.gcp_network.id)
+        pulumi.export('gcp_instance_name', self.gcp_instance.name)
+        pulumi.export('gcp_instance_ip', self.gcp_instance.network_interfaces.apply(
             lambda ni: ni[0].access_configs[0].nat_ip if ni and ni[0].access_configs else "pending"
         ))
-        pulumi.export('static_ip', static_ip.address)
+        pulumi.export('gcp_static_ip', self.gcp_address.address)
 
     def get_outputs(self) -> Dict[str, Any]:
-        """Get template outputs"""
-        cloud = self._cfg('cloud', 'aws')
-        return {
-            "cloud": cloud,
+        """Get template outputs for all deployed clouds"""
+        outputs: Dict[str, Any] = {
             "project_name": self._cfg('project_name', 'web-app'),
             "environment": self._cfg('environment', 'dev'),
-            "network_id": self.network.id if self.network else None,
-            "compute_id": self.compute.id if self.compute else None,
-            "lb_id": self.lb.id if self.lb else None,
         }
+
+        # AWS outputs
+        if self.aws_vpc:
+            outputs["aws_vpc_id"] = self.aws_vpc.id
+            outputs["aws_instance_id"] = self.aws_instance.id if self.aws_instance else None
+            outputs["aws_alb_dns"] = self.aws_alb.dns_name if self.aws_alb else None
+            outputs["aws_public_ip"] = self.aws_instance.public_ip if self.aws_instance else None
+
+        # Azure outputs
+        if self.azure_vnet:
+            outputs["azure_vnet_id"] = self.azure_vnet.id
+            outputs["azure_vm_id"] = self.azure_vm.id if self.azure_vm else None
+            outputs["azure_lb_id"] = self.azure_lb.id if self.azure_lb else None
+            outputs["azure_public_ip"] = self.azure_pip.ip_address if self.azure_pip else None
+
+        # GCP outputs
+        if self.gcp_network:
+            outputs["gcp_network_id"] = self.gcp_network.id
+            outputs["gcp_instance_name"] = self.gcp_instance.name if self.gcp_instance else None
+            outputs["gcp_static_ip"] = self.gcp_address.address if self.gcp_address else None
+
+        return outputs
 
     @classmethod
     def get_metadata(cls) -> Dict[str, Any]:
@@ -449,40 +497,41 @@ class MultiWebAppTemplate(InfrastructureTemplate):
         return {
             "name": "multi-web-app",
             "title": "Multi-Cloud Web Application",
-            "description": "Deploy a web application with network, load balancer, and compute on AWS, Azure, or GCP. One template, three clouds, same interface.",
+            "description": "Deploy a web application across AWS, Azure, and GCP simultaneously. Toggle which clouds to include for cross-cloud redundancy with unified governance.",
             "category": "web",
-            "version": "1.0.0",
+            "version": "2.0.0",
             "author": "Archie",
             "cloud": "multi",
             "environment": "nonprod",
-            "base_cost": "$50-80/month",
+            "base_cost": "$50-80/month per cloud",
             "features": [
-                "Single template deploys to AWS, Azure, or GCP",
-                "VPC / VNet / VPC Network with subnets",
-                "Application Load Balancer / Azure LB / GCP HTTP LB",
-                "EC2 / Azure VM / GCE compute instance",
-                "Security Groups / NSG / Firewall rules",
-                "HTTPS support with port configuration",
+                "Deploy to 1, 2, or all 3 clouds simultaneously",
+                "AWS: VPC + ALB + EC2 + Security Groups",
+                "Azure: Resource Group + VNet + NSG + LB + VM + NIC + Public IP",
+                "GCP: VPC Network + Subnet + Firewall + GCE + Global Address",
+                "Cross-cloud redundancy with unified governance",
+                "Single deploy creates consistent infrastructure across clouds",
+                "HTTPS support with port configuration per cloud",
             ],
-            "tags": ["multi-cloud", "web", "load-balancer", "compute", "vpc"],
-            "deployment_time": "5-10 minutes",
+            "tags": ["multi-cloud", "web", "load-balancer", "compute", "vpc", "cross-cloud"],
+            "deployment_time": "5-15 minutes",
             "complexity": "intermediate",
             "use_cases": [
-                "Cloud-agnostic web application deployment",
-                "Multi-cloud strategy evaluation",
+                "Multi-cloud redundancy for web applications",
                 "Disaster recovery across cloud providers",
+                "Cloud migration with parallel deployment",
                 "Vendor lock-in avoidance",
-                "Standardized web app infrastructure",
+                "Cross-cloud strategy evaluation",
             ],
             "pillars": [
                 {
                     "title": "Operational Excellence",
                     "score": "excellent",
                     "score_color": "#10b981",
-                    "description": "Single template manages infrastructure across three cloud providers",
+                    "description": "Single template deploys and governs infrastructure across three clouds simultaneously",
                     "practices": [
-                        "Unified interface abstracts cloud-specific complexity",
-                        "Infrastructure as Code for repeatable multi-cloud deployments",
+                        "One deploy creates infrastructure on multiple clouds at once",
+                        "Unified governance and drift detection across all clouds",
                         "Consistent naming and tagging across all providers",
                         "Environment-aware configuration (dev/staging/prod)",
                         "Factory pattern ensures consistent resource creation",
@@ -494,7 +543,7 @@ class MultiWebAppTemplate(InfrastructureTemplate):
                     "score_color": "#f59e0b",
                     "description": "Network isolation with security groups per cloud provider",
                     "practices": [
-                        "VPC / VNet / VPC Network isolation per deployment",
+                        "VPC / VNet / VPC Network isolation per cloud",
                         "Security Group / NSG / Firewall restricts ingress",
                         "Private subnets for compute instances",
                         "HTTPS support configurable per deployment",
@@ -503,25 +552,26 @@ class MultiWebAppTemplate(InfrastructureTemplate):
                 },
                 {
                     "title": "Reliability",
-                    "score": "good",
-                    "score_color": "#f59e0b",
-                    "description": "Load balancer distributes traffic with health checks",
+                    "score": "excellent",
+                    "score_color": "#10b981",
+                    "description": "Cross-cloud deployment provides ultimate redundancy",
                     "practices": [
-                        "Load balancer health checks detect failed instances",
+                        "Simultaneous deployment across multiple clouds",
+                        "Load balancer health checks per cloud",
+                        "No single cloud is a single point of failure",
                         "Multi-AZ subnets for AWS ALB",
                         "Cloud-managed load balancers with built-in redundancy",
-                        "Static IP for consistent DNS resolution",
                     ]
                 },
                 {
                     "title": "Performance Efficiency",
                     "score": "good",
                     "score_color": "#f59e0b",
-                    "description": "Right-sized compute with load balancing for traffic distribution",
+                    "description": "Right-sized compute with load balancing per cloud",
                     "practices": [
                         "Configurable instance type per cloud provider",
                         "Load balancer offloads connection management",
-                        "Region selection for latency optimization",
+                        "Region selection per cloud for latency optimization",
                         "Application port configurable for any workload",
                     ]
                 },
@@ -529,12 +579,12 @@ class MultiWebAppTemplate(InfrastructureTemplate):
                     "title": "Cost Optimization",
                     "score": "good",
                     "score_color": "#f59e0b",
-                    "description": "Right-sized instances with cloud-specific cost optimization",
+                    "description": "Toggle clouds on/off to control spend per environment",
                     "practices": [
+                        "Deploy only to clouds you need (1, 2, or all 3)",
                         "Instance type mapped to equivalent tiers across clouds",
                         "Single instance for non-prod environments",
                         "Cloud-specific cost-efficient defaults",
-                        "Environment-based sizing (dev vs prod)",
                     ]
                 },
                 {
@@ -543,7 +593,7 @@ class MultiWebAppTemplate(InfrastructureTemplate):
                     "score_color": "#f59e0b",
                     "description": "Right-sized resources with efficient cloud utilization",
                     "practices": [
-                        "Single instance for dev reduces resource consumption",
+                        "Toggle off unused clouds to reduce resource consumption",
                         "Cloud-managed LB shares infrastructure",
                         "Region selection can target low-carbon regions",
                         "Right-sized compute minimizes energy waste",
@@ -577,33 +627,41 @@ class MultiWebAppTemplate(InfrastructureTemplate):
                     "group": "Essentials",
                     "isEssential": True,
                 },
-                "cloud": {
-                    "type": "string",
-                    "default": "aws",
-                    "title": "Cloud Provider",
-                    "description": "Target cloud provider for deployment",
-                    "enum": ["aws", "azure", "gcp"],
+                "deploy_aws": {
+                    "type": "boolean",
+                    "default": True,
+                    "title": "Deploy to AWS",
+                    "description": "Deploy VPC + ALB + EC2 on AWS",
                     "order": 3,
-                    "group": "Essentials",
+                    "group": "Cloud Selection",
                     "isEssential": True,
                 },
-                "region": {
-                    "type": "string",
-                    "default": "us-east-1",
-                    "title": "Region",
-                    "description": "Cloud region (e.g., us-east-1, eastus, us-central1)",
+                "deploy_azure": {
+                    "type": "boolean",
+                    "default": False,
+                    "title": "Deploy to Azure",
+                    "description": "Deploy VNet + LB + VM on Azure",
                     "order": 4,
-                    "group": "Essentials",
+                    "group": "Cloud Selection",
+                    "isEssential": True,
+                },
+                "deploy_gcp": {
+                    "type": "boolean",
+                    "default": False,
+                    "title": "Deploy to GCP",
+                    "description": "Deploy VPC Network + GCE on GCP",
+                    "order": 5,
+                    "group": "Cloud Selection",
                     "isEssential": True,
                 },
                 "instance_type": {
                     "type": "string",
                     "default": "t3.small",
                     "title": "Instance Type",
-                    "description": "Compute instance size (e.g., t3.small, Standard_B2s, e2-medium)",
+                    "description": "Compute instance size (e.g., t3.small for AWS, Standard_B2s for Azure, e2-medium for GCP)",
                     "order": 10,
                     "group": "Compute",
-                    "cost_impact": "~$15-40/month",
+                    "cost_impact": "~$15-40/month per cloud",
                 },
                 "cidr_block": {
                     "type": "string",
@@ -625,7 +683,7 @@ class MultiWebAppTemplate(InfrastructureTemplate):
                     "type": "boolean",
                     "default": True,
                     "title": "Enable HTTPS",
-                    "description": "Allow HTTPS (port 443) traffic",
+                    "description": "Allow HTTPS (port 443) traffic on all clouds",
                     "order": 22,
                     "group": "Security & Access",
                 },
@@ -633,19 +691,37 @@ class MultiWebAppTemplate(InfrastructureTemplate):
                     "type": "string",
                     "default": "",
                     "title": "SSH Public Key",
-                    "description": "SSH public key for Azure VM access (Azure only)",
+                    "description": "SSH public key for Azure VM access (required when deploying to Azure)",
                     "order": 30,
                     "group": "Security & Access",
-                    "conditional": {"field": "cloud"},
+                    "conditional": {"field": "deploy_azure"},
                 },
-                "gcp_project": {
+                "azure_region": {
                     "type": "string",
-                    "default": "",
-                    "title": "GCP Project ID",
-                    "description": "Google Cloud project ID (GCP only)",
-                    "order": 31,
-                    "group": "Essentials",
-                    "conditional": {"field": "cloud"},
+                    "default": "eastus",
+                    "title": "Azure Region",
+                    "description": "Azure region (e.g., eastus, westus2, westeurope)",
+                    "order": 40,
+                    "group": "Cloud Regions",
+                    "conditional": {"field": "deploy_azure"},
+                },
+                "gcp_region": {
+                    "type": "string",
+                    "default": "us-central1",
+                    "title": "GCP Region",
+                    "description": "GCP region (e.g., us-central1, us-east1, europe-west1)",
+                    "order": 41,
+                    "group": "Cloud Regions",
+                    "conditional": {"field": "deploy_gcp"},
+                },
+                "gcp_zone": {
+                    "type": "string",
+                    "default": "us-central1-a",
+                    "title": "GCP Zone",
+                    "description": "GCP zone for compute instances",
+                    "order": 42,
+                    "group": "Cloud Regions",
+                    "conditional": {"field": "deploy_gcp"},
                 },
                 "team_name": {
                     "type": "string",
@@ -656,5 +732,5 @@ class MultiWebAppTemplate(InfrastructureTemplate):
                     "group": "Tags",
                 },
             },
-            "required": ["project_name", "cloud"],
+            "required": ["project_name"],
         }

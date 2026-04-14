@@ -1,20 +1,20 @@
 """
 Multi-Cloud Database Template
 
-Composed template: RDS / Azure SQL / Cloud SQL.
-Config field `cloud` selects the provider. Same interface for all three clouds:
-db_name, engine, instance_size.
+Deploy managed relational databases across AWS, Azure, and GCP simultaneously.
+Toggle which clouds to include — deploy to 1, 2, or all 3 at once.
 
-Base cost: ~$15-50/month (varies by cloud and instance size)
-- Managed relational database
-- Configurable engine (postgres, mysql)
-- Configurable instance size
-- Automated backups
-- Network isolation
+Base cost: ~$15-50/month per cloud
+- AWS: RDS PostgreSQL with Security Group + Subnet Group
+- Azure: Resource Group + PostgreSQL Flexible Server + Database
+- GCP: Cloud SQL Instance + Database + User
 """
 
-from typing import Any, Dict, Optional
+from typing import Any, Dict, List, Optional
 import pulumi
+import pulumi_aws as aws_sdk
+import pulumi_azure_native as azure_native
+import pulumi_gcp as gcp
 
 from provisioner.templates.base import template_registry, InfrastructureTemplate
 from provisioner.templates.atomic_factory import PulumiAtomicFactory as factory
@@ -25,10 +25,10 @@ class MultiDatabaseTemplate(InfrastructureTemplate):
     """
     Multi-Cloud Database Template
 
-    Creates (based on cloud selection):
-    - AWS: RDS Instance with subnet group and security group
-    - Azure: Azure SQL Server + Database with firewall rules
-    - GCP: Cloud SQL Instance with database and user
+    Deploys managed databases to any combination of:
+    - AWS: RDS PostgreSQL with Security Group
+    - Azure: PostgreSQL Flexible Server + Database
+    - GCP: Cloud SQL Instance + Database + User
     """
 
     def __init__(self, name: str = None, config: Dict[str, Any] = None, **kwargs):
@@ -43,32 +43,45 @@ class MultiDatabaseTemplate(InfrastructureTemplate):
         super().__init__(name, raw_config)
         self.config = raw_config
 
-        # Resource references
-        self.database: Optional[object] = None
-        self.server: Optional[object] = None
-        self.security: Optional[object] = None
+        # AWS resource references
+        self.aws_sg: Optional[object] = None
+        self.aws_rds: Optional[object] = None
+
+        # Azure resource references
+        self.azure_rg: Optional[object] = None
+        self.azure_server: Optional[object] = None
+        self.azure_database: Optional[object] = None
+
+        # GCP resource references
+        self.gcp_instance: Optional[object] = None
+        self.gcp_database: Optional[object] = None
+        self.gcp_user: Optional[object] = None
 
     def _cfg(self, key: str, default=None):
         """Read config from root or parameters (Rule #6)"""
         params = self.config.get('parameters', {})
-        cloud = self.config.get('cloud') or (params.get('cloud') if isinstance(params, dict) else None) or 'aws'
-        cloud_params = params.get(cloud, {}) if isinstance(params, dict) else {}
         return (
             self.config.get(key) or
-            (cloud_params.get(key) if isinstance(cloud_params, dict) else None) or
             (params.get(key) if isinstance(params, dict) else None) or
             default
         )
+
+    def _get_bool(self, key: str, default: bool = False) -> bool:
+        """Read a boolean config value, handling string/bool/Decimal"""
+        val = self._cfg(key, default)
+        if isinstance(val, bool):
+            return val
+        if isinstance(val, str):
+            return val.lower() in ('true', '1', 'yes')
+        return bool(val)
 
     def create_infrastructure(self) -> Dict[str, Any]:
         """Deploy multi-cloud database infrastructure (implements abstract method)"""
         return self.create()
 
     def create(self) -> Dict[str, Any]:
-        """Deploy database to the selected cloud provider"""
+        """Deploy databases to all selected cloud providers"""
 
-        # Read config
-        cloud = self._cfg('cloud', 'aws')
         project = self._cfg('project_name', 'db-app')
         env = self._cfg('environment', 'dev')
         team_name = self._cfg('team_name', '')
@@ -80,23 +93,35 @@ class MultiDatabaseTemplate(InfrastructureTemplate):
         admin_username = self._cfg('admin_username', 'dbadmin')
         admin_password = self._cfg('admin_password', 'ChangeMe123!')
         backup_retention = int(self._cfg('backup_retention', 7))
-        publicly_accessible = self._cfg('publicly_accessible', False)
-        if isinstance(publicly_accessible, str):
-            publicly_accessible = publicly_accessible.lower() in ('true', '1', 'yes')
+        publicly_accessible = self._get_bool('publicly_accessible', False)
+
+        deploy_aws = self._get_bool('deploy_aws', True)
+        deploy_azure = self._get_bool('deploy_azure', False)
+        deploy_gcp = self._get_bool('deploy_gcp', False)
 
         prefix = f"{project}-{env}"
+        clouds_deployed: List[str] = []
 
-        if cloud == 'aws':
-            self._create_aws(prefix, project, env, team_name, db_name, engine, engine_version, instance_size, storage_gb, admin_username, admin_password, backup_retention, publicly_accessible)
-        elif cloud == 'azure':
-            self._create_azure(prefix, project, env, team_name, db_name, engine, engine_version, instance_size, storage_gb, admin_username, admin_password, backup_retention, publicly_accessible)
-        elif cloud == 'gcp':
-            self._create_gcp(prefix, project, env, team_name, db_name, engine, engine_version, instance_size, storage_gb, admin_username, admin_password, backup_retention, publicly_accessible)
-        else:
-            raise ValueError(f"Unsupported cloud: {cloud}. Must be aws, azure, or gcp.")
+        if deploy_aws:
+            self._create_aws(prefix, project, env, team_name, db_name, engine, engine_version,
+                             instance_size, storage_gb, admin_username, admin_password,
+                             backup_retention, publicly_accessible)
+            clouds_deployed.append('aws')
+
+        if deploy_azure:
+            self._create_azure(prefix, project, env, team_name, db_name, engine, engine_version,
+                               instance_size, storage_gb, admin_username, admin_password,
+                               backup_retention, publicly_accessible)
+            clouds_deployed.append('azure')
+
+        if deploy_gcp:
+            self._create_gcp(prefix, project, env, team_name, db_name, engine, engine_version,
+                             instance_size, storage_gb, admin_username, admin_password,
+                             backup_retention, publicly_accessible)
+            clouds_deployed.append('gcp')
 
         # Common exports
-        pulumi.export('cloud', cloud)
+        pulumi.export('clouds_deployed', clouds_deployed)
         pulumi.export('project_name', project)
         pulumi.export('environment', env)
         pulumi.export('db_name', db_name)
@@ -104,22 +129,24 @@ class MultiDatabaseTemplate(InfrastructureTemplate):
 
         return self.get_outputs()
 
-    def _create_aws(self, prefix, project, env, team_name, db_name, engine, engine_version, instance_size, storage_gb, admin_username, admin_password, backup_retention, publicly_accessible):
-        """Deploy AWS RDS"""
+    def _create_aws(self, prefix, project, env, team_name, db_name, engine, engine_version,
+                    instance_size, storage_gb, admin_username, admin_password,
+                    backup_retention, publicly_accessible):
+        """Deploy AWS RDS PostgreSQL with Security Group"""
         tags = {"Project": project, "Environment": env, "ManagedBy": "Archie", "Template": "multi-database"}
         if team_name:
             tags["Team"] = team_name
 
-        # Default engine versions
         if not engine_version:
             engine_version = "15.4" if engine == "postgres" else "8.0"
 
-        # Security Group (allowing DB port from anywhere for dev — PE should lock this)
         db_port = 5432 if engine == "postgres" else 3306
-        self.security = factory.create(
+
+        # Security Group
+        self.aws_sg = factory.create(
             "aws:ec2:SecurityGroup",
-            f"{prefix}-db-sg",
-            description=f"Database security group for {project}",
+            f"aws-{prefix}-db-sg",
+            description=f"Database security group for {project} (AWS)",
             ingress=[{
                 "protocol": "tcp",
                 "from_port": db_port,
@@ -128,14 +155,14 @@ class MultiDatabaseTemplate(InfrastructureTemplate):
                 "description": f"{engine} from private networks",
             }],
             egress=[{"protocol": "-1", "from_port": 0, "to_port": 0, "cidr_blocks": ["0.0.0.0/0"], "description": "All outbound"}],
-            tags={**tags, "Name": f"{prefix}-db-sg"},
+            tags={**tags, "Name": f"aws-{prefix}-db-sg"},
         )
 
         # RDS Instance
-        self.database = factory.create(
+        self.aws_rds = factory.create(
             "aws:rds:Instance",
-            f"{prefix}-rds",
-            identifier=f"{prefix}-{db_name}",
+            f"aws-{prefix}-rds",
+            identifier=f"aws-{prefix}-{db_name}",
             engine=engine,
             engine_version=engine_version,
             instance_class=instance_size,
@@ -147,39 +174,42 @@ class MultiDatabaseTemplate(InfrastructureTemplate):
             skip_final_snapshot=True if env != "prod" else False,
             backup_retention_period=backup_retention,
             storage_encrypted=True,
-            vpc_security_group_ids=[self.security.id],
-            tags={**tags, "Name": f"{prefix}-{db_name}"},
+            vpc_security_group_ids=[self.aws_sg.id],
+            tags={**tags, "Name": f"aws-{prefix}-{db_name}"},
         )
 
-        pulumi.export('db_endpoint', self.database.endpoint)
-        pulumi.export('db_port', self.database.port)
-        pulumi.export('db_instance_id', self.database.id)
+        pulumi.export('aws_db_endpoint', self.aws_rds.endpoint)
+        pulumi.export('aws_db_port', self.aws_rds.port)
+        pulumi.export('aws_db_instance_id', self.aws_rds.id)
 
-    def _create_azure(self, prefix, project, env, team_name, db_name, engine, engine_version, instance_size, storage_gb, admin_username, admin_password, backup_retention, publicly_accessible):
-        """Deploy Azure SQL / PostgreSQL Flexible Server"""
+    def _create_azure(self, prefix, project, env, team_name, db_name, engine, engine_version,
+                      instance_size, storage_gb, admin_username, admin_password,
+                      backup_retention, publicly_accessible):
+        """Deploy Azure PostgreSQL Flexible Server + Database"""
         tags = {"Project": project, "Environment": env, "ManagedBy": "Archie", "Template": "multi-database"}
         if team_name:
             tags["Team"] = team_name
 
-        location = self._cfg('region', 'eastus')
+        location = self._cfg('azure_region', 'eastus')
 
         # Resource Group
-        rg = factory.create(
+        self.azure_rg = factory.create(
             "azure-native:resources:ResourceGroup",
-            f"{prefix}-db-rg",
-            resource_group_name=f"{prefix}-db-rg",
+            f"azure-{prefix}-db-rg",
+            resource_group_name=f"azure-{prefix}-db-rg",
             location=location,
             tags=tags,
         )
 
+        sku = instance_size if 'Standard' in instance_size else 'Standard_B1ms'
+
         if engine == "postgres":
             # PostgreSQL Flexible Server
-            sku = instance_size if 'Standard' in instance_size else 'Standard_B1ms'
-            self.server = factory.create(
+            self.azure_server = factory.create(
                 "azure-native:dbforpostgresql:Server",
-                f"{prefix}-pg",
-                server_name=f"{prefix}-pg",
-                resource_group_name=rg.name,
+                f"azure-{prefix}-pg",
+                server_name=f"azure-{prefix}-pg",
+                resource_group_name=self.azure_rg.name,
                 location=location,
                 sku={"name": sku, "tier": "Burstable"},
                 version=engine_version or "15",
@@ -190,27 +220,25 @@ class MultiDatabaseTemplate(InfrastructureTemplate):
                 tags=tags,
             )
 
-            # Database
-            self.database = factory.create(
+            self.azure_database = factory.create(
                 "azure-native:dbforpostgresql:Database",
-                f"{prefix}-{db_name}",
+                f"azure-{prefix}-{db_name}",
                 database_name=db_name,
-                server_name=self.server.name,
-                resource_group_name=rg.name,
+                server_name=self.azure_server.name,
+                resource_group_name=self.azure_rg.name,
                 charset="UTF8",
                 collation="en_US.utf8",
             )
 
-            pulumi.export('db_endpoint', self.server.fully_qualified_domain_name)
-            pulumi.export('db_port', 5432)
+            pulumi.export('azure_db_endpoint', self.azure_server.fully_qualified_domain_name)
+            pulumi.export('azure_db_port', 5432)
         else:
             # MySQL Flexible Server
-            sku = instance_size if 'Standard' in instance_size else 'Standard_B1ms'
-            self.server = factory.create(
+            self.azure_server = factory.create(
                 "azure-native:dbformysql:Server",
-                f"{prefix}-mysql",
-                server_name=f"{prefix}-mysql",
-                resource_group_name=rg.name,
+                f"azure-{prefix}-mysql",
+                server_name=f"azure-{prefix}-mysql",
+                resource_group_name=self.azure_rg.name,
                 location=location,
                 sku={"name": sku, "tier": "Burstable"},
                 version=engine_version or "8.0.21",
@@ -221,24 +249,26 @@ class MultiDatabaseTemplate(InfrastructureTemplate):
                 tags=tags,
             )
 
-            self.database = factory.create(
+            self.azure_database = factory.create(
                 "azure-native:dbformysql:Database",
-                f"{prefix}-{db_name}",
+                f"azure-{prefix}-{db_name}",
                 database_name=db_name,
-                server_name=self.server.name,
-                resource_group_name=rg.name,
+                server_name=self.azure_server.name,
+                resource_group_name=self.azure_rg.name,
                 charset="utf8mb4",
                 collation="utf8mb4_unicode_ci",
             )
 
-            pulumi.export('db_endpoint', self.server.fully_qualified_domain_name)
-            pulumi.export('db_port', 3306)
+            pulumi.export('azure_db_endpoint', self.azure_server.fully_qualified_domain_name)
+            pulumi.export('azure_db_port', 3306)
 
-        pulumi.export('db_server_id', self.server.id)
+        pulumi.export('azure_db_server_id', self.azure_server.id)
 
-    def _create_gcp(self, prefix, project, env, team_name, db_name, engine, engine_version, instance_size, storage_gb, admin_username, admin_password, backup_retention, publicly_accessible):
-        """Deploy GCP Cloud SQL"""
-        region = self._cfg('region', 'us-central1')
+    def _create_gcp(self, prefix, project, env, team_name, db_name, engine, engine_version,
+                    instance_size, storage_gb, admin_username, admin_password,
+                    backup_retention, publicly_accessible):
+        """Deploy GCP Cloud SQL Instance + Database + User"""
+        region = self._cfg('gcp_region', 'us-central1')
 
         labels = {
             "project": project.lower().replace(' ', '-'),
@@ -259,10 +289,10 @@ class MultiDatabaseTemplate(InfrastructureTemplate):
         tier = instance_size if 'db-' in instance_size else 'db-f1-micro'
 
         # Cloud SQL Instance
-        self.server = factory.create(
+        self.gcp_instance = factory.create(
             "gcp:sql:DatabaseInstance",
-            f"{prefix}-sql",
-            name=f"{prefix}-sql",
+            f"gcp-{prefix}-sql",
+            name=f"gcp-{prefix}-sql",
             database_version=database_version,
             region=region,
             deletion_protection=True if env == "prod" else False,
@@ -284,36 +314,53 @@ class MultiDatabaseTemplate(InfrastructureTemplate):
         )
 
         # Database
-        self.database = factory.create(
+        self.gcp_database = factory.create(
             "gcp:sql:Database",
-            f"{prefix}-{db_name}",
+            f"gcp-{prefix}-{db_name}",
             name=db_name,
-            instance=self.server.name,
+            instance=self.gcp_instance.name,
         )
 
         # User
-        factory.create(
+        self.gcp_user = factory.create(
             "gcp:sql:User",
-            f"{prefix}-{admin_username}",
+            f"gcp-{prefix}-{admin_username}",
             name=admin_username,
-            instance=self.server.name,
+            instance=self.gcp_instance.name,
             password=admin_password,
         )
 
-        pulumi.export('db_endpoint', self.server.public_ip_address)
-        pulumi.export('db_connection_name', self.server.connection_name)
-        pulumi.export('db_instance_id', self.server.id)
+        pulumi.export('gcp_db_endpoint', self.gcp_instance.public_ip_address)
+        pulumi.export('gcp_db_connection_name', self.gcp_instance.connection_name)
+        pulumi.export('gcp_db_instance_id', self.gcp_instance.id)
 
     def get_outputs(self) -> Dict[str, Any]:
-        """Get template outputs"""
-        cloud = self._cfg('cloud', 'aws')
-        return {
-            "cloud": cloud,
+        """Get template outputs for all deployed clouds"""
+        outputs: Dict[str, Any] = {
+            "project_name": self._cfg('project_name', 'db-app'),
+            "environment": self._cfg('environment', 'dev'),
             "db_name": self._cfg('db_name', 'appdb'),
             "engine": self._cfg('engine', 'postgres'),
-            "database_id": self.database.id if self.database else None,
-            "server_id": self.server.id if self.server else None,
         }
+
+        # AWS outputs
+        if self.aws_rds:
+            outputs["aws_db_endpoint"] = self.aws_rds.endpoint
+            outputs["aws_db_port"] = self.aws_rds.port
+            outputs["aws_db_instance_id"] = self.aws_rds.id
+
+        # Azure outputs
+        if self.azure_server:
+            outputs["azure_db_server_id"] = self.azure_server.id
+            outputs["azure_db_endpoint"] = self.azure_server.fully_qualified_domain_name
+
+        # GCP outputs
+        if self.gcp_instance:
+            outputs["gcp_db_endpoint"] = self.gcp_instance.public_ip_address
+            outputs["gcp_db_connection_name"] = self.gcp_instance.connection_name
+            outputs["gcp_db_instance_id"] = self.gcp_instance.id
+
+        return outputs
 
     @classmethod
     def get_metadata(cls) -> Dict[str, Any]:
@@ -321,65 +368,67 @@ class MultiDatabaseTemplate(InfrastructureTemplate):
         return {
             "name": "multi-database",
             "title": "Multi-Cloud Managed Database",
-            "description": "Deploy a managed relational database on AWS (RDS), Azure (SQL/PostgreSQL), or GCP (Cloud SQL). Same interface: db_name, engine, instance_size.",
+            "description": "Deploy managed relational databases across AWS, Azure, and GCP simultaneously. Toggle which clouds to include for cross-cloud redundancy with unified governance.",
             "category": "database",
-            "version": "1.0.0",
+            "version": "2.0.0",
             "author": "Archie",
             "cloud": "multi",
             "environment": "nonprod",
-            "base_cost": "$15-50/month",
+            "base_cost": "$15-50/month per cloud",
             "features": [
-                "Single template deploys to AWS, Azure, or GCP",
-                "PostgreSQL and MySQL engine support",
-                "Configurable instance size per cloud",
-                "Automated backups with retention policy",
-                "Encryption at rest (AWS and GCP)",
-                "Network-restricted access by default",
+                "Deploy to 1, 2, or all 3 clouds simultaneously",
+                "AWS: RDS PostgreSQL/MySQL with encryption and Security Group",
+                "Azure: PostgreSQL/MySQL Flexible Server with geo-backup options",
+                "GCP: Cloud SQL with auto-resize and backup configuration",
+                "PostgreSQL and MySQL engine support across all clouds",
+                "Cross-cloud database redundancy with unified governance",
+                "Automated backups with configurable retention per cloud",
             ],
-            "tags": ["multi-cloud", "database", "rds", "azure-sql", "cloud-sql", "postgres", "mysql"],
+            "tags": ["multi-cloud", "database", "rds", "azure-sql", "cloud-sql", "postgres", "mysql", "cross-cloud"],
             "deployment_time": "5-15 minutes",
             "complexity": "intermediate",
             "use_cases": [
-                "Cloud-agnostic application databases",
-                "Multi-cloud database strategy",
-                "Development and staging databases",
-                "Standardized database provisioning",
-                "Cross-cloud disaster recovery",
+                "Multi-cloud database redundancy",
+                "Disaster recovery across cloud providers",
+                "Cloud migration with parallel databases",
+                "Vendor lock-in avoidance for data layer",
+                "Cross-cloud compliance requirements",
             ],
             "pillars": [
                 {
                     "title": "Operational Excellence",
                     "score": "excellent",
                     "score_color": "#10b981",
-                    "description": "Managed database with automated backups and consistent interface across clouds",
+                    "description": "Single template deploys and governs databases across three clouds simultaneously",
                     "practices": [
-                        "Unified config interface across three cloud providers",
+                        "One deploy creates databases on multiple clouds at once",
+                        "Unified governance for database configuration across clouds",
                         "Automated backups with configurable retention",
                         "Infrastructure as Code for repeatable database provisioning",
-                        "Engine version pinning for consistency",
-                        "Tags and labels for resource organization",
+                        "Tags and labels for resource organization across clouds",
                     ]
                 },
                 {
                     "title": "Security",
                     "score": "excellent",
                     "score_color": "#10b981",
-                    "description": "Encryption at rest with network-restricted access",
+                    "description": "Encryption at rest with network-restricted access on all clouds",
                     "practices": [
                         "Encryption at rest enabled by default (AWS, GCP)",
                         "Network access restricted to private ranges (10.0.0.0/8)",
                         "Admin password configurable (PE should lock for prod)",
                         "Security group / firewall isolates database port",
-                        "Public access disabled by default",
+                        "Public access disabled by default on all clouds",
                     ]
                 },
                 {
                     "title": "Reliability",
-                    "score": "good",
-                    "score_color": "#f59e0b",
-                    "description": "Managed database with automated backups and deletion protection",
+                    "score": "excellent",
+                    "score_color": "#10b981",
+                    "description": "Cross-cloud deployment provides ultimate data redundancy",
                     "practices": [
-                        "Automated backups with configurable retention",
+                        "Simultaneous databases across multiple clouds",
+                        "Automated backups with configurable retention per cloud",
                         "Deletion protection for production environments",
                         "Cloud-managed high availability options",
                         "Point-in-time recovery via backup retention",
@@ -401,12 +450,12 @@ class MultiDatabaseTemplate(InfrastructureTemplate):
                     "title": "Cost Optimization",
                     "score": "good",
                     "score_color": "#f59e0b",
-                    "description": "Right-sized instances with environment-appropriate settings",
+                    "description": "Toggle clouds on/off to control database spend",
                     "practices": [
+                        "Deploy only to clouds you need (1, 2, or all 3)",
                         "Burstable instance types for non-prod workloads",
                         "Skip final snapshot for dev environments saves time",
                         "Configurable storage size prevents over-provisioning",
-                        "Geo-redundant backup disabled for non-prod savings",
                     ]
                 },
                 {
@@ -415,8 +464,8 @@ class MultiDatabaseTemplate(InfrastructureTemplate):
                     "score_color": "#f59e0b",
                     "description": "Managed infrastructure with efficient resource utilization",
                     "practices": [
+                        "Toggle off unused clouds to reduce resource consumption",
                         "Managed service shares underlying infrastructure",
-                        "Right-sized instances reduce energy waste",
                         "Burstable tiers maximize compute utilization",
                         "Storage auto-resize prevents pre-allocated waste",
                     ]
@@ -449,21 +498,38 @@ class MultiDatabaseTemplate(InfrastructureTemplate):
                     "group": "Essentials",
                     "isEssential": True,
                 },
-                "cloud": {
-                    "type": "string",
-                    "default": "aws",
-                    "title": "Cloud Provider",
-                    "description": "Target cloud for the database",
-                    "enum": ["aws", "azure", "gcp"],
+                "deploy_aws": {
+                    "type": "boolean",
+                    "default": True,
+                    "title": "Deploy to AWS",
+                    "description": "Deploy RDS PostgreSQL/MySQL on AWS",
                     "order": 3,
-                    "group": "Essentials",
+                    "group": "Cloud Selection",
+                    "isEssential": True,
+                },
+                "deploy_azure": {
+                    "type": "boolean",
+                    "default": False,
+                    "title": "Deploy to Azure",
+                    "description": "Deploy PostgreSQL/MySQL Flexible Server on Azure",
+                    "order": 4,
+                    "group": "Cloud Selection",
+                    "isEssential": True,
+                },
+                "deploy_gcp": {
+                    "type": "boolean",
+                    "default": False,
+                    "title": "Deploy to GCP",
+                    "description": "Deploy Cloud SQL on GCP",
+                    "order": 5,
+                    "group": "Cloud Selection",
                     "isEssential": True,
                 },
                 "db_name": {
                     "type": "string",
                     "default": "appdb",
                     "title": "Database Name",
-                    "description": "Name of the database to create",
+                    "description": "Name of the database to create on each cloud",
                     "order": 10,
                     "group": "Database",
                 },
@@ -471,7 +537,7 @@ class MultiDatabaseTemplate(InfrastructureTemplate):
                     "type": "string",
                     "default": "postgres",
                     "title": "Database Engine",
-                    "description": "Relational database engine",
+                    "description": "Relational database engine (same across all clouds)",
                     "enum": ["postgres", "mysql"],
                     "order": 11,
                     "group": "Database",
@@ -488,16 +554,16 @@ class MultiDatabaseTemplate(InfrastructureTemplate):
                     "type": "string",
                     "default": "db.t3.micro",
                     "title": "Instance Size",
-                    "description": "Database instance size (e.g., db.t3.micro, Standard_B1ms, db-f1-micro)",
+                    "description": "Database instance size (e.g., db.t3.micro for AWS, Standard_B1ms for Azure, db-f1-micro for GCP)",
                     "order": 13,
                     "group": "Database",
-                    "cost_impact": "$15-50/month",
+                    "cost_impact": "$15-50/month per cloud",
                 },
                 "storage_gb": {
                     "type": "number",
                     "default": 20,
                     "title": "Storage (GB)",
-                    "description": "Allocated storage in gigabytes",
+                    "description": "Allocated storage in gigabytes per cloud",
                     "minimum": 10,
                     "maximum": 1000,
                     "order": 14,
@@ -508,7 +574,7 @@ class MultiDatabaseTemplate(InfrastructureTemplate):
                     "type": "string",
                     "default": "dbadmin",
                     "title": "Admin Username",
-                    "description": "Database administrator username",
+                    "description": "Database administrator username (same across all clouds)",
                     "order": 20,
                     "group": "Security & Access",
                 },
@@ -539,13 +605,23 @@ class MultiDatabaseTemplate(InfrastructureTemplate):
                     "order": 30,
                     "group": "Backup & Recovery",
                 },
-                "region": {
+                "azure_region": {
                     "type": "string",
-                    "default": "us-east-1",
-                    "title": "Region",
-                    "description": "Cloud region (e.g., us-east-1, eastus, us-central1)",
+                    "default": "eastus",
+                    "title": "Azure Region",
+                    "description": "Azure region (e.g., eastus, westus2, westeurope)",
                     "order": 40,
-                    "group": "Deployment",
+                    "group": "Cloud Regions",
+                    "conditional": {"field": "deploy_azure"},
+                },
+                "gcp_region": {
+                    "type": "string",
+                    "default": "us-central1",
+                    "title": "GCP Region",
+                    "description": "GCP region (e.g., us-central1, us-east1, europe-west1)",
+                    "order": 41,
+                    "group": "Cloud Regions",
+                    "conditional": {"field": "deploy_gcp"},
                 },
                 "team_name": {
                     "type": "string",
@@ -556,5 +632,5 @@ class MultiDatabaseTemplate(InfrastructureTemplate):
                     "group": "Tags",
                 },
             },
-            "required": ["project_name", "cloud", "db_name", "engine"],
+            "required": ["project_name", "db_name", "engine"],
         }
