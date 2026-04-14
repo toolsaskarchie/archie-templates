@@ -304,6 +304,13 @@ class RDSPostgresTemplate(InfrastructureTemplate):
             "tags": ["database", "postgresql", "rds", "production", "high-availability"],
             "deployment_time": "15-20 minutes",
             "complexity": "advanced",
+            "use_cases": [
+                "Production application databases",
+                "Multi-AZ high-availability workloads",
+                "Compliance-ready data storage",
+                "Enterprise web application backends",
+                "Transactional workloads requiring ACID compliance",
+            ],
             "pillars": [
                 {
                     "title": "Security",

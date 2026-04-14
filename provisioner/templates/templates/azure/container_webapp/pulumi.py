@@ -189,6 +189,12 @@ class AzureContainerWebAppTemplate(InfrastructureTemplate):
             "complexity": "low",
             "deployment_time": "5-7 minutes",
             "marketplace_group": "WEBSITES",
+            "use_cases": [
+                "Containerized web application hosting",
+                "Docker-based microservice deployment",
+                "Development and staging web apps",
+                "Quick proof-of-concept deployments",
+            ],
             "pillars": [
                 {
                     "title": "Operational Excellence",

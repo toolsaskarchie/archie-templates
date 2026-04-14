@@ -207,6 +207,14 @@ class CloudFrontNonProdConfig:
                     "isEssential": True,
                     "order": 23
                 },
+                "team_name": {
+                    "type": "string",
+                    "default": "",
+                    "title": "Team Name",
+                    "description": "Team that owns this resource",
+                    "order": 50,
+                    "group": "Tags",
+                },
             },
             "required": ["project_name", "region"]
         }

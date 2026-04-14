@@ -174,6 +174,12 @@ class GcpComputeNonProdTemplate(InfrastructureTemplate):
             "complexity": "low",
             "deployment_time": "2-5 minutes",
             "marketplace_group": "gcp-compute-group",
+            "use_cases": [
+                "Development and testing virtual machines",
+                "Application prototyping environments",
+                "CI/CD build runners",
+                "Lightweight application hosting",
+            ],
             "pillars": [
                 {
                     "title": "Operational Excellence",

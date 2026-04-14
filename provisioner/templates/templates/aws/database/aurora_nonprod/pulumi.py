@@ -327,6 +327,12 @@ class AuroraNonProdTemplate(InfrastructureTemplate):
             "tags": ["aws", "database", "aurora", "postgresql", "mysql", "nonprod", "cost-optimized"],
             "deployment_time": "15-20 minutes",
             "complexity": "advanced",
+            "use_cases": [
+                "Development and staging databases",
+                "Microservice backends requiring managed failover",
+                "Applications needing Aurora compatibility",
+                "Cost-optimized non-production database clusters",
+            ],
             "pillars": [
                 {
                     "title": "Security",

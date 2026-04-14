@@ -685,6 +685,12 @@ class AWSLandingZoneTemplate(InfrastructureTemplate):
             ],
             "deployment_time": "10-15 minutes",
             "complexity": "advanced",
+            "use_cases": [
+                "Enterprise AWS multi-account setup",
+                "Security and compliance baseline",
+                "CIS Benchmark alignment for new organizations",
+                "Centralized governance and cost management",
+            ],
             "pillars": [
                 {
                     "title": "Operational Excellence",
@@ -844,7 +850,15 @@ class AWSLandingZoneTemplate(InfrastructureTemplate):
                     "description": "Number of days to retain CloudTrail and Config logs",
                     "order": 40,
                     "group": "Logging"
-                }
+                },
+                "team_name": {
+                    "type": "string",
+                    "default": "",
+                    "title": "Team Name",
+                    "description": "Team that owns this resource",
+                    "order": 50,
+                    "group": "Tags",
+                },
             },
             "required": ["project_name", "region"]
         }

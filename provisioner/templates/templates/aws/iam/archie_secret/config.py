@@ -100,7 +100,15 @@ class ArchieSecretConfig:
                     "group": "Keys to Store",
                     "isEssential": True,
                     "order": 12
-                }
+                },
+                "team_name": {
+                    "type": "string",
+                    "default": "",
+                    "title": "Team Name",
+                    "description": "Team that owns this resource",
+                    "order": 50,
+                    "group": "Tags",
+                },
             },
             "required": ["projectName", "access_key", "secret_key"]
         }

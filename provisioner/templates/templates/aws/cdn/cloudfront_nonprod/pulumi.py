@@ -213,6 +213,13 @@ class CloudFrontNonProdTemplate(InfrastructureTemplate):
             ],
             "deployment_time": "5-10 minutes",
             "complexity": "intermediate",
+            "use_cases": [
+                "Static website hosting with global CDN",
+                "Single-page application delivery",
+                "Marketing and landing page hosting",
+                "Developer preview environments",
+                "Documentation sites with low latency",
+            ],
             "pillars": [
                 {
                     "title": "Operational Excellence",

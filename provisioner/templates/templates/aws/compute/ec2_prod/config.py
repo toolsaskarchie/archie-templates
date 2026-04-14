@@ -84,6 +84,14 @@ class EC2ProdConfig:
             "isEssential": True,
             "order": 75
         }
+        schema["team_name"] = {
+            "type": "string",
+            "default": "",
+            "title": "Team Name",
+            "description": "Team that owns this resource",
+            "order": 250,
+            "group": "Tags",
+        }
         return {
             "type": "object",
             "properties": schema,

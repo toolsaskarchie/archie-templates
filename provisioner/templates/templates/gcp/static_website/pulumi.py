@@ -248,6 +248,12 @@ class GCPStaticWebsiteTemplate(InfrastructureTemplate):
             "complexity": "low",
             "deployment_time": "2-3 minutes",
             "marketplace_group": "WEBSITES",
+            "use_cases": [
+                "Static website hosting on GCP",
+                "Landing page and marketing site deployment",
+                "First GCP deployment onboarding",
+                "Developer preview environments",
+            ],
             "pillars": [
                 {
                     "title": "Operational Excellence",

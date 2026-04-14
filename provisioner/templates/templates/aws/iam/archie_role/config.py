@@ -123,7 +123,15 @@ class ArchieRoleConfig:
                     "isEssential": True,
                     "is_essential": True,
                     "order": 6
-                }
+                },
+                "team_name": {
+                    "type": "string",
+                    "default": "",
+                    "title": "Team Name",
+                    "description": "Team that owns this resource",
+                    "order": 50,
+                    "group": "Tags",
+                },
             },
             "required": ["project_name"]
         }

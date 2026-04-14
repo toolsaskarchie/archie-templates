@@ -230,7 +230,9 @@ class ServerlessApiProdTemplate(InfrastructureTemplate):
                     "description": "Lambda memory allocation", "order": 10, "group": "Compute",
                     "cost_impact": "Proportional to memory"},
                 "lambda_timeout": {"type": "integer", "default": 30, "title": "Lambda Timeout (s)",
-                    "description": "Lambda timeout in seconds", "order": 11, "group": "Compute"}
+                    "description": "Lambda timeout in seconds", "order": 11, "group": "Compute"},
+                "team_name": {"type": "string", "default": "", "title": "Team Name",
+                    "description": "Team that owns this resource", "order": 50, "group": "Tags"},
             },
             "required": ["project_name", "region"]
         }

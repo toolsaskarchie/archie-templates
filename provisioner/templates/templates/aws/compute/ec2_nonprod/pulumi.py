@@ -496,7 +496,15 @@ class EC2NonProdTemplate(InfrastructureTemplate):
                 "conditional": {
                     "field": "enable_ssh_access"
                 }
-            }
+            },
+            "team_name": {
+                "type": "string",
+                "default": "",
+                "title": "Team Name",
+                "description": "Team that owns this resource",
+                "order": 200,
+                "group": "Tags",
+            },
         }
 
     @classmethod

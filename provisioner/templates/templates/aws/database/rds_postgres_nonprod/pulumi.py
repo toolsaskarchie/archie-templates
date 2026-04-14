@@ -311,6 +311,12 @@ class RDSPostgresNonProdTemplate(InfrastructureTemplate):
             "tags": ["rds", "postgres", "database", "nonprod"],
             "deployment_time": "8-12 minutes",
             "complexity": "intermediate",
+            "use_cases": [
+                "Development and staging databases",
+                "Application prototyping",
+                "Integration testing environments",
+                "Cost-sensitive non-production workloads",
+            ],
             "pillars": [
                 {
                     "title": "Security",

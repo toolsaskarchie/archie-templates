@@ -199,6 +199,13 @@ class RedisNonProdTemplate(InfrastructureTemplate):
             "tags": ["redis", "elasticache", "database", "cache", "nonprod"],
             "deployment_time": "5-10 minutes",
             "complexity": "intermediate",
+            "use_cases": [
+                "Application session caching",
+                "API response caching",
+                "Pub/Sub messaging for microservices",
+                "Rate limiting and throttling",
+                "Development and testing cache layer",
+            ],
             "pillars": [
                 {
                     "title": "Performance Efficiency",

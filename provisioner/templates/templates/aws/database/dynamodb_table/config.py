@@ -153,7 +153,15 @@ class DynamoDBTableConfig:
                     "default": 5,
                     "group": "Table Settings",
                     "order": 16
-                }
+                },
+                "team_name": {
+                    "type": "string",
+                    "default": "",
+                    "title": "Team Name",
+                    "description": "Team that owns this resource",
+                    "order": 50,
+                    "group": "Tags",
+                },
             },
             "required": ["project_name", "region", "tableName", "hashKey"]
         }

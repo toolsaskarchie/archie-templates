@@ -118,6 +118,12 @@ class ArchieSecretTemplate(InfrastructureTemplate):
             ],
             "deployment_time": "1-2 minutes",
             "complexity": "low",
+            "use_cases": [
+                "Archie platform onboarding credential storage",
+                "Secure AWS access key management",
+                "Cross-account deployment authentication",
+                "Compliance-ready secret storage",
+            ],
             "pillars": [
                 {
                     "title": "Operational Excellence",

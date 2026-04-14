@@ -267,6 +267,13 @@ set -ex
             "tags": ["eks", "kubernetes", "containers", "compute", "nonprod"],
             "deployment_time": "15-20 minutes",
             "complexity": "advanced",
+            "use_cases": [
+                "Microservices development and testing",
+                "Container-based CI/CD pipelines",
+                "Pre-production Kubernetes validation",
+                "Developer inner-loop Kubernetes testing",
+                "Multi-service application staging",
+            ],
             "pillars": [
                 {
                     "title": "Operational Excellence",

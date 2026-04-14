@@ -327,6 +327,13 @@ class ALBNonProdTemplate(InfrastructureTemplate):
             "tags": ["alb", "load-balancer", "ha", "networking", "nonprod"],
             "deployment_time": "12-18 minutes",
             "complexity": "intermediate",
+            "use_cases": [
+                "Web application load balancing",
+                "API gateway with health checks",
+                "HTTPS termination for backend services",
+                "Blue-green deployment targets",
+                "Development and staging traffic distribution",
+            ],
             "pillars": [
                 {
                     "title": "Operational Excellence",

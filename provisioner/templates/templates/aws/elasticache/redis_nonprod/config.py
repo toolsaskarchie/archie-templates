@@ -172,7 +172,15 @@ class RedisNonProdConfig:
                     "items": {"type": "string"},
                     "group": "Networking",
                     "order": 22
-                }
+                },
+                "team_name": {
+                    "type": "string",
+                    "default": "",
+                    "title": "Team Name",
+                    "description": "Team that owns this resource",
+                    "order": 50,
+                    "group": "Tags",
+                },
             },
             "required": ["project_name", "region", "cluster_name"]
         }

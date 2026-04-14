@@ -21,37 +21,69 @@ from provisioner.templates.atomic_factory import PulumiAtomicFactory as factory
 @template_registry("azure-appgw-nonprod")
 class AzureAppGatewayNonProdTemplate(InfrastructureTemplate):
 
-    def __init__(self, name=None, config=None, **kwargs):
-        raw_config = config or kwargs or {}
+    def __init__(self, name: str = None, config: Dict[str, Any] = None, azure_config: Dict[str, Any] = None, **kwargs):
+        raw_config = config or azure_config or kwargs or {}
         if name is None:
-            name = raw_config.get('project_name', 'azure-appgw-nonprod')
+            name = (
+                raw_config.get('project_name') or
+                raw_config.get('projectName') or
+                raw_config.get('parameters', {}).get('azure', {}).get('project_name') or
+                'azure-appgw-nonprod'
+            )
         super().__init__(name, raw_config)
+        self.config = raw_config
 
-    def create_infrastructure(self):
+        # Resource references (populated in create())
+        self.resource_group: Optional[object] = None
+        self.vnet: Optional[object] = None
+        self.appgw_subnet: Optional[object] = None
+        self.backend_nsg: Optional[object] = None
+        self.backend_subnet: Optional[object] = None
+        self.appgw_pip: Optional[object] = None
+        self.vms: list = []
+        self.nics: list = []
+        self.appgw: Optional[object] = None
+
+    def _cfg(self, key: str, default=None):
+        """Read config from root, parameters.azure, or parameters (Rule #6)"""
         params = self.config.get('parameters', {})
-        def cfg(key, default=None):
-            return self.config.get(key) or params.get(key) or default
+        azure_params = params.get('azure', {}) if isinstance(params, dict) else {}
+        return (
+            self.config.get(key) or
+            (azure_params.get(key) if isinstance(azure_params, dict) else None) or
+            (params.get(key) if isinstance(params, dict) else None) or
+            default
+        )
 
-        project = cfg('project_name', 'myproject')
-        env = cfg('environment', 'dev')
-        location = cfg('location', 'centralus')
-        vnet_cidr = cfg('vnet_cidr', '10.0.0.0/16')
-        appgw_cidr = cfg('appgw_subnet_cidr', '10.0.1.0/24')
-        backend_cidr = cfg('backend_subnet_cidr', '10.0.2.0/24')
-        vm_size = cfg('vm_size', 'Standard_D2s_v3')
-        instance_count = int(cfg('instance_count', '2'))
-        backend_port = int(cfg('backend_port', '80'))
+    def create_infrastructure(self) -> Dict[str, Any]:
+        """Deploy Azure App Gateway infrastructure (implements abstract method)"""
+        return self.create()
+
+    def create(self) -> Dict[str, Any]:
+        """Deploy complete Azure Application Gateway infrastructure"""
+        project = self._cfg('project_name', 'myproject')
+        env = self._cfg('environment', 'dev')
+        location = self._cfg('location', 'centralus')
+        vnet_cidr = self._cfg('vnet_cidr', '10.0.0.0/16')
+        appgw_cidr = self._cfg('appgw_subnet_cidr', '10.0.1.0/24')
+        backend_cidr = self._cfg('backend_subnet_cidr', '10.0.2.0/24')
+        vm_size = self._cfg('vm_size', 'Standard_D2s_v3')
+        instance_count = int(self._cfg('instance_count', '2'))
+        backend_port = int(self._cfg('backend_port', '80'))
+        team_name = self._cfg('team_name', '')
 
         tags = {'Project': project, 'Environment': env, 'ManagedBy': 'Archie'}
+        if team_name:
+            tags['Team'] = team_name
 
         # 1. Resource Group
-        rg_name = cfg('resource_group_name') or f'rg-{project}-{env}'
+        rg_name = self._cfg('resource_group_name') or f'rg-{project}-{env}'
         self.resource_group = factory.create('azure-native:resources:ResourceGroup', rg_name,
             resource_group_name=rg_name, location=location, tags=tags,
         )
 
         # 2. Virtual Network
-        vnet_name = cfg('vnet_name') or f'vnet-{project}-{env}'
+        vnet_name = self._cfg('vnet_name') or f'vnet-{project}-{env}'
         self.vnet = factory.create('azure-native:network:VirtualNetwork', vnet_name,
             virtual_network_name=vnet_name,
             resource_group_name=self.resource_group.name,
@@ -60,8 +92,8 @@ class AzureAppGatewayNonProdTemplate(InfrastructureTemplate):
             tags=tags,
         )
 
-        # 3. App Gateway Subnet (dedicated — no other resources allowed)
-        appgw_subnet_name = cfg('appgw_subnet_name') or f'snet-appgw-{project}-{env}'
+        # 3. App Gateway Subnet (dedicated -- no other resources allowed)
+        appgw_subnet_name = self._cfg('appgw_subnet_name') or f'snet-appgw-{project}-{env}'
         self.appgw_subnet = factory.create('azure-native:network:Subnet', appgw_subnet_name,
             subnet_name=appgw_subnet_name,
             resource_group_name=self.resource_group.name,
@@ -70,7 +102,7 @@ class AzureAppGatewayNonProdTemplate(InfrastructureTemplate):
         )
 
         # 4. Backend Subnet + NSG
-        backend_nsg_name = cfg('backend_nsg_name') or f'nsg-backend-{project}-{env}'
+        backend_nsg_name = self._cfg('backend_nsg_name') or f'nsg-backend-{project}-{env}'
         self.backend_nsg = factory.create('azure-native:network:NetworkSecurityGroup', backend_nsg_name,
             network_security_group_name=backend_nsg_name,
             resource_group_name=self.resource_group.name,
@@ -102,7 +134,7 @@ class AzureAppGatewayNonProdTemplate(InfrastructureTemplate):
             tags=tags,
         )
 
-        backend_subnet_name = cfg('backend_subnet_name') or f'snet-backend-{project}-{env}'
+        backend_subnet_name = self._cfg('backend_subnet_name') or f'snet-backend-{project}-{env}'
         self.backend_subnet = factory.create('azure-native:network:Subnet', backend_subnet_name,
             subnet_name=backend_subnet_name,
             resource_group_name=self.resource_group.name,
@@ -112,7 +144,7 @@ class AzureAppGatewayNonProdTemplate(InfrastructureTemplate):
         )
 
         # 5. Public IP for App Gateway
-        pip_name = cfg('appgw_pip_name') or f'pip-appgw-{project}-{env}'
+        pip_name = self._cfg('appgw_pip_name') or f'pip-appgw-{project}-{env}'
         self.appgw_pip = factory.create('azure-native:network:PublicIPAddress', pip_name,
             public_ip_address_name=pip_name,
             resource_group_name=self.resource_group.name,
@@ -154,7 +186,7 @@ class AzureAppGatewayNonProdTemplate(InfrastructureTemplate):
         self.vms = []
         self.nics = []
         for i in range(1, instance_count + 1):
-            nic_name = cfg(f'nic_backend_{i}_name') or f'nic-backend-{project}-{env}-{i}'
+            nic_name = self._cfg(f'nic_backend_{i}_name') or f'nic-backend-{project}-{env}-{i}'
             nic = factory.create('azure-native:network:NetworkInterface', nic_name,
                 network_interface_name=nic_name,
                 resource_group_name=self.resource_group.name,
@@ -168,7 +200,7 @@ class AzureAppGatewayNonProdTemplate(InfrastructureTemplate):
             )
             self.nics.append(nic)
 
-            vm_name = cfg(f'vm_backend_{i}_name') or f'vm-backend-{project}-{env}-{i}'
+            vm_name = self._cfg(f'vm_backend_{i}_name') or f'vm-backend-{project}-{env}-{i}'
             vm = factory.create('azure-native:compute:VirtualMachine', vm_name,
                 vm_name=vm_name,
                 resource_group_name=self.resource_group.name,
@@ -205,8 +237,7 @@ class AzureAppGatewayNonProdTemplate(InfrastructureTemplate):
             self.vms.append(vm)
 
         # 7. Application Gateway
-        appgw_name = cfg('appgw_name') or f'appgw-{project}-{env}'
-        backend_addresses = [{'ip_address': nic.ip_configurations.apply(lambda ips: ips[0].private_ip_address)} for nic in self.nics]
+        appgw_name = self._cfg('appgw_name') or f'appgw-{project}-{env}'
 
         self.appgw = factory.create('azure-native:network:ApplicationGateway', appgw_name,
             application_gateway_name=appgw_name,
@@ -292,7 +323,7 @@ class AzureAppGatewayNonProdTemplate(InfrastructureTemplate):
             tags=tags,
         )
 
-        # Exports — Rule #7: export all generated names for upgrade reuse
+        # Exports -- Rule #7: export all generated names for upgrade reuse
         pulumi.export('resource_group_name', rg_name)
         pulumi.export('vnet_name', vnet_name)
         pulumi.export('vnet_id', self.vnet.id)
@@ -305,39 +336,208 @@ class AzureAppGatewayNonProdTemplate(InfrastructureTemplate):
         pulumi.export('appgw_public_ip', self.appgw_pip.ip_address)
         pulumi.export('appgw_url', self.appgw_pip.ip_address.apply(lambda ip: f'http://{ip}'))
         pulumi.export('backend_subnet_id', self.backend_subnet.id)
+        pulumi.export('environment', env)
         for i in range(instance_count):
-            pulumi.export(f'nic_backend_{i}_name', cfg(f'nic_backend_{i}_name') or f'nic-backend-{project}-{env}-{i}')
-            pulumi.export(f'vm_backend_{i}_name', cfg(f'vm_backend_{i}_name') or f'vm-backend-{project}-{env}-{i}')
+            pulumi.export(f'nic_backend_{i}_name', self._cfg(f'nic_backend_{i}_name') or f'nic-backend-{project}-{env}-{i}')
+            pulumi.export(f'vm_backend_{i}_name', self._cfg(f'vm_backend_{i}_name') or f'vm-backend-{project}-{env}-{i}')
 
         return self.get_outputs()
 
-    def get_outputs(self):
+    def get_outputs(self) -> Dict[str, Any]:
         return {
-            'resource_group_name': self.resource_group.name if hasattr(self, 'resource_group') else None,
-            'appgw_id': self.appgw.id if hasattr(self, 'appgw') else None,
-            'appgw_public_ip': self.appgw_pip.ip_address if hasattr(self, 'appgw_pip') else None,
-            'vnet_id': self.vnet.id if hasattr(self, 'vnet') else None,
+            'resource_group_name': self.resource_group.name if self.resource_group else None,
+            'appgw_id': self.appgw.id if self.appgw else None,
+            'appgw_name': self.appgw.name if self.appgw else None,
+            'appgw_public_ip': self.appgw_pip.ip_address if self.appgw_pip else None,
+            'vnet_id': self.vnet.id if self.vnet else None,
+            'appgw_subnet_id': self.appgw_subnet.id if self.appgw_subnet else None,
+            'backend_subnet_id': self.backend_subnet.id if self.backend_subnet else None,
+            'backend_nsg_id': self.backend_nsg.id if self.backend_nsg else None,
         }
 
     @classmethod
-    def get_metadata(cls):
+    def get_metadata(cls) -> Dict[str, Any]:
         return {
             'name': 'azure-appgw-nonprod',
             'title': 'Application Gateway with Backend VMs',
             'description': 'L7 load balancer with VNet, backend VMs, NSG isolation, and HTTP routing. Azure equivalent of AWS ALB.',
             'category': 'networking',
+            'version': '1.0.0',
+            'author': 'Archie',
             'cloud': 'azure',
-            'tier': 'standard',
             'environment': 'nonprod',
-            'estimated_cost': '$90-130/month',
+            'base_cost': '$90-130/month',
             'deployment_time': '10-15 minutes',
+            'complexity': 'intermediate',
             'features': [
                 'Application Gateway Standard_v2 with HTTP listener',
                 'Dedicated App Gateway subnet',
                 'Backend VMs with managed identity',
-                'NSG isolation — backend only accepts App Gateway traffic',
+                'NSG isolation -- backend only accepts App Gateway traffic',
                 'Configurable instance count and VM size',
                 'Standard tagging and naming',
             ],
             'tags': ['azure', 'networking', 'load-balancer', 'appgw', 'nonprod'],
+            'use_cases': [
+                'Web application load balancing',
+                'Multi-instance backend with health probes',
+                'URL-based routing for microservices',
+                'Development and staging environments',
+            ],
+            'pillars': [
+                {
+                    'title': 'Security',
+                    'score': 'good',
+                    'score_color': '#10b981',
+                    'description': 'NSG isolation restricts backend to App Gateway traffic only',
+                    'practices': [
+                        'Backend NSG allows only App Gateway subnet traffic',
+                        'No direct public access to backend VMs',
+                        'Managed identity on backend VMs',
+                        'Dedicated subnet for App Gateway',
+                    ],
+                },
+                {
+                    'title': 'Operational Excellence',
+                    'score': 'good',
+                    'score_color': '#10b981',
+                    'description': 'Automated VM provisioning with cloud-init and standard naming',
+                    'practices': [
+                        'Cloud-init automates nginx setup',
+                        'Standard naming and tagging conventions',
+                        'Configurable instance count for scaling',
+                    ],
+                },
+                {
+                    'title': 'Cost Optimization',
+                    'score': 'good',
+                    'score_color': '#f59e0b',
+                    'description': 'Standard_v2 SKU with configurable capacity and VM size',
+                    'practices': [
+                        'Configurable VM size for right-sizing',
+                        'Standard_LRS disks for non-prod',
+                        'Single capacity unit for App Gateway',
+                    ],
+                },
+                {
+                    'title': 'Reliability',
+                    'score': 'good',
+                    'score_color': '#10b981',
+                    'description': 'Multiple backend VMs behind L7 load balancer',
+                    'practices': [
+                        'App Gateway distributes traffic across VMs',
+                        'Health probes detect unhealthy backends',
+                        'Configurable instance count for redundancy',
+                    ],
+                },
+                {
+                    'title': 'Sustainability',
+                    'score': 'good',
+                    'score_color': '#10b981',
+                    'description': 'Right-sized for non-prod with configurable capacity',
+                    'practices': [
+                        'Configurable VM count matches workload needs',
+                        'Standard_LRS storage reduces redundancy overhead',
+                        'Single App Gateway capacity unit avoids over-provisioning',
+                    ],
+                },
+            ],
+        }
+
+    @classmethod
+    def get_config_schema(cls) -> Dict[str, Any]:
+        return {
+            'type': 'object',
+            'properties': {
+                'project_name': {
+                    'type': 'string',
+                    'default': 'myproject',
+                    'title': 'Project Name',
+                    'description': 'Used in resource naming',
+                    'order': 1,
+                    'group': 'Essentials',
+                    'isEssential': True,
+                },
+                'environment': {
+                    'type': 'string',
+                    'default': 'dev',
+                    'title': 'Environment',
+                    'description': 'Deployment environment',
+                    'enum': ['dev', 'staging'],
+                    'order': 2,
+                    'group': 'Essentials',
+                    'isEssential': True,
+                },
+                'location': {
+                    'type': 'string',
+                    'default': 'centralus',
+                    'title': 'Azure Region',
+                    'description': 'Azure region for all resources',
+                    'order': 3,
+                    'group': 'Essentials',
+                    'isEssential': True,
+                },
+                'vnet_cidr': {
+                    'type': 'string',
+                    'default': '10.0.0.0/16',
+                    'title': 'VNet CIDR',
+                    'description': 'Address space for the virtual network',
+                    'order': 10,
+                    'group': 'Network Configuration',
+                },
+                'appgw_subnet_cidr': {
+                    'type': 'string',
+                    'default': '10.0.1.0/24',
+                    'title': 'App Gateway Subnet CIDR',
+                    'description': 'Dedicated subnet for the Application Gateway',
+                    'order': 11,
+                    'group': 'Network Configuration',
+                },
+                'backend_subnet_cidr': {
+                    'type': 'string',
+                    'default': '10.0.2.0/24',
+                    'title': 'Backend Subnet CIDR',
+                    'description': 'Subnet for backend VMs',
+                    'order': 12,
+                    'group': 'Network Configuration',
+                },
+                'backend_port': {
+                    'type': 'number',
+                    'default': 80,
+                    'title': 'Backend Port',
+                    'description': 'Port the backend VMs listen on',
+                    'order': 13,
+                    'group': 'Network Configuration',
+                },
+                'vm_size': {
+                    'type': 'string',
+                    'default': 'Standard_D2s_v3',
+                    'title': 'Backend VM Size',
+                    'description': 'Azure VM size for backend instances',
+                    'enum': ['Standard_B1s', 'Standard_B2s', 'Standard_D2s_v3', 'Standard_D4s_v3'],
+                    'order': 20,
+                    'group': 'Compute',
+                    'cost_impact': '$15-120/month per VM',
+                },
+                'instance_count': {
+                    'type': 'number',
+                    'default': 2,
+                    'title': 'Backend Instance Count',
+                    'description': 'Number of backend VMs',
+                    'minimum': 1,
+                    'maximum': 5,
+                    'order': 21,
+                    'group': 'Compute',
+                    'cost_impact': '+$30/month per instance',
+                },
+                'team_name': {
+                    'type': 'string',
+                    'default': '',
+                    'title': 'Team Name',
+                    'description': 'Team that owns this resource',
+                    'order': 50,
+                    'group': 'Tags',
+                },
+            },
+            'required': ['project_name'],
         }

@@ -263,6 +263,12 @@ class AzureStaticWebsiteTemplate(InfrastructureTemplate):
             "complexity": "low",
             "deployment_time": "3-5 minutes",
             "marketplace_group": "WEBSITES",
+            "use_cases": [
+                "Static website hosting on Azure",
+                "Landing page and marketing site deployment",
+                "First Azure deployment onboarding",
+                "Developer preview environments",
+            ],
             "pillars": [
                 {
                     "title": "Operational Excellence",

@@ -182,6 +182,12 @@ class GCPVPCSimpleTemplate(InfrastructureTemplate):
             "complexity": "intermediate",
             "deployment_time": "3-5 minutes",
             "marketplace_group": "gcp-vpc-group",
+            "use_cases": [
+                "Non-production network foundation",
+                "Development and staging VPC setup",
+                "Microservice network isolation",
+                "Application tier networking with NAT",
+            ],
             "pillars": [
                 {
                     "title": "Operational Excellence",

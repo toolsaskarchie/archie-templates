@@ -184,6 +184,12 @@ class ArchieRoleTemplate(InfrastructureTemplate):
             ],
             "deployment_time": "1-2 minutes",
             "complexity": "low",
+            "use_cases": [
+                "Connect AWS account to Archie platform",
+                "Cross-account infrastructure discovery",
+                "Read-only cloud resource inventory",
+                "Secure onboarding without long-term credentials",
+            ],
             "pillars": [
                 {
                     "title": "Operational Excellence",

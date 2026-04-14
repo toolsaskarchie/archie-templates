@@ -889,7 +889,15 @@ class VPCProdTemplate(InfrastructureTemplate):
                     "description": "Your IP for SSH/RDP access (e.g., 1.2.3.4/32)",
                     "order": 140,
                     "group": "Security Settings"
-                }
+                },
+                "team_name": {
+                    "type": "string",
+                    "default": "",
+                    "title": "Team Name",
+                    "description": "Team that owns this resource",
+                    "order": 50,
+                    "group": "Tags",
+                },
             },
             "required": ["project_name", "region"]
         }
