@@ -21,6 +21,7 @@ from provisioner.utils.aws import (
 from provisioner.templates.base import template_registry, InfrastructureTemplate
 from provisioner.templates.templates.aws.s3.static_website.config import StaticWebsiteConfig
 from provisioner.templates.atomic_factory import PulumiAtomicFactory as factory
+from provisioner.templates.shared.aws_schema import get_project_env_schema
 
 
 @template_registry("aws-static-website")
@@ -51,6 +52,17 @@ class S3StaticWebsiteTemplate(InfrastructureTemplate):
         self.config = raw_config
         self.temp_dir: Optional[tempfile.TemporaryDirectory] = None
         self.bucket: Optional[aws.s3.Bucket] = None
+
+    def _cfg(self, key: str, default=None):
+        """Read config from root, parameters.aws, or parameters (Rule #6)"""
+        params = self.config.get('parameters', {})
+        aws_params = params.get('aws', {}) if isinstance(params, dict) else {}
+        return (
+            self.config.get(key) or
+            (aws_params.get(key) if isinstance(aws_params, dict) else None) or
+            (params.get(key) if isinstance(params, dict) else None) or
+            default
+        )
         
         # Environment settings for source files
         environment = os.getenv("ENVIRONMENT", "sandbox")
@@ -430,7 +442,15 @@ class S3StaticWebsiteTemplate(InfrastructureTemplate):
         
         # Add Project/Env fields
         schema["properties"].update(get_project_env_schema())
-        
+        schema["properties"]["team_name"] = {
+            "type": "string",
+            "default": "",
+            "title": "Team Name",
+            "description": "Team that owns this resource",
+            "order": 50,
+            "group": "Tags",
+        }
+
         return schema
     
     @classmethod

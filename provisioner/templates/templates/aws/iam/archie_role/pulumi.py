@@ -32,16 +32,27 @@ class ArchieRoleTemplate(InfrastructureTemplate):
     def __init__(self, name: str = None, config: Dict[str, Any] = None, **kwargs):
         """Initialize Archie role template"""
         raw_config = config or kwargs or {}
-        
+
         if name is None:
             name = raw_config.get('projectName') or raw_config.get('project_name', 'archie-role')
-        
+
         super().__init__(name, raw_config)
         self.cfg = ArchieRoleConfig(raw_config)
         self.role: Optional[aws.iam.Role] = None
         self.policy: Optional[aws.iam.Policy] = None
-        
+
         self._validate_config()
+
+    def _cfg(self, key: str, default=None):
+        """Read config from root, parameters.aws, or parameters (Rule #6)"""
+        params = self.config.get('parameters', {})
+        aws_params = params.get('aws', {}) if isinstance(params, dict) else {}
+        return (
+            self.config.get(key) or
+            (aws_params.get(key) if isinstance(aws_params, dict) else None) or
+            (params.get(key) if isinstance(params, dict) else None) or
+            default
+        )
     
     def _validate_config(self) -> None:
         """Validate configuration"""

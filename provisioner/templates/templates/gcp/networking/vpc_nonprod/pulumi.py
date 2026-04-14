@@ -31,12 +31,13 @@ class GCPVPCSimpleTemplate(InfrastructureTemplate):
     def __init__(self, name: str = None, config: Dict[str, Any] = None, **kwargs):
         raw_config = config or kwargs or {}
         self.cfg = GCPVPCSimpleConfig(raw_config)
-        
+
         if name is None:
             name = self.cfg.project_name
-            
+
         super().__init__(name, raw_config)
-        
+        self.config = raw_config
+
         # Resource references
         self.vpc = None
         self.public_subnet = None
@@ -45,7 +46,22 @@ class GCPVPCSimpleTemplate(InfrastructureTemplate):
         self.nat = None
         self.firewall_rules = []
 
+    def _cfg(self, key: str, default=None):
+        """Read config from root, parameters.gcp, or parameters (Rule #6)"""
+        params = self.config.get('parameters', {})
+        gcp_params = params.get('gcp', {}) if isinstance(params, dict) else {}
+        return (
+            self.config.get(key) or
+            (gcp_params.get(key) if isinstance(gcp_params, dict) else None) or
+            (params.get(key) if isinstance(params, dict) else None) or
+            default
+        )
+
     def create_infrastructure(self) -> Dict[str, Any]:
+        """Deploy infrastructure (implements abstract method)"""
+        return self.create()
+
+    def create(self) -> Dict[str, Any]:
         """Deploy GCP VPC infrastructure using factory pattern"""
         
         # Validate GCP project
@@ -179,6 +195,13 @@ class GCPVPCSimpleTemplate(InfrastructureTemplate):
             "environment": "nonprod",
             "base_cost": "$5/month",
             "tags": ["vpc", "networking", "gcp", "nonprod", "nat"],
+            "features": [
+                "Custom mode VPC network",
+                "Public and private subnets with CIDR configuration",
+                "Cloud Router and Cloud NAT for private subnet egress",
+                "Firewall rules for SSH, HTTP, and HTTPS",
+                "Private IP Google Access for GCP service connectivity",
+            ],
             "complexity": "intermediate",
             "deployment_time": "3-5 minutes",
             "marketplace_group": "gcp-vpc-group",
@@ -268,5 +291,14 @@ class GCPVPCSimpleTemplate(InfrastructureTemplate):
 
     @classmethod
     def get_config_schema(cls) -> Dict[str, Any]:
-        """Get configuration schema from source of truth"""
-        return GCPVPCSimpleConfig.get_config_schema()
+        """Get configuration schema for the deploy form"""
+        base = GCPVPCSimpleConfig.get_config_schema()
+        base["properties"]["team_name"] = {
+            "type": "string",
+            "default": "",
+            "title": "Team Name",
+            "description": "Team that owns this resource",
+            "order": 50,
+            "group": "Tags",
+        }
+        return base

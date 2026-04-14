@@ -725,6 +725,14 @@ class EC2NonProdConfig:
                     "group": "VPC Configuration",
                     "order": 60
                 },
+                "team_name": {
+                    "type": "string",
+                    "default": "",
+                    "title": "Team Name",
+                    "description": "Team that owns this resource",
+                    "order": 70,
+                    "group": "Tags",
+                },
             },
             "required": ["project_name"]
         }

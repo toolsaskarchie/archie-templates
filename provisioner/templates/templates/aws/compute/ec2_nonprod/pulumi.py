@@ -26,7 +26,7 @@ class EC2NonProdTemplate(InfrastructureTemplate):
             name = raw_config.get('instanceName', 'ec2-nonprod')
         super().__init__(name, raw_config)
         self.cfg = EC2NonProdConfig(raw_config)
-        
+
         # Resource references
         self.vpc_template: Optional[VPCSimpleNonprodTemplate] = None
         self.iam_roles = []
@@ -34,6 +34,17 @@ class EC2NonProdTemplate(InfrastructureTemplate):
         self.security_groups = []
         self.ec2_instances = []
         
+    def _cfg(self, key: str, default=None):
+        """Read config from root, parameters.aws, or parameters (Rule #6)"""
+        params = self.config.get('parameters', {})
+        aws_params = params.get('aws', {}) if isinstance(params, dict) else {}
+        return (
+            self.config.get(key) or
+            (aws_params.get(key) if isinstance(aws_params, dict) else None) or
+            (params.get(key) if isinstance(params, dict) else None) or
+            default
+        )
+
     def create_infrastructure(self) -> Dict[str, Any]:
         return self.create()
 

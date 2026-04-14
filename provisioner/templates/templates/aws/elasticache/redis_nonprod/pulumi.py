@@ -51,11 +51,22 @@ class RedisNonProdTemplate(InfrastructureTemplate):
             name = raw_config.get('cluster_name', 'redis-nonprod')
 
         super().__init__(name, raw_config)
-        
+
         # Initialize resources
         self.security_group: Optional[aws.ec2.SecurityGroup] = None
         self.subnet_group: Optional[aws.elasticache.SubnetGroup] = None
         self.cluster: Optional[aws.elasticache.Cluster] = None
+
+    def _cfg(self, key: str, default=None):
+        """Read config from root, parameters.aws, or parameters (Rule #6)"""
+        params = self.config.get('parameters', {})
+        aws_params = params.get('aws', {}) if isinstance(params, dict) else {}
+        return (
+            self.config.get(key) or
+            (aws_params.get(key) if isinstance(aws_params, dict) else None) or
+            (params.get(key) if isinstance(params, dict) else None) or
+            default
+        )
 
     def create_infrastructure(self) -> Dict[str, Any]:
         """Deploy infrastructure (implements abstract method)"""
@@ -355,7 +366,15 @@ class RedisNonProdTemplate(InfrastructureTemplate):
                 "description": "Redis connection port",
                 "default": 6379,
                 "group": "Network Settings"
-            }
+            },
+            "team_name": {
+                "type": "string",
+                "default": "",
+                "title": "Team Name",
+                "description": "Team that owns this resource",
+                "order": 50,
+                "group": "Tags",
+            },
         })
-        
+
         return schema

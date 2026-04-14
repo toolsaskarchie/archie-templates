@@ -34,6 +34,7 @@ class AzureStaticWebsiteTemplate(InfrastructureTemplate):
         if name is None:
             name = raw_config.get('websiteName', raw_config.get('projectName', 'azure-static-website'))
         super().__init__(name, raw_config)
+        self.config = raw_config
         self.cfg = AzureStaticWebsiteConfig(raw_config)
         self.resource_group = None
         self.storage_account = None
@@ -44,6 +45,17 @@ class AzureStaticWebsiteTemplate(InfrastructureTemplate):
         self.SOURCE_BUCKET = f"archie-static-website-source-{environment}"
         self.SOURCE_REGION = "us-east-1"
         self.SOURCE_FILES = ["index-azure.html", "styles.css"]
+
+    def _cfg(self, key: str, default=None):
+        """Read config from root, parameters.azure, or parameters (Rule #6)"""
+        params = self.config.get('parameters', {})
+        azure_params = params.get('azure', {}) if isinstance(params, dict) else {}
+        return (
+            self.config.get(key) or
+            (azure_params.get(key) if isinstance(azure_params, dict) else None) or
+            (params.get(key) if isinstance(params, dict) else None) or
+            default
+        )
 
     def _download_source_files(self, stack_name: str = None) -> List[Dict[str, str]]:
         """Download HTML/CSS files from Archie's source bucket and customize with deployment info"""
@@ -149,7 +161,11 @@ class AzureStaticWebsiteTemplate(InfrastructureTemplate):
             f.write(html_content)
 
     def create_infrastructure(self) -> Dict[str, Any]:
-        """Deploy infrastructure using factory pattern"""
+        """Deploy infrastructure (implements abstract method)"""
+        return self.create()
+
+    def create(self) -> Dict[str, Any]:
+        """Deploy Azure static website infrastructure"""
         random_suffix = ''.join(random.choices(string.ascii_lowercase + string.digits, k=8))
 
         # 1. Resource Group — use user-provided name or generate unique one
@@ -219,27 +235,22 @@ class AzureStaticWebsiteTemplate(InfrastructureTemplate):
         pulumi.export("storage_account_name", self.storage_account.name)
         pulumi.export("website_url", website_url)
 
-        return {
-            "template_name": "azure-static-website",
-            "outputs": {
-                "website_name": self.name,
-                "resource_group": self.resource_group.name,
-                "storage_account_name": self.storage_account.name,
-                "website_url": website_url
-            }
-        }
+        return self.get_outputs()
 
     def get_outputs(self) -> Dict[str, Any]:
         """Get template outputs"""
-        if not self.storage_account: return {}
+        if not self.storage_account:
+            return {}
         website_url = self.storage_account.primary_endpoints.apply(
             lambda e: e.web if e and hasattr(e, 'web') else None
         )
         return {
             "website_name": self.name,
             "resource_group": self.resource_group.name if self.resource_group else None,
+            "resource_group_id": self.resource_group.id if self.resource_group else None,
             "storage_account_name": self.storage_account.name,
-            "website_url": website_url
+            "storage_account_id": self.storage_account.id,
+            "website_url": website_url,
         }
 
     def cleanup(self) -> None:
@@ -365,7 +376,15 @@ class AzureStaticWebsiteTemplate(InfrastructureTemplate):
                     "type": "string",
                     "title": "Azure Region",
                     "default": "eastus"
-                }
+                },
+                "team_name": {
+                    "type": "string",
+                    "default": "",
+                    "title": "Team Name",
+                    "description": "Team that owns this resource",
+                    "order": 50,
+                    "group": "Tags",
+                },
             },
             "required": ["websiteName"]
         }

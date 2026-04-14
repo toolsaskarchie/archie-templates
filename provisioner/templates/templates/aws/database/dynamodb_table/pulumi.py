@@ -35,7 +35,18 @@ class DynamoDBTableTemplate(InfrastructureTemplate):
             name = raw_config.get('tableName', 'dynamodb-table')
 
         super().__init__(name, raw_config)
-        self.table: Optional[aws.dynamodb.Table] = None
+        self.table = None
+
+    def _cfg(self, key: str, default=None):
+        """Read config from root, parameters.aws, or parameters (Rule #6)"""
+        params = self.config.get('parameters', {})
+        aws_params = params.get('aws', {}) if isinstance(params, dict) else {}
+        return (
+            self.config.get(key) or
+            (aws_params.get(key) if isinstance(aws_params, dict) else None) or
+            (params.get(key) if isinstance(params, dict) else None) or
+            default
+        )
 
     def create_infrastructure(self) -> Dict[str, Any]:
         """Deploy infrastructure (implements abstract method)"""

@@ -122,7 +122,17 @@ class RDSPostgresConfig:
         
         # Required fields for RDS Prod
         required = list(set(vpc_schema.get("required", []) + ["dbName", "dbUsername"]))
-        
+
+        # Add team_name to Tags group
+        properties["team_name"] = {
+            "type": "string",
+            "default": "",
+            "title": "Team Name",
+            "description": "Team that owns this resource",
+            "order": 250,
+            "group": "Tags",
+        }
+
         return {
             "type": "object",
             "properties": properties,

@@ -31,16 +31,32 @@ class K8sSimpleWebAppTemplate(InfrastructureTemplate):
         if name is None:
             name = raw_config.get('appName', 'k8s-web-app')
         super().__init__(name, raw_config)
+        self.config = raw_config
         self.cfg = K8sSimpleWebAppConfig(raw_config)
-        
+
         self.namespace = None
         self.config_map = None
         self.deployment = None
         self.service = None
         self.ingress = None
 
+    def _cfg(self, key: str, default=None):
+        """Read config from root, parameters.kubernetes, or parameters (Rule #6)"""
+        params = self.config.get('parameters', {})
+        k8s_params = params.get('kubernetes', {}) if isinstance(params, dict) else {}
+        return (
+            self.config.get(key) or
+            (k8s_params.get(key) if isinstance(k8s_params, dict) else None) or
+            (params.get(key) if isinstance(params, dict) else None) or
+            default
+        )
+
     def create_infrastructure(self) -> Dict[str, Any]:
-        """Deploy infrastructure using factory pattern"""
+        """Deploy infrastructure (implements abstract method)"""
+        return self.create()
+
+    def create(self) -> Dict[str, Any]:
+        """Deploy Kubernetes web app infrastructure"""
         
         # 1. Initialize Kubernetes Provider
         provider = None
@@ -174,11 +190,14 @@ class K8sSimpleWebAppTemplate(InfrastructureTemplate):
 
     def get_outputs(self) -> Dict[str, Any]:
         """Get template outputs"""
-        if not self.deployment: return {}
+        if not self.deployment:
+            return {}
         return {
             "app_name": self.cfg.app_name,
             "namespace": self.cfg.namespace,
-            "service_name": f"{self.cfg.app_name}-service"
+            "service_name": f"{self.cfg.app_name}-service",
+            "deployment_name": self.deployment.metadata.apply(lambda m: m.name) if self.deployment else None,
+            "service_type": self.cfg.service_type,
         }
 
     @classmethod
@@ -190,9 +209,25 @@ class K8sSimpleWebAppTemplate(InfrastructureTemplate):
             "description": "Deploy a simple web application to Kubernetes with Deployment, Service, and optional Ingress.",
             "category": "compute",
             "cloud": "kubernetes",
+            "environment": "nonprod",
             "version": "1.1.0",
             "author": "InnovativeApps",
             "tags": ["kubernetes", "docker", "k8s", "webapp"],
+            "base_cost": "$0/month (cluster costs separate)",
+            "features": [
+                "Kubernetes Deployment with configurable replicas",
+                "Service for network access (ClusterIP/NodePort/LoadBalancer)",
+                "ConfigMap for environment variable management",
+                "Optional Ingress with nginx controller",
+                "Namespace isolation for workload separation",
+                "Resource limits and requests for right-sizing",
+            ],
+            "use_cases": [
+                "Containerized web application deployment",
+                "Microservice hosting on Kubernetes",
+                "Development and staging workloads",
+                "REST API backends with load balancing",
+            ],
             "complexity": "medium",
             "deployment_time": "2-4 minutes",
             "marketplace_group": "COMPUTE",
@@ -288,11 +323,19 @@ class K8sSimpleWebAppTemplate(InfrastructureTemplate):
                 "replicas": {"type": "integer", "title": "Replicas", "default": 2},
                 "namespace": {"type": "string", "title": "Namespace", "default": "default"},
                 "serviceType": {
-                    "type": "string", 
-                    "title": "Service Type", 
+                    "type": "string",
+                    "title": "Service Type",
                     "enum": ["ClusterIP", "NodePort", "LoadBalancer"],
                     "default": "LoadBalancer"
-                }
+                },
+                "team_name": {
+                    "type": "string",
+                    "default": "",
+                    "title": "Team Name",
+                    "description": "Team that owns this resource",
+                    "order": 50,
+                    "group": "Tags",
+                },
             },
             "required": ["appName", "image"]
         }

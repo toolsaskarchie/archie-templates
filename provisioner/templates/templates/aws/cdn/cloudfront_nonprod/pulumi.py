@@ -46,6 +46,17 @@ class CloudFrontNonProdTemplate(InfrastructureTemplate):
         self.s3_template: Optional[S3StaticWebsiteTemplate] = None
         self.distribution: Optional[aws.cloudfront.Distribution] = None
 
+    def _cfg(self, key: str, default=None):
+        """Read config from root, parameters.aws, or parameters (Rule #6)"""
+        params = self.config.get('parameters', {})
+        aws_params = params.get('aws', {}) if isinstance(params, dict) else {}
+        return (
+            self.config.get(key) or
+            (aws_params.get(key) if isinstance(aws_params, dict) else None) or
+            (params.get(key) if isinstance(params, dict) else None) or
+            default
+        )
+
     def create_infrastructure(self) -> Dict[str, Any]:
         """Deploy infrastructure (implements abstract method)"""
         return self.create()

@@ -37,16 +37,28 @@ class AzureContainerWebAppTemplate(InfrastructureTemplate):
         if name is None:
             name = raw_config.get('appName', 'azure-webapp')
         super().__init__(name, raw_config)
+        self.config = raw_config
         self.cfg = AzureContainerWebAppConfig(raw_config)
         self.temp_dir: Optional[tempfile.TemporaryDirectory] = None
         self.resource_group = None
         self.app_service_plan = None
         self.app_service = None
-        
+
         environment = os.getenv("ENVIRONMENT", "sandbox")
         self.SOURCE_BUCKET = f"archie-static-website-source-{environment}"
         self.SOURCE_REGION = "us-east-1"
         self.SOURCE_FILES = ["index.html", "styles.css"]
+
+    def _cfg(self, key: str, default=None):
+        """Read config from root, parameters.azure, or parameters (Rule #6)"""
+        params = self.config.get('parameters', {})
+        azure_params = params.get('azure', {}) if isinstance(params, dict) else {}
+        return (
+            self.config.get(key) or
+            (azure_params.get(key) if isinstance(azure_params, dict) else None) or
+            (params.get(key) if isinstance(params, dict) else None) or
+            default
+        )
     
     def _download_source_files(self, app_service_name: str = None, stack_name: str = None) -> List[Dict[str, Any]]:
         """Download and customize files from S3"""
@@ -93,10 +105,15 @@ class AzureContainerWebAppTemplate(InfrastructureTemplate):
             f.write(content)
 
     def create_infrastructure(self) -> Dict[str, Any]:
-        """Deploy infrastructure using factory pattern"""
+        """Deploy infrastructure (implements abstract method)"""
+        return self.create()
+
+    def create(self) -> Dict[str, Any]:
+        """Deploy Azure container web app infrastructure"""
         random_suffix = ''.join(random.choices(string.ascii_lowercase + string.digits, k=6))
         safe_project = ''.join(c for c in self.name.lower() if c.isalnum())[:20]
         app_service_name = f"{safe_project}-app-{random_suffix}"
+        team_name = self._cfg('team_name', '')
         
         # 1. Content Preparation
         files = self._download_source_files(app_service_name=app_service_name, stack_name=self.name)
@@ -109,9 +126,9 @@ class AzureContainerWebAppTemplate(InfrastructureTemplate):
             f"{self.name}-rg",
             resource_group_name=self.cfg.resourceGroup or f"rg-{safe_project}-{random_suffix}",
             location=self.cfg.location,
-            tags={"ManagedBy": "Archie"}
+            tags={"ManagedBy": "Archie", **({"Team": team_name} if team_name else {})}
         )
-        
+
         # 3. App Service Plan
         self.app_service_plan = factory.create(
             "azure-native:web:AppServicePlan",
@@ -152,21 +169,22 @@ class AzureContainerWebAppTemplate(InfrastructureTemplate):
         
         website_url = pulumi.Output.concat("https://", self.app_service.default_host_name)
         pulumi.export("website_url", website_url)
-        
-        return {
-            "template_name": "azure-container-webapp",
-            "outputs": {
-                "app_service_name": self.app_service.name,
-                "website_url": website_url
-            }
-        }
+        pulumi.export("app_service_name", self.app_service.name)
+        pulumi.export("resource_group_name", self.resource_group.name)
+        pulumi.export("app_service_plan_name", self.app_service_plan.name)
+
+        return self.get_outputs()
 
     def get_outputs(self) -> Dict[str, Any]:
         """Get template outputs"""
-        if not self.app_service: return {}
+        if not self.app_service:
+            return {}
         return {
             "app_service_name": self.app_service.name,
-            "website_url": pulumi.Output.concat("https://", self.app_service.default_host_name)
+            "app_service_id": self.app_service.id,
+            "website_url": pulumi.Output.concat("https://", self.app_service.default_host_name),
+            "resource_group_name": self.resource_group.name if self.resource_group else None,
+            "app_service_plan_id": self.app_service_plan.id if self.app_service_plan else None,
         }
 
     def cleanup(self) -> None:
@@ -291,7 +309,15 @@ class AzureContainerWebAppTemplate(InfrastructureTemplate):
                     "type": "string",
                     "title": "Azure Region",
                     "default": "eastus"
-                }
+                },
+                "team_name": {
+                    "type": "string",
+                    "default": "",
+                    "title": "Team Name",
+                    "description": "Team that owns this resource",
+                    "order": 50,
+                    "group": "Tags",
+                },
             },
             "required": ["appName", "resourceGroup"]
         }

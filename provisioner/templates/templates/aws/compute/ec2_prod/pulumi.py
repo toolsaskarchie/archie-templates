@@ -42,6 +42,17 @@ class EC2ProdTemplate(InfrastructureTemplate):
         self.ec2_instance = None
         self.access_sg = None
 
+    def _cfg(self, key: str, default=None):
+        """Read config from root, parameters.aws, or parameters (Rule #6)"""
+        params = self.config.get('parameters', {})
+        aws_params = params.get('aws', {}) if isinstance(params, dict) else {}
+        return (
+            self.config.get(key) or
+            (aws_params.get(key) if isinstance(aws_params, dict) else None) or
+            (params.get(key) if isinstance(params, dict) else None) or
+            default
+        )
+
     def create_infrastructure(self) -> Dict[str, Any]:
         return self.create()
 
@@ -227,15 +238,20 @@ class EC2ProdTemplate(InfrastructureTemplate):
     
     def get_outputs(self) -> Dict[str, Any]:
         """Get template outputs"""
-        if not self.ec2_instance: return {}
-        res = {
+        if not self.ec2_instance:
+            return {}
+        outputs = {
             "instance_id": self.ec2_instance.id,
+            "instance_type": self.cfg.instance_type,
             "private_ip": self.ec2_instance.private_ip,
-            "public_ip": self.ec2_instance.public_ip
+            "public_ip": self.ec2_instance.public_ip,
+            "security_group_ids": self.ec2_instance.vpc_security_group_ids,
+            "iam_role_arn": self.iam_role.arn if self.iam_role else None,
+            "instance_profile_name": self.instance_profile.name if self.instance_profile else None,
         }
         if self.vpc_template:
-            res.update(self.vpc_template.get_outputs())
-        return res
+            outputs.update(self.vpc_template.get_outputs())
+        return outputs
 
     @classmethod
     def get_metadata(cls) -> Dict[str, Any]:

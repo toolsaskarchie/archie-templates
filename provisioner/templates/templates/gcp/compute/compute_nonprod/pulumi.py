@@ -27,15 +27,27 @@ class GcpComputeNonProdTemplate(InfrastructureTemplate):
         """Initialize template"""
         raw_config = config or kwargs or {}
         self.cfg = GcpComputeNonProdConfig(raw_config)
-        
+
         if name is None:
             name = self.cfg.instance_name
-        
+
         super().__init__(name, raw_config)
-        
+        self.config = raw_config
+
         # Resource references
         self.instance = None
         self.firewall_rules = []
+
+    def _cfg(self, key: str, default=None):
+        """Read config from root, parameters.gcp, or parameters (Rule #6)"""
+        params = self.config.get('parameters', {})
+        gcp_params = params.get('gcp', {}) if isinstance(params, dict) else {}
+        return (
+            self.config.get(key) or
+            (gcp_params.get(key) if isinstance(gcp_params, dict) else None) or
+            (params.get(key) if isinstance(params, dict) else None) or
+            default
+        )
     
     def create_infrastructure(self) -> Dict[str, Any]:
         """Deploy infrastructure (implements abstract method)"""
@@ -171,6 +183,13 @@ class GcpComputeNonProdTemplate(InfrastructureTemplate):
             "environment": "nonprod",
             "base_cost": "$10/month",
             "tags": ["gcp", "compute", "vm"],
+            "features": [
+                "Compute Engine instance with configurable machine type",
+                "Firewall rules for SSH, HTTP, HTTPS access",
+                "Optional external IP address",
+                "Configurable boot disk size and type",
+                "Resource labeling for cost tracking",
+            ],
             "complexity": "low",
             "deployment_time": "2-5 minutes",
             "marketplace_group": "gcp-compute-group",
@@ -255,4 +274,93 @@ class GcpComputeNonProdTemplate(InfrastructureTemplate):
                     ]
                 }
             ]
+        }
+
+    @classmethod
+    def get_config_schema(cls) -> Dict[str, Any]:
+        """Get configuration schema for the deploy form"""
+        return {
+            "type": "object",
+            "properties": {
+                "instance_name": {
+                    "type": "string",
+                    "default": "my-instance",
+                    "title": "Instance Name",
+                    "description": "Name for the Compute Engine instance",
+                    "order": 1,
+                    "group": "Essentials",
+                    "isEssential": True,
+                },
+                "environment": {
+                    "type": "string",
+                    "default": "dev",
+                    "title": "Environment",
+                    "description": "Deployment environment",
+                    "enum": ["dev", "staging"],
+                    "order": 2,
+                    "group": "Essentials",
+                    "isEssential": True,
+                },
+                "machine_type": {
+                    "type": "string",
+                    "default": "e2-micro",
+                    "title": "Machine Type",
+                    "description": "GCP machine type for the instance",
+                    "enum": ["e2-micro", "e2-small", "e2-medium", "n2-standard-2", "n2-standard-4", "n2-standard-8"],
+                    "order": 10,
+                    "group": "Compute",
+                    "cost_impact": "$5-200/month",
+                },
+                "zone": {
+                    "type": "string",
+                    "default": "us-central1-a",
+                    "title": "Zone",
+                    "description": "GCP zone for the instance",
+                    "order": 11,
+                    "group": "Compute",
+                },
+                "disk_size_gb": {
+                    "type": "number",
+                    "default": 20,
+                    "title": "Boot Disk Size (GB)",
+                    "description": "Size of the boot disk",
+                    "minimum": 10,
+                    "maximum": 500,
+                    "order": 12,
+                    "group": "Compute",
+                },
+                "enable_http": {
+                    "type": "boolean",
+                    "default": True,
+                    "title": "Enable HTTP",
+                    "description": "Create firewall rule for HTTP (port 80)",
+                    "order": 20,
+                    "group": "Security & Access",
+                },
+                "enable_https": {
+                    "type": "boolean",
+                    "default": True,
+                    "title": "Enable HTTPS",
+                    "description": "Create firewall rule for HTTPS (port 443)",
+                    "order": 21,
+                    "group": "Security & Access",
+                },
+                "assign_external_ip": {
+                    "type": "boolean",
+                    "default": True,
+                    "title": "External IP",
+                    "description": "Assign an external IP address to the instance",
+                    "order": 22,
+                    "group": "Security & Access",
+                },
+                "team_name": {
+                    "type": "string",
+                    "default": "",
+                    "title": "Team Name",
+                    "description": "Team that owns this resource",
+                    "order": 50,
+                    "group": "Tags",
+                },
+            },
+            "required": ["instance_name"],
         }

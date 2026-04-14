@@ -971,7 +971,15 @@ class VPCSimpleNonprodTemplate(InfrastructureTemplate):
                     "order": 106,
                     "group": "Architecture Decisions",
                     "cost_impact": "+$42/month"
-                }
+                },
+                "team_name": {
+                    "type": "string",
+                    "default": "",
+                    "title": "Team Name",
+                    "description": "Team that owns this resource",
+                    "order": 200,
+                    "group": "Tags",
+                },
             },
             "required": ["project_name", "region"]
         }

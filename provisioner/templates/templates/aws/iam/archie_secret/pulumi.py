@@ -30,13 +30,24 @@ class ArchieSecretTemplate(InfrastructureTemplate):
         """Initialize Archie secret template"""
         raw_config = config or kwargs or {}
         self.cfg = ArchieSecretConfig(raw_config)
-        
+
         if name is None:
             name = self.cfg.project_name
-            
+
         super().__init__(name, raw_config)
-        self.secret: Optional[aws.secretsmanager.Secret] = None
-        self.secret_version: Optional[aws.secretsmanager.SecretVersion] = None
+        self.secret = None
+        self.secret_version = None
+
+    def _cfg(self, key: str, default=None):
+        """Read config from root, parameters.aws, or parameters (Rule #6)"""
+        params = self.config.get('parameters', {})
+        aws_params = params.get('aws', {}) if isinstance(params, dict) else {}
+        return (
+            self.config.get(key) or
+            (aws_params.get(key) if isinstance(aws_params, dict) else None) or
+            (params.get(key) if isinstance(params, dict) else None) or
+            default
+        )
 
     def create_infrastructure(self) -> Dict[str, Any]:
         """Deploy infrastructure (implements abstract method)"""

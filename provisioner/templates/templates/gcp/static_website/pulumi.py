@@ -38,13 +38,25 @@ class GCPStaticWebsiteTemplate(InfrastructureTemplate):
             name = raw_config.get('projectName', raw_config.get('websiteName', 'gcp-static-website'))
 
         super().__init__(name, raw_config)
+        self.config = raw_config
         self.temp_dir: Optional[tempfile.TemporaryDirectory] = None
         self.bucket = None
-        
+
         environment = os.getenv("ENVIRONMENT", "sandbox")
         self.SOURCE_BUCKET = f"archie-static-website-source-{environment}"
         self.SOURCE_PROJECT = self.cfg.project
         self.SOURCE_FILES = ["index-gcp.html", "styles.css"]
+
+    def _cfg(self, key: str, default=None):
+        """Read config from root, parameters.gcp, or parameters (Rule #6)"""
+        params = self.config.get('parameters', {})
+        gcp_params = params.get('gcp', {}) if isinstance(params, dict) else {}
+        return (
+            self.config.get(key) or
+            (gcp_params.get(key) if isinstance(gcp_params, dict) else None) or
+            (params.get(key) if isinstance(params, dict) else None) or
+            default
+        )
 
     def _download_source_files(self, bucket_name: str = None, stack_name: str = None) -> List[Dict[str, Any]]:
         """Download branded files from Archie S3 source bucket (worker runs in AWS Lambda)."""
@@ -150,7 +162,11 @@ class GCPStaticWebsiteTemplate(InfrastructureTemplate):
             f.write(content)
 
     def create_infrastructure(self) -> Dict[str, Any]:
-        """Deploy infrastructure using factory pattern"""
+        """Deploy infrastructure (implements abstract method)"""
+        return self.create()
+
+    def create(self) -> Dict[str, Any]:
+        """Deploy GCP static website infrastructure"""
         import random
         import string
         
@@ -214,22 +230,18 @@ class GCPStaticWebsiteTemplate(InfrastructureTemplate):
         website_url = pulumi.Output.concat("https://storage.googleapis.com/", self.bucket.name, "/index.html")
         pulumi.export("website_url", website_url)
         pulumi.export("bucket_name", self.bucket.name)
-        
-        return {
-            "template_name": "gcp-static-website",
-            "outputs": {
-                "bucket_name": self.bucket.name,
-                "website_url": website_url
-            }
-        }
+
+        return self.get_outputs()
 
     def get_outputs(self) -> Dict[str, Any]:
         """Get template outputs"""
-        if not self.bucket: return {}
+        if not self.bucket:
+            return {}
         website_url = pulumi.Output.concat("https://storage.googleapis.com/", self.bucket.name, "/index.html")
         return {
             "bucket_name": self.bucket.name,
-            "website_url": website_url
+            "bucket_id": self.bucket.id,
+            "website_url": website_url,
         }
 
     @classmethod
@@ -244,6 +256,13 @@ class GCPStaticWebsiteTemplate(InfrastructureTemplate):
             "version": "1.1.0",
             "author": "InnovativeApps",
             "tags": ["gcp", "storage", "website", "static", "free"],
+            "features": [
+                "Cloud Storage bucket with static website hosting",
+                "Public access via IAM binding",
+                "Archie-branded congratulations page",
+                "HTTPS access via Cloud Storage URL",
+                "Uniform bucket-level access for simplified IAM",
+            ],
             "base_cost": "$0.00/month",
             "complexity": "low",
             "deployment_time": "2-3 minutes",
@@ -339,9 +358,21 @@ class GCPStaticWebsiteTemplate(InfrastructureTemplate):
                 "websiteName": {
                     "type": "string",
                     "title": "Website Name",
-                    "default": "my-gcp-site"
-                }
-            }
+                    "default": "my-gcp-site",
+                    "order": 1,
+                    "group": "Essentials",
+                    "isEssential": True,
+                },
+                "team_name": {
+                    "type": "string",
+                    "default": "",
+                    "title": "Team Name",
+                    "description": "Team that owns this resource",
+                    "order": 50,
+                    "group": "Tags",
+                },
+            },
+            "required": ["websiteName"],
         }
 
     def cleanup(self) -> None:
