@@ -49,6 +49,10 @@ TOOLS = [
      }, "required": ["template_name", "stack_name", "config"]}},
     {"name": "get_deploy_status", "description": "Check deployment status by ID. Poll until COMPLETED or FAILED.",
      "input_schema": {"type": "object", "properties": {"deployment_id": {"type": "string"}}, "required": ["deployment_id"]}},
+    {"name": "destroy_stack", "description": "Destroy a deployed stack. ONLY after user confirms. This permanently removes all cloud resources.",
+     "input_schema": {"type": "object", "properties": {
+         "stack_id": {"type": "string", "description": "The deployment ID of the stack to destroy (e.g. deploy-1234567890)"},
+     }, "required": ["stack_id"]}},
 ]
 
 
@@ -104,6 +108,9 @@ def execute_tool(name, inp):
             return {"deployment_id": result.get("deploymentId",""), "status": result.get("status",""),
                 "resource_count": result.get("resource_count",0)}
         return result
+    elif name == "destroy_stack":
+        stack_id = inp.get("stack_id", "")
+        return call_api(f"/stacks/{stack_id}/destroy", method="POST", body={"confirm": True})
     return {"error": f"Unknown tool: {name}"}
 
 
