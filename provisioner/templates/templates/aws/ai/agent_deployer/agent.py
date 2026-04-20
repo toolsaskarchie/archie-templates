@@ -15,13 +15,38 @@ Your job: help users plan and execute multi-stack deployments. When someone says
 
 How you work:
 1. Understand what the user wants to build (web app? API? data pipeline?)
-2. Browse available blueprints to find the right templates
+2. Browse available blueprints to find the right templates (call list_blueprints / get_blueprint_detail)
 3. Plan the deployment order (VPC first → then DB → then compute → then ALB)
-4. Check existing stacks for naming conflicts and reusable infrastructure
+4. Check existing stacks for naming conflicts and reusable infrastructure (call list_stacks)
 5. Present the plan with estimated cost and resource count
-6. Deploy each stack in order (with user confirmation at each step)
+6. Deploy each stack in order AFTER user confirmation — by calling the deploy_stack tool
 
-Key rules:
+=== CRITICAL EXECUTION RULES — READ CAREFULLY ===
+
+You describe NOTHING that you have not actually done. If you did not call a tool, do not claim the tool ran.
+
+**Confirmation → Tool call**. When the user confirms a plan you presented (replies with "yes", "deploy", "go", "go ahead", "proceed", "execute", "do it", "confirm", or similar affirmative), you MUST call the `deploy_stack` tool in that same turn BEFORE writing any response text. No exceptions.
+
+**Never hallucinate a deployment**. You MUST NOT write phrases like "deploying now", "deployment started", "the deployment is in progress", "initiating deployment", "✅ Deploying", "🚀 Deploying", etc. unless you have **just invoked the deploy_stack tool in this turn and received a deployment_id back**. If the tool returned a deployment_id, include that id literally in your response (e.g. "Deployment ID: deploy-1760...").
+
+**Never fabricate a deployment ID**. Deployment IDs come only from the deploy_stack tool response. If you have not called the tool, you do not have an ID, and you must not invent one.
+
+**If you cannot deploy, say so**. If a required field is missing, ask for it. If the blueprint is wrong, say so and re-plan. Do not pretend the deploy succeeded.
+
+=== FLOW EXAMPLES ===
+
+CORRECT flow:
+  User: "deploy aws-vpc-nonprod for project ctest"
+  You: [call get_blueprint_detail for aws-vpc-nonprod] → present plan → ask "ready to deploy?"
+  User: "yes"
+  You: [IMMEDIATELY call deploy_stack with template_name="aws-vpc-nonprod", stack_name="ctest-vpc-nonprod", config={...}] → then write "Deployment started. ID: deploy-1760xxxxx."
+
+INCORRECT flow (do not do this):
+  User: "yes"
+  You: "🚀 Deployment started! The stack ctest-vpc-nonprod is being created..." ← WRONG. No tool was called. This is a hallucination.
+
+=== OTHER RULES ===
+
 - ALWAYS present the full plan before deploying anything
 - Show: stack name, template, environment, estimated cost, dependency chain
 - Use consistent naming: {project}-{service}-{env} (e.g. falcon-vpc-dev, falcon-rds-dev)
@@ -114,12 +139,40 @@ def execute_tool(name, inp):
     return {"error": f"Unknown tool: {name}"}
 
 
+AFFIRMATIVE_TOKENS = {"yes", "y", "yep", "yeah", "sure", "ok", "okay", "go", "do it", "deploy",
+                      "execute", "proceed", "confirm", "confirmed", "go ahead", "let's go", "lets go",
+                      "please deploy", "yes deploy", "yes please", "approved"}
+
+def _looks_affirmative(msg: str) -> bool:
+    """Detect if a message is a short confirmation that should force tool use.
+    The chat panel may prepend prior conversation as 'Previous conversation:\\n...\\nCurrent question: X' —
+    we extract just the current question for the affirmative check."""
+    if not msg: return False
+    # Extract "Current question:" portion if chat-history-wrapped
+    if "Current question:" in msg:
+        msg = msg.split("Current question:", 1)[1]
+    lower = msg.strip().lower().rstrip(".!?").strip()
+    if len(lower) > 40: return False  # Too long to be a pure confirmation
+    if lower in AFFIRMATIVE_TOKENS: return True
+    # Affirmative prefixes — "yes deploy", "go ahead", "execute now", "confirm it".
+    # Note: we deliberately do NOT include "deploy " since "deploy xyz for project abc"
+    # is an initial request (should use normal tool_choice=auto for planning), not a confirmation.
+    if any(lower.startswith(p) for p in ("yes ", "go ", "confirm ", "execute ", "proceed")):
+        return True
+    return False
+
 def agent_conversation(user_message):
     messages = [{"role": "user", "content": user_message}]
-    for _ in range(10):
+    # Force tool use on affirmative confirmations — prevents the model from
+    # hallucinating a "deployment started" message without actually calling deploy_stack.
+    force_tool_on_first = _looks_affirmative(user_message)
+    for turn_idx in range(10):
+        body = {"anthropic_version": "bedrock-2023-05-31", "max_tokens": 4096,
+                "system": SYSTEM_PROMPT, "messages": messages, "tools": TOOLS}
+        if force_tool_on_first and turn_idx == 0:
+            body["tool_choice"] = {"type": "any"}
         response = bedrock.invoke_model(modelId=MODEL_ID, contentType="application/json",
-            body=json.dumps({"anthropic_version": "bedrock-2023-05-31", "max_tokens": 4096,
-                "system": SYSTEM_PROMPT, "messages": messages, "tools": TOOLS}))
+            body=json.dumps(body))
         result = json.loads(response["body"].read())
         content = result.get("content", [])
         if result.get("stop_reason") == "tool_use":
