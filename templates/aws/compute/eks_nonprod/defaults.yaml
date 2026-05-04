@@ -1,0 +1,5 @@
+# eks_nonprod - Default Configuration
+# All resource configurations in one place for easy modification
+
+features:
+  enable_ssm: true

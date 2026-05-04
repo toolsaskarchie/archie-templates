@@ -1,0 +1,841 @@
+{
+  "_meta": {
+    "template_type": "base",
+    "template_id": "aws-rds-postgres",
+    "description": "Base aws-rds-postgres template extracted from Pulumi code",
+    "version": "1.0",
+    "generated_from": "pulumi.py",
+    "source_of_truth": "pulumi.py - This file is GENERATED. Edit pulumi.py instead."
+  },
+  "base_resources": [
+    {
+      "id": "aws-rds-postgres:{namer_resource}",
+      "type": "aws:rds:SubnetGroup",
+      "name": "{namer_resource}",
+      "description": "aws:rds:SubnetGroup resource",
+      "optional": false,
+      "full_defaults": {
+        "subnet_ids": "{config_subnet_ids}",
+        "description": "Subnet group for {db_identifier}",
+        "tags": {
+          "Name": "{sng_name}"
+        }
+      },
+      "dependencies": [],
+      "dependents": []
+    },
+    {
+      "id": "aws-rds-postgres:{namer_rds}",
+      "type": "aws:rds:Instance",
+      "name": "{namer_rds}",
+      "description": "aws:rds:Instance resource",
+      "optional": false,
+      "full_defaults": {
+        "instance_class": "{config_db_instance_class}",
+        "allocated_storage": "{config_allocated_storage}",
+        "engine": "postgres",
+        "engine_version": "{config_engine_version}",
+        "identifier": "{namer_rds}",
+        "db_name": "{config_db_name}",
+        "username": "{config_db_username}",
+        "password": "{db_password}",
+        "db_subnet_group_name": "{config_name}",
+        "vpc_security_group_ids": [
+          "{sg_id}"
+        ],
+        "publicly_accessible": "{config_publicly_accessible}",
+        "multi_az": "{computed}",
+        "storage_type": "gp3",
+        "storage_encrypted": "{config_storage_encrypted}",
+        "backup_retention_period": "{config_backup_retention_days}",
+        "skip_final_snapshot": "{config_skip_final_snapshot}",
+        "performance_insights_enabled": true,
+        "performance_insights_retention_period": 7,
+        "copy_tags_to_snapshot": true,
+        "deletion_protection": true,
+        "tags": {
+          "Name": "{db_identifier}"
+        }
+      },
+      "dependencies": [],
+      "dependents": []
+    },
+    {
+      "id": "aws-rds-postgres:{project_name}-password",
+      "type": "aws:secretsmanager:Secret",
+      "name": "{project_name}-password",
+      "description": "Secret resource - {project_name}-password",
+      "category": "Security",
+      "from_sub_template": "aws-rds-postgres",
+      "full_defaults": {},
+      "dependencies": [],
+      "dependents": [],
+      "optional": false
+    },
+    {
+      "id": "aws-rds-postgres:{project_name}-password-version",
+      "type": "aws:secretsmanager:SecretVersion",
+      "name": "{project_name}-password-version",
+      "description": "SecretVersion resource - {project_name}-password-version",
+      "category": "Security",
+      "from_sub_template": "aws-rds-postgres",
+      "full_defaults": {},
+      "dependencies": [],
+      "dependents": [],
+      "optional": false
+    },
+    {
+      "id": "aws-vpc-prod:vpc-{project}-{environment}-{region_short}-{network_num}",
+      "type": "aws:ec2:Vpc",
+      "name": "vpc-{project}-{environment}-{region_short}-{network_num}",
+      "description": "aws:ec2:Vpc resource",
+      "optional": false,
+      "full_defaults": {
+        "cidr_block": "{cidr_block}",
+        "enable_dns_support": "{computed}",
+        "enable_dns_hostnames": "{computed}",
+        "instance_tenancy": "{computed}",
+        "tags": {
+          "Name": "{vpc_resource_name}",
+          "Project": "{project_name}",
+          "Environment": "prod",
+          "ManagedBy": "Archie"
+        }
+      },
+      "dependencies": [],
+      "dependents": [],
+      "from_sub_template": "VPCProdTemplate"
+    },
+    {
+      "id": "aws-vpc-prod:igw-{project}-{environment}",
+      "type": "aws:ec2:InternetGateway",
+      "name": "igw-{project}-{environment}",
+      "description": "aws:ec2:InternetGateway resource",
+      "optional": false,
+      "full_defaults": {
+        "vpc_id": "{config_id}",
+        "tags": {
+          "Name": "{igw_name}",
+          "Project": "{project_name}",
+          "Environment": "prod"
+        }
+      },
+      "dependencies": [],
+      "dependents": [],
+      "from_sub_template": "VPCProdTemplate"
+    },
+    {
+      "id": "aws-vpc-prod:{project}-{environment}-isolatedsub-{region_short}-{az_short}-{subnet_num}-1",
+      "type": "aws:ec2:Subnet",
+      "name": "{project}-{environment}-isolatedsub-{region_short}-{az_short}-{subnet_num}-1",
+      "description": "aws:ec2:Subnet resource",
+      "optional": false,
+      "full_defaults": {
+        "vpc_id": "{config_id}",
+        "cidr_block": "{iso_cidr}",
+        "availability_zone": "{az}",
+        "map_public_ip_on_launch": false,
+        "tags": {
+          "Name": "{iso_sub_name}",
+          "Project": "{project_name}",
+          "Environment": "prod",
+          "Tier": "isolated",
+          "AZ": "{az}"
+        }
+      },
+      "dependencies": [],
+      "dependents": [],
+      "from_sub_template": "VPCProdTemplate"
+    },
+    {
+      "id": "aws-vpc-prod:{project}-{environment}-isolatedsub-{region_short}-{az_short}-{subnet_num}-2",
+      "type": "aws:ec2:Subnet",
+      "name": "{project}-{environment}-isolatedsub-{region_short}-{az_short}-{subnet_num}-2",
+      "description": "aws:ec2:Subnet resource",
+      "optional": false,
+      "full_defaults": {
+        "vpc_id": "{config_id}",
+        "cidr_block": "{iso_cidr}",
+        "availability_zone": "{az}",
+        "map_public_ip_on_launch": false,
+        "tags": {
+          "Name": "{iso_sub_name}",
+          "Project": "{project_name}",
+          "Environment": "prod",
+          "Tier": "isolated",
+          "AZ": "{az}"
+        }
+      },
+      "dependencies": [],
+      "dependents": [],
+      "from_sub_template": "VPCProdTemplate"
+    },
+    {
+      "id": "aws-vpc-prod:{project}-{environment}-isolatedsub-{region_short}-{az_short}-{subnet_num}-3",
+      "type": "aws:ec2:Subnet",
+      "name": "{project}-{environment}-isolatedsub-{region_short}-{az_short}-{subnet_num}-3",
+      "description": "aws:ec2:Subnet resource",
+      "optional": false,
+      "full_defaults": {
+        "vpc_id": "{config_id}",
+        "cidr_block": "{iso_cidr}",
+        "availability_zone": "{az}",
+        "map_public_ip_on_launch": false,
+        "tags": {
+          "Name": "{iso_sub_name}",
+          "Project": "{project_name}",
+          "Environment": "prod",
+          "Tier": "isolated",
+          "AZ": "{az}"
+        }
+      },
+      "dependencies": [],
+      "dependents": [],
+      "from_sub_template": "VPCProdTemplate"
+    },
+    {
+      "id": "aws-vpc-prod:{project}-{environment}-privsub-{region_short}-{az_short}-{subnet_num}-1",
+      "type": "aws:ec2:Subnet",
+      "name": "{project}-{environment}-privsub-{region_short}-{az_short}-{subnet_num}-1",
+      "description": "aws:ec2:Subnet resource",
+      "optional": false,
+      "full_defaults": {
+        "vpc_id": "{config_id}",
+        "cidr_block": "{priv_cidr}",
+        "availability_zone": "{az}",
+        "map_public_ip_on_launch": false,
+        "tags": {
+          "Name": "{priv_sub_name}",
+          "Project": "{project_name}",
+          "Environment": "prod",
+          "Tier": "private",
+          "AZ": "{az}"
+        }
+      },
+      "dependencies": [],
+      "dependents": [],
+      "from_sub_template": "VPCProdTemplate"
+    },
+    {
+      "id": "aws-vpc-prod:{project}-{environment}-privsub-{region_short}-{az_short}-{subnet_num}-2",
+      "type": "aws:ec2:Subnet",
+      "name": "{project}-{environment}-privsub-{region_short}-{az_short}-{subnet_num}-2",
+      "description": "aws:ec2:Subnet resource",
+      "optional": false,
+      "full_defaults": {
+        "vpc_id": "{config_id}",
+        "cidr_block": "{priv_cidr}",
+        "availability_zone": "{az}",
+        "map_public_ip_on_launch": false,
+        "tags": {
+          "Name": "{priv_sub_name}",
+          "Project": "{project_name}",
+          "Environment": "prod",
+          "Tier": "private",
+          "AZ": "{az}"
+        }
+      },
+      "dependencies": [],
+      "dependents": [],
+      "from_sub_template": "VPCProdTemplate"
+    },
+    {
+      "id": "aws-vpc-prod:{project}-{environment}-privsub-{region_short}-{az_short}-{subnet_num}-3",
+      "type": "aws:ec2:Subnet",
+      "name": "{project}-{environment}-privsub-{region_short}-{az_short}-{subnet_num}-3",
+      "description": "aws:ec2:Subnet resource",
+      "optional": false,
+      "full_defaults": {
+        "vpc_id": "{config_id}",
+        "cidr_block": "{priv_cidr}",
+        "availability_zone": "{az}",
+        "map_public_ip_on_launch": false,
+        "tags": {
+          "Name": "{priv_sub_name}",
+          "Project": "{project_name}",
+          "Environment": "prod",
+          "Tier": "private",
+          "AZ": "{az}"
+        }
+      },
+      "dependencies": [],
+      "dependents": [],
+      "from_sub_template": "VPCProdTemplate"
+    },
+    {
+      "id": "aws-vpc-prod:{project}-{environment}-pubsub-{region_short}-{az_short}-{subnet_num}-1",
+      "type": "aws:ec2:Subnet",
+      "name": "{project}-{environment}-pubsub-{region_short}-{az_short}-{subnet_num}-1",
+      "description": "aws:ec2:Subnet resource",
+      "optional": false,
+      "full_defaults": {
+        "vpc_id": "{config_id}",
+        "cidr_block": "{pub_cidr}",
+        "availability_zone": "{az}",
+        "map_public_ip_on_launch": true,
+        "tags": {
+          "Name": "{pub_sub_name}",
+          "Project": "{project_name}",
+          "Environment": "prod",
+          "Tier": "public",
+          "AZ": "{az}"
+        }
+      },
+      "dependencies": [],
+      "dependents": [],
+      "from_sub_template": "VPCProdTemplate"
+    },
+    {
+      "id": "aws-vpc-prod:{project}-{environment}-pubsub-{region_short}-{az_short}-{subnet_num}-2",
+      "type": "aws:ec2:Subnet",
+      "name": "{project}-{environment}-pubsub-{region_short}-{az_short}-{subnet_num}-2",
+      "description": "aws:ec2:Subnet resource",
+      "optional": false,
+      "full_defaults": {
+        "vpc_id": "{config_id}",
+        "cidr_block": "{pub_cidr}",
+        "availability_zone": "{az}",
+        "map_public_ip_on_launch": true,
+        "tags": {
+          "Name": "{pub_sub_name}",
+          "Project": "{project_name}",
+          "Environment": "prod",
+          "Tier": "public",
+          "AZ": "{az}"
+        }
+      },
+      "dependencies": [],
+      "dependents": [],
+      "from_sub_template": "VPCProdTemplate"
+    },
+    {
+      "id": "aws-vpc-prod:{project}-{environment}-pubsub-{region_short}-{az_short}-{subnet_num}-3",
+      "type": "aws:ec2:Subnet",
+      "name": "{project}-{environment}-pubsub-{region_short}-{az_short}-{subnet_num}-3",
+      "description": "aws:ec2:Subnet resource",
+      "optional": false,
+      "full_defaults": {
+        "vpc_id": "{config_id}",
+        "cidr_block": "{pub_cidr}",
+        "availability_zone": "{az}",
+        "map_public_ip_on_launch": true,
+        "tags": {
+          "Name": "{pub_sub_name}",
+          "Project": "{project_name}",
+          "Environment": "prod",
+          "Tier": "public",
+          "AZ": "{az}"
+        }
+      },
+      "dependencies": [],
+      "dependents": [],
+      "from_sub_template": "VPCProdTemplate"
+    },
+    {
+      "id": "aws-vpc-prod:rt-{project}-{environment}-{tier}-{region_short}",
+      "type": "aws:ec2:RouteTable",
+      "name": "rt-{project}-{environment}-{tier}-{region_short}",
+      "description": "aws:ec2:RouteTable resource",
+      "optional": false,
+      "full_defaults": {
+        "vpc_id": "{config_id}",
+        "tags": {
+          "Name": "{public_rt_name}",
+          "Project": "{project_name}",
+          "Environment": "prod",
+          "Tier": "public"
+        }
+      },
+      "dependencies": [],
+      "dependents": [],
+      "from_sub_template": "VPCProdTemplate"
+    },
+    {
+      "id": "aws-vpc-prod:rt-{project}-{environment}-{tier}-{region_short}-1",
+      "type": "aws:ec2:RouteTable",
+      "name": "rt-{project}-{environment}-{tier}-{region_short}-1",
+      "description": "aws:ec2:RouteTable resource",
+      "optional": false,
+      "full_defaults": {
+        "vpc_id": "{config_id}",
+        "tags": {
+          "Name": "{priv_rt_name}",
+          "Project": "{project_name}",
+          "Environment": "prod",
+          "Tier": "private",
+          "AZ": "{az}"
+        }
+      },
+      "dependencies": [],
+      "dependents": [],
+      "from_sub_template": "VPCProdTemplate"
+    },
+    {
+      "id": "aws-vpc-prod:rt-{project}-{environment}-{tier}-{region_short}-2",
+      "type": "aws:ec2:RouteTable",
+      "name": "rt-{project}-{environment}-{tier}-{region_short}-2",
+      "description": "aws:ec2:RouteTable resource",
+      "optional": false,
+      "full_defaults": {
+        "vpc_id": "{config_id}",
+        "tags": {
+          "Name": "{priv_rt_name}",
+          "Project": "{project_name}",
+          "Environment": "prod",
+          "Tier": "private",
+          "AZ": "{az}"
+        }
+      },
+      "dependencies": [],
+      "dependents": [],
+      "from_sub_template": "VPCProdTemplate"
+    },
+    {
+      "id": "aws-vpc-prod:rt-{project}-{environment}-{tier}-{region_short}-3",
+      "type": "aws:ec2:RouteTable",
+      "name": "rt-{project}-{environment}-{tier}-{region_short}-3",
+      "description": "aws:ec2:RouteTable resource",
+      "optional": false,
+      "full_defaults": {
+        "vpc_id": "{config_id}",
+        "tags": {
+          "Name": "{priv_rt_name}",
+          "Project": "{project_name}",
+          "Environment": "prod",
+          "Tier": "private",
+          "AZ": "{az}"
+        }
+      },
+      "dependencies": [],
+      "dependents": [],
+      "from_sub_template": "VPCProdTemplate"
+    },
+    {
+      "id": "aws-vpc-prod:eip-{project}-{environment}-{purpose}-{region_short}-{az_short}-1",
+      "type": "aws:ec2:Eip",
+      "name": "eip-{project}-{environment}-{purpose}-{region_short}-{az_short}-1",
+      "description": "aws:ec2:Eip resource",
+      "optional": false,
+      "full_defaults": {
+        "domain": "vpc",
+        "tags": {
+          "Name": "{nat_eip_name}",
+          "Project": "{project_name}",
+          "Environment": "prod",
+          "AZ": "{az}"
+        }
+      },
+      "conditional": {
+        "field": "enable_nat_gateway"
+      },
+      "dependencies": [],
+      "dependents": [],
+      "from_sub_template": "VPCProdTemplate"
+    },
+    {
+      "id": "aws-vpc-prod:eip-{project}-{environment}-{purpose}-{region_short}-{az_short}-2",
+      "type": "aws:ec2:Eip",
+      "name": "eip-{project}-{environment}-{purpose}-{region_short}-{az_short}-2",
+      "description": "aws:ec2:Eip resource",
+      "optional": false,
+      "full_defaults": {
+        "domain": "vpc",
+        "tags": {
+          "Name": "{nat_eip_name}",
+          "Project": "{project_name}",
+          "Environment": "prod",
+          "AZ": "{az}"
+        }
+      },
+      "conditional": {
+        "field": "enable_nat_gateway"
+      },
+      "dependencies": [],
+      "dependents": [],
+      "from_sub_template": "VPCProdTemplate"
+    },
+    {
+      "id": "aws-vpc-prod:eip-{project}-{environment}-{purpose}-{region_short}-{az_short}-3",
+      "type": "aws:ec2:Eip",
+      "name": "eip-{project}-{environment}-{purpose}-{region_short}-{az_short}-3",
+      "description": "aws:ec2:Eip resource",
+      "optional": false,
+      "full_defaults": {
+        "domain": "vpc",
+        "tags": {
+          "Name": "{nat_eip_name}",
+          "Project": "{project_name}",
+          "Environment": "prod",
+          "AZ": "{az}"
+        }
+      },
+      "conditional": {
+        "field": "enable_nat_gateway"
+      },
+      "dependencies": [],
+      "dependents": [],
+      "from_sub_template": "VPCProdTemplate"
+    },
+    {
+      "id": "aws-vpc-prod:nat-{project}-{environment}-{region_short}-{az_short}-1",
+      "type": "aws:ec2:NatGateway",
+      "name": "nat-{project}-{environment}-{region_short}-{az_short}-1",
+      "description": "aws:ec2:NatGateway resource",
+      "optional": false,
+      "full_defaults": {
+        "subnet_id": "{id}",
+        "allocation_id": "{id}",
+        "tags": {
+          "Name": "{nat_gw_name}",
+          "Project": "{project_name}",
+          "Environment": "prod",
+          "AZ": "{az}"
+        }
+      },
+      "conditional": {
+        "field": "enable_nat_gateway"
+      },
+      "dependencies": [],
+      "dependents": [],
+      "estimated_monthly_cost": 64.8,
+      "cost_impact_description": "Multi-AZ NAT Gateways for high availability",
+      "from_sub_template": "VPCProdTemplate"
+    },
+    {
+      "id": "aws-vpc-prod:nat-{project}-{environment}-{region_short}-{az_short}-2",
+      "type": "aws:ec2:NatGateway",
+      "name": "nat-{project}-{environment}-{region_short}-{az_short}-2",
+      "description": "aws:ec2:NatGateway resource",
+      "optional": false,
+      "full_defaults": {
+        "subnet_id": "{id}",
+        "allocation_id": "{id}",
+        "tags": {
+          "Name": "{nat_gw_name}",
+          "Project": "{project_name}",
+          "Environment": "prod",
+          "AZ": "{az}"
+        }
+      },
+      "conditional": {
+        "field": "enable_nat_gateway"
+      },
+      "dependencies": [],
+      "dependents": [],
+      "estimated_monthly_cost": 64.8,
+      "cost_impact_description": "Multi-AZ NAT Gateways for high availability",
+      "from_sub_template": "VPCProdTemplate"
+    },
+    {
+      "id": "aws-vpc-prod:nat-{project}-{environment}-{region_short}-{az_short}-3",
+      "type": "aws:ec2:NatGateway",
+      "name": "nat-{project}-{environment}-{region_short}-{az_short}-3",
+      "description": "aws:ec2:NatGateway resource",
+      "optional": false,
+      "full_defaults": {
+        "subnet_id": "{id}",
+        "allocation_id": "{id}",
+        "tags": {
+          "Name": "{nat_gw_name}",
+          "Project": "{project_name}",
+          "Environment": "prod",
+          "AZ": "{az}"
+        }
+      },
+      "conditional": {
+        "field": "enable_nat_gateway"
+      },
+      "dependencies": [],
+      "dependents": [],
+      "estimated_monthly_cost": 64.8,
+      "cost_impact_description": "Multi-AZ NAT Gateways for high availability",
+      "from_sub_template": "VPCProdTemplate"
+    },
+    {
+      "id": "aws-vpc-prod:{project}-{environment}-vpce-dynamodb-{type}",
+      "type": "aws:ec2:VpcEndpoint",
+      "name": "{project}-{environment}-vpce-dynamodb-{type}",
+      "description": "aws:ec2:VpcEndpoint resource",
+      "optional": false,
+      "full_defaults": {
+        "vpc_id": "{config_id}",
+        "service_name": "com.amazonaws.{region}.dynamodb",
+        "vpc_endpoint_type": "Gateway",
+        "route_table_ids": "{endpoint_rt_ids}",
+        "tags": {
+          "Name": "{ddb_name}",
+          "Project": "{project_name}",
+          "Environment": "prod"
+        }
+      },
+      "dependencies": [],
+      "dependents": [],
+      "from_sub_template": "VPCProdTemplate"
+    },
+    {
+      "id": "aws-vpc-prod:{project}-{environment}-vpce-s3-{type}",
+      "type": "aws:ec2:VpcEndpoint",
+      "name": "{project}-{environment}-vpce-s3-{type}",
+      "description": "aws:ec2:VpcEndpoint resource",
+      "optional": false,
+      "full_defaults": {
+        "vpc_id": "{config_id}",
+        "service_name": "com.amazonaws.{region}.s3",
+        "vpc_endpoint_type": "Gateway",
+        "route_table_ids": "{endpoint_rt_ids}",
+        "tags": {
+          "Name": "{s3_name}",
+          "Project": "{project_name}",
+          "Environment": "prod"
+        }
+      },
+      "dependencies": [],
+      "dependents": [],
+      "from_sub_template": "VPCProdTemplate"
+    },
+    {
+      "id": "aws-vpc-prod:{project}-{environment}-vpce-{service}-{type}",
+      "type": "aws:ec2:VpcEndpoint",
+      "name": "{project}-{environment}-vpce-{service}-{type}",
+      "description": "aws:ec2:VpcEndpoint resource",
+      "optional": false,
+      "full_defaults": {
+        "vpc_id": "{config_id}",
+        "service_name": "com.amazonaws.{region}.{svc}",
+        "vpc_endpoint_type": "Interface",
+        "subnet_ids": "{private_subnet_ids}",
+        "security_group_ids": [
+          "{id}"
+        ],
+        "private_dns_enabled": true,
+        "tags": {
+          "Name": "{svc_name}",
+          "Project": "{project_name}",
+          "Environment": "prod"
+        }
+      },
+      "conditional": {
+        "field": "enable_ssm_endpoints"
+      },
+      "dependencies": [],
+      "dependents": [],
+      "from_sub_template": "VPCProdTemplate"
+    },
+    {
+      "id": "aws-vpc-prod:{project}-{environment}-vpce-{service}-{type}",
+      "type": "aws:ec2:VpcEndpoint",
+      "name": "{project}-{environment}-vpce-{service}-{type}",
+      "description": "aws:ec2:VpcEndpoint resource",
+      "optional": false,
+      "full_defaults": {
+        "vpc_id": "{config_id}",
+        "service_name": "com.amazonaws.{region}.{svc}",
+        "vpc_endpoint_type": "Interface",
+        "subnet_ids": "{private_subnet_ids}",
+        "security_group_ids": [
+          "{id}"
+        ],
+        "private_dns_enabled": true,
+        "tags": {
+          "Name": "{svc_name}",
+          "Project": "{project_name}",
+          "Environment": "prod"
+        }
+      },
+      "conditional": {
+        "field": "enable_ssm_endpoints"
+      },
+      "dependencies": [],
+      "dependents": [],
+      "from_sub_template": "VPCProdTemplate"
+    },
+    {
+      "id": "aws-vpc-prod:{project}-{environment}-vpce-{service}-{type}",
+      "type": "aws:ec2:VpcEndpoint",
+      "name": "{project}-{environment}-vpce-{service}-{type}",
+      "description": "aws:ec2:VpcEndpoint resource",
+      "optional": false,
+      "full_defaults": {
+        "vpc_id": "{config_id}",
+        "service_name": "com.amazonaws.{region}.{svc}",
+        "vpc_endpoint_type": "Interface",
+        "subnet_ids": "{private_subnet_ids}",
+        "security_group_ids": [
+          "{id}"
+        ],
+        "private_dns_enabled": true,
+        "tags": {
+          "Name": "{svc_name}",
+          "Project": "{project_name}",
+          "Environment": "prod"
+        }
+      },
+      "conditional": {
+        "field": "enable_ssm_endpoints"
+      },
+      "dependencies": [],
+      "dependents": [],
+      "from_sub_template": "VPCProdTemplate"
+    },
+    {
+      "id": "aws-vpc-prod:{project}-{environment}-flowlog-{scope}-{traffic}",
+      "type": "aws:ec2:FlowLog",
+      "name": "{project}-{environment}-flowlog-{scope}-{traffic}",
+      "description": "aws:ec2:FlowLog resource",
+      "optional": false,
+      "full_defaults": {
+        "vpc_id": "{config_id}",
+        "traffic_type": "ALL",
+        "log_destination_type": "s3",
+        "log_destination": "{arn}",
+        "max_aggregation_interval": 600,
+        "destination_options": {
+          "file_format": "plain-text",
+          "hive_compatible_partitions": false,
+          "per_hour_partition": false
+        },
+        "tags": {
+          "Name": "{flow_name}",
+          "Project": "{project_name}",
+          "Environment": "prod"
+        }
+      },
+      "conditional": {
+        "field": "enable_flow_logs"
+      },
+      "dependencies": [],
+      "dependents": [],
+      "from_sub_template": "VPCProdTemplate"
+    },
+    {
+      "id": "aws-rds-postgres:{project}-{environment}-db-sg",
+      "type": "aws:ec2:SecurityGroup",
+      "name": "{project}-{environment}-db-sg",
+      "description": "aws:ec2:SecurityGroup resource",
+      "optional": false,
+      "full_defaults": {
+        "vpc_id": "{config_vpc_id}",
+        "description": "PostgreSQL access for Production",
+        "egress": [],
+        "tags": {
+          "Name": "{sg_name}"
+        }
+      },
+      "dependencies": [],
+      "dependents": []
+    },
+    {
+      "id": "aws-vpc-prod:{project}-{environment}-access-sg",
+      "type": "aws:ec2:SecurityGroup",
+      "name": "{project}-{environment}-access-sg",
+      "description": "aws:ec2:SecurityGroup resource",
+      "optional": false,
+      "full_defaults": {
+        "vpc_id": "{config_id}",
+        "description": "Security group for SSH/RDP access",
+        "ingress": "{access_sg_ingress}",
+        "egress": [],
+        "tags": {
+          "Name": "{access_sg_name}",
+          "Project": "{project_name}",
+          "Environment": "prod",
+          "Tier": "access",
+          "ManagedBy": "Archie"
+        }
+      },
+      "dependencies": [],
+      "dependents": [],
+      "from_sub_template": "VPCProdTemplate"
+    },
+    {
+      "id": "aws-vpc-prod:{project}-{environment}-app-sg",
+      "type": "aws:ec2:SecurityGroup",
+      "name": "{project}-{environment}-app-sg",
+      "description": "aws:ec2:SecurityGroup resource",
+      "optional": false,
+      "full_defaults": {
+        "vpc_id": "{config_id}",
+        "description": "Security group for application tier",
+        "egress": [],
+        "tags": {
+          "Name": "{app_sg_name}",
+          "Project": "{project_name}",
+          "Environment": "prod",
+          "Tier": "app",
+          "ManagedBy": "Archie"
+        }
+      },
+      "dependencies": [],
+      "dependents": [],
+      "from_sub_template": "VPCProdTemplate"
+    },
+    {
+      "id": "aws-vpc-prod:{project}-{environment}-db-sg",
+      "type": "aws:ec2:SecurityGroup",
+      "name": "{project}-{environment}-db-sg",
+      "description": "aws:ec2:SecurityGroup resource",
+      "optional": false,
+      "full_defaults": {
+        "vpc_id": "{config_id}",
+        "description": "Security group for database tier",
+        "egress": [],
+        "tags": {
+          "Name": "{db_sg_name}",
+          "Project": "{project_name}",
+          "Environment": "prod",
+          "Tier": "db",
+          "ManagedBy": "Archie"
+        }
+      },
+      "dependencies": [],
+      "dependents": [],
+      "from_sub_template": "VPCProdTemplate"
+    },
+    {
+      "id": "aws-vpc-prod:{project}-{environment}-web-sg",
+      "type": "aws:ec2:SecurityGroup",
+      "name": "{project}-{environment}-web-sg",
+      "description": "aws:ec2:SecurityGroup resource",
+      "optional": false,
+      "full_defaults": {
+        "vpc_id": "{config_id}",
+        "description": "Security group for web tier - allows HTTP/HTTPS traffic",
+        "ingress": [],
+        "egress": [],
+        "tags": {
+          "Name": "{web_sg_name}",
+          "Project": "{project_name}",
+          "Environment": "prod",
+          "Tier": "web",
+          "ManagedBy": "Archie"
+        }
+      },
+      "dependencies": [],
+      "dependents": [],
+      "from_sub_template": "VPCProdTemplate"
+    },
+    {
+      "id": "aws-vpc-prod:{namer_s3_bucket}",
+      "type": "aws:s3:Bucket",
+      "name": "{namer_s3_bucket}",
+      "description": "aws:s3:Bucket resource",
+      "optional": false,
+      "full_defaults": {
+        "bucket": "{namer_s3_bucket}",
+        "force_destroy": true,
+        "tags": {
+          "Name": "{bucket_name}",
+          "Project": "{project_name}",
+          "Environment": "prod",
+          "Purpose": "VPC Flow Logs"
+        }
+      },
+      "conditional": {
+        "field": "enable_flow_logs"
+      },
+      "dependencies": [],
+      "dependents": [],
+      "from_sub_template": "VPCProdTemplate"
+    }
+  ]
+}

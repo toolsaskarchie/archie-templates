@@ -1,0 +1,112 @@
+metadata:
+  name: kubernetes-web-app
+  title: Simple Web App
+  description: Deploy a simple web application to Kubernetes with Deployment, Service, and optional Ingress.
+  category: compute
+  cloud: kubernetes
+  version: latest
+  author: InnovativeApps
+  tags:
+  - kubernetes
+  - docker
+  - k8s
+  - webapp
+  complexity: medium
+  deployment_time: 2-4 minutes
+  marketplace_group: COMPUTE
+  action_name: kubernetes-web-app
+  environment: prod
+  tier: template
+  use_cases:
+  - Production workloads
+  - Mission-critical applications
+  - Enterprise-grade infrastructure
+resources:
+  '{project_name}-config':
+    type: kubernetes:core/v1:ConfigMap
+    name: '{project_name}-config'
+    always_created: true
+    description: kubernetes:core/v1:ConfigMap resource
+    smart_defaults:
+      metadata:
+        name: '{config_app_name}-config'
+      data: '{config_data}'
+      opts: '{opts}'
+  '{project_name}':
+    type: kubernetes:apps/v1:Deployment
+    name: '{project_name}'
+    always_created: true
+    description: kubernetes:apps/v1:Deployment resource
+    smart_defaults:
+      metadata: {}
+      spec: {}
+      opts: '{opts}'
+  '{project_name}-svc':
+    type: kubernetes:core/v1:Service
+    name: '{project_name}-svc'
+    always_created: true
+    description: kubernetes:core/v1:Service resource
+    smart_defaults:
+      metadata:
+        name: '{config_app_name}-service'
+      spec: {}
+      opts: '{opts}'
+  '{config_namespace}':
+    type: kubernetes:core/v1:Namespace
+    name: '{config_namespace}'
+    always_created: true
+    description: kubernetes:core/v1:Namespace resource
+    conditional:
+      field: namespace
+      operator: '!='
+      value: default
+    smart_defaults:
+      metadata: {}
+      opts: '{opts}'
+  '{project_name}-ingress':
+    type: kubernetes:networking.k8s.io/v1:Ingress
+    name: '{project_name}-ingress'
+    always_created: true
+    description: kubernetes:networking.k8s.io/v1:Ingress resource
+    conditional:
+      field: enable_ingress
+    smart_defaults:
+      metadata:
+        name: '{config_app_name}-ingress'
+      spec: {}
+      opts: '{opts}'
+configuration:
+  properties:
+    resource_labels:
+      type: string
+      title: Resource Labels
+      description: Get resource labels for Kubernetes resources.
+      group: General Settings
+      order: 1
+    appName:
+      type: string
+      title: App Name
+      default: my-web-app
+    image:
+      type: string
+      title: Container Image
+      default: nginx:latest
+    replicas:
+      type: integer
+      title: Replicas
+      default: 2
+    namespace:
+      type: string
+      title: Namespace
+      default: default
+    serviceType:
+      type: string
+      title: Service Type
+      enum:
+      - ClusterIP
+      - NodePort
+      - LoadBalancer
+      default: LoadBalancer
+  required:
+  - appName
+  - image

@@ -1,0 +1,111 @@
+{
+  "_meta": {
+    "template_type": "base",
+    "template_id": "gcp-static-website",
+    "description": "Base gcp-static-website template extracted from Pulumi code",
+    "version": "1.0",
+    "generated_from": "pulumi.py",
+    "source_of_truth": "pulumi.py - This file is GENERATED. Edit pulumi.py instead."
+  },
+  "base_resources": [
+    {
+      "id": "gcp-static-website:archie-logo-png",
+      "type": "aws:s3:BucketObject",
+      "name": "archie-logo-png",
+      "description": "Archie brand logo (archie-logo.png)",
+      "category": "Storage",
+      "full_defaults": {
+        "key": "archie-logo.png",
+        "content_type": "image/png",
+        "tags": {
+          "Name": "archie-archie-logo-png-{environment}",
+          "ManagedBy": "Archie"
+        }
+      },
+      "dependencies": [],
+      "dependents": [],
+      "optional": false
+    },
+    {
+      "id": "gcp-static-website:index-html",
+      "type": "aws:s3:BucketObject",
+      "name": "index-html",
+      "description": "Archie-branded congratulations page (index.html)",
+      "category": "Storage",
+      "full_defaults": {
+        "key": "index.html",
+        "content_type": "text/html",
+        "tags": {
+          "Name": "archie-index-html-{environment}",
+          "ManagedBy": "Archie"
+        }
+      },
+      "dependencies": [],
+      "dependents": [],
+      "optional": false
+    },
+    {
+      "id": "gcp-static-website:styles-css",
+      "type": "aws:s3:BucketObject",
+      "name": "styles-css",
+      "description": "Styles with dark/light theme support (styles.css)",
+      "category": "Storage",
+      "full_defaults": {
+        "key": "styles.css",
+        "content_type": "text/css",
+        "tags": {
+          "Name": "archie-styles-css-{environment}",
+          "ManagedBy": "Archie"
+        }
+      },
+      "dependencies": [],
+      "dependents": [],
+      "optional": false
+    },
+    {
+      "id": "gcp-static-website:{project_name}",
+      "type": "gcp:storage:Bucket",
+      "name": "{project_name}",
+      "description": "gcp:storage:Bucket resource",
+      "optional": false,
+      "full_defaults": {
+        "name": "{bucket_name}",
+        "location": "{config_location}",
+        "project": "{config_project}",
+        "website": {},
+        "uniform_bucket_level_access": true,
+        "force_destroy": true,
+        "labels": {
+          "managed-by": "archie"
+        }
+      },
+      "dependencies": [],
+      "dependents": []
+    },
+    {
+      "id": "gcp-static-website:{project_name}-public-read",
+      "type": "gcp:storage:BucketIAMBinding",
+      "name": "{project_name}-public-read",
+      "description": "gcp:storage:BucketIAMBinding resource",
+      "optional": false,
+      "full_defaults": {
+        "bucket": "{config_name}",
+        "role": "roles/storage.objectViewer",
+        "members": [
+          "allUsers"
+        ]
+      },
+      "dependencies": [],
+      "dependents": []
+    },
+    {
+      "id": "gcp-static-website:{project_name}-",
+      "type": "gcp:storage:BucketObject",
+      "name": "{project_name}-",
+      "description": "gcp:storage:BucketObject resource",
+      "optional": false,
+      "dependencies": [],
+      "dependents": []
+    }
+  ]
+}

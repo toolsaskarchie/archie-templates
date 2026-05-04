@@ -1,0 +1,65 @@
+# DynamoDB Table - Default Configuration
+# All resource configurations in one place for easy modification
+
+# =============================================================================
+# Table Configuration
+# =============================================================================
+table:
+  billing_mode: "PAY_PER_REQUEST"  # or "PROVISIONED"
+  hash_key: "id"
+  hash_key_type: "S"  # S=String, N=Number, B=Binary
+  
+  # Optional range key
+  range_key: null
+  range_key_type: "S"
+
+# =============================================================================
+# Capacity Configuration (for PROVISIONED mode)
+# =============================================================================
+capacity:
+  read_capacity: 5
+  write_capacity: 5
+
+# =============================================================================
+# Server-Side Encryption
+# =============================================================================
+encryption:
+  enabled: true
+  kms_key_arn: null  # null = AWS managed key
+
+# =============================================================================
+# Point-in-Time Recovery
+# =============================================================================
+point_in_time_recovery:
+  enabled: true
+
+# =============================================================================
+# TTL Configuration
+# =============================================================================
+ttl:
+  enabled: false
+  attribute_name: "ttl"
+
+# =============================================================================
+# Stream Configuration
+# =============================================================================
+stream:
+  enabled: false
+  view_type: "NEW_AND_OLD_IMAGES"  # NEW_IMAGE, OLD_IMAGE, NEW_AND_OLD_IMAGES, KEYS_ONLY
+
+# =============================================================================
+# Global Secondary Indexes
+# =============================================================================
+global_secondary_indexes: []
+# Example:
+# - name: "GSI1"
+#   hash_key: "gsi1pk"
+#   range_key: "gsi1sk"
+#   projection_type: "ALL"
+
+# =============================================================================
+# Tags Configuration
+# =============================================================================
+tags:
+  ManagedBy: "Archie"
+  Purpose: "Application Data Storage"

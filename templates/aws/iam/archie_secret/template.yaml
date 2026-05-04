@@ -1,0 +1,154 @@
+metadata:
+  name: aws-archie-secret
+  title: Archie Credential Secret
+  description: Securely stores AWS Access Keys in AWS Secrets Manager. Encrypted at rest and managed via Archie's standardized security patterns, providing a safe way to handle sensitive onboarding credentials.
+  category: security
+  version: latest
+  author: InnovativeApps
+  cloud: aws
+  environment: all
+  base_cost: $0.40/month
+  tags:
+  - iam
+  - secrets
+  - security
+  - aws
+  - onboarding
+  features:
+  - Secure, encrypted credential storage
+  - Automated Secrets Manager lifecycle management
+  - Direct compatibility with Archie deployment engine
+  - VPC-integrated access control potential
+  - Compliance-ready secret management
+  deployment_time: 1-2 minutes
+  complexity: low
+  pillars:
+  - title: Operational Excellence
+    score: good
+    score_color: '#f59e0b'
+    description: Automated secret provisioning with infrastructure as code
+    practices:
+    - Infrastructure as Code for repeatable secret deployments
+    - Automated secret version management via Pulumi
+    - Standard tagging for governance and resource tracking
+    - Consistent naming conventions for secret identification
+    - One-click deployment eliminates manual Secrets Manager setup
+  - title: Security
+    score: excellent
+    score_color: '#10b981'
+    description: AWS-managed encryption with fine-grained access control
+    practices:
+    - Secrets encrypted at rest using AWS KMS by default
+    - IAM policies control who can access the secret
+    - Secret versioning enables safe credential rotation
+    - No plaintext credentials stored in code or config files
+    - Audit trail via CloudTrail for all secret access events
+  - title: Reliability
+    score: excellent
+    score_color: '#10b981'
+    description: Secrets Manager is a fully managed regional service
+    practices:
+    - AWS-managed service with built-in high availability
+    - Automatic replication within the region for durability
+    - Secret versioning prevents accidental data loss
+    - No infrastructure to maintain or monitor for uptime
+    - Automated deployment reduces human error in configuration
+  - title: Performance Efficiency
+    score: excellent
+    score_color: '#10b981'
+    description: Low-latency secret retrieval with caching support
+    practices:
+    - Sub-millisecond secret retrieval via AWS SDK
+    - Client-side caching eliminates repeated API calls
+    - No compute resources required for secret management
+    - Deploys in under 2 minutes with no warm-up required
+    - Minimal API calls needed for credential access
+  - title: Cost Optimization
+    score: excellent
+    score_color: '#10b981'
+    description: Minimal cost at $0.40/month per secret
+    practices:
+    - Fixed $0.40/month per secret with no hidden charges
+    - No compute or networking costs for secret storage
+    - Eliminates need for self-managed credential vaults
+    - API calls included in free tier for typical usage
+    - Single secret stores multiple credential key-value pairs
+  - title: Sustainability
+    score: excellent
+    score_color: '#10b981'
+    description: Fully managed service with zero idle resource consumption
+    practices:
+    - No compute resources provisioned or running
+    - Leverages shared AWS Secrets Manager infrastructure
+    - Zero energy consumption beyond the managed service
+    - Eliminates need for dedicated credential management servers
+    - Serverless architecture minimizes environmental footprint
+  architecture:
+    summary: Archie Secret Template
+  action_name: aws-archie-secret
+  tier: template
+  use_cases:
+  - Production workloads
+  - Mission-critical applications
+  - Enterprise-grade infrastructure
+resources:
+  '{project_name}-secret':
+    type: aws:secretsmanager:Secret
+    name: '{project_name}-secret'
+    always_created: true
+    description: Secret resource
+    smart_defaults:
+      name: <secret_name>
+      description: '{computed}'
+      tags: '{tags}'
+  '{project_name}-secret-version':
+    type: aws:secretsmanager:SecretVersion
+    name: '{project_name}-secret-version'
+    always_created: true
+    description: SecretVersion resource
+    smart_defaults:
+      secret_id: '{config_id}'
+      secret_string: '{json_config}'
+configuration:
+  properties:
+    secret_name:
+      type: string
+      title: Secret Name
+      description: Get secret name generated from project/env.
+      group: General Settings
+      order: 1
+    access_key:
+      type: string
+      title: Access Key ID to Store
+      description: The Access Key ID that Archie will use for deployments (stored in Secrets Manager)
+      placeholder: AKIA...
+      is_secret: true
+      order: 3
+    secret_key:
+      type: string
+      title: Secret Access Key to Store
+      description: The Secret Access Key that Archie will use for deployments (stored in Secrets Manager)
+      placeholder: wJalr...
+      is_secret: true
+      order: 4
+    projectName:
+      type: string
+      title: Project Name
+      description: Unique identifier for this project (e.g., 'myapp')
+      order: 1
+    creds_header:
+      type: separator
+      title: Keys to Store in Secrets Manager
+      description: These credentials will be securely stored. They can be different from the deploy credentials below.
+      group: Essentials
+      isEssential: true
+      order: 2
+  required:
+  - projectName
+  - access_key
+  - secret_key
+outputs:
+- name: secret_arn
+  description: 'Output: secret_arn'
+- name: secret_name
+  description: 'Output: secret_name'

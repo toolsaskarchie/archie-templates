@@ -1,0 +1,146 @@
+{
+  "metadata": {
+    "name": "aws-archie-secret",
+    "title": "Archie Onboarding Secret",
+    "description": "Securely store your AWS Access Keys in AWS Secrets Manager for Archie's 'Secret' deployment method. Ideal for users who want to manage their own sensitive credentials while giving Archie safe access.",
+    "category": "security",
+    "version": "latest",
+    "author": "InnovativeApps",
+    "features": [
+      "Secure credential storage (Secrets Manager)",
+      "Principle of Least Privilege support",
+      "Automated Secret ARN generation",
+      "Directly compatible with Archie Onboarding",
+      "Encrypted at rest by default"
+    ],
+    "tags": [
+      "iam",
+      "secrets",
+      "security",
+      "onboarding",
+      "managed"
+    ],
+    "estimated_cost": "$0.40/month (AWS Secrets Manager cost)",
+    "complexity": "beginner",
+    "deployment_time": "1-2 minutes",
+    "marketplace_group": "aws-security-group",
+    "is_listed_in_marketplace": true,
+    "action_name": "aws-archie-secret",
+    "environment": "prod",
+    "cloud": "aws",
+    "tier": "template",
+    "use_cases": [
+      "Production workloads",
+      "Mission-critical applications",
+      "Enterprise-grade infrastructure"
+    ]
+  },
+  "configuration": {
+    "type": "object",
+    "required": [
+      "projectName",
+      "access_key",
+      "secret_key"
+    ],
+    "properties": {
+      "secret_name": {
+        "type": "string",
+        "title": "Secret Name",
+        "description": "Get secret name generated from project/env.",
+        "group": "General Settings",
+        "order": 1
+      },
+      "access_key": {
+        "type": "string",
+        "title": "AWS Access Key ID",
+        "description": "The Access Key ID for Archie's service user",
+        "placeholder": "AKIA...",
+        "is_secret": true,
+        "order": 2
+      },
+      "secret_key": {
+        "type": "string",
+        "title": "AWS Secret Access Key",
+        "description": "The Secret Access Key for Archie's service user",
+        "placeholder": "wJalr...",
+        "is_secret": true,
+        "order": 3
+      },
+      "projectName": {
+        "type": "string",
+        "title": "Project Name",
+        "description": "Unique identifier for this project (e.g., 'myapp')",
+        "order": 1
+      }
+    },
+    "smart_defaults": {}
+  },
+  "resources": [
+    {
+      "id": "aws-archie-secret:secret",
+      "type": "aws:secretsmanager:Secret",
+      "name": "secret",
+      "description": "Resource - secret",
+      "category": "Security",
+      "smart_defaults": {
+        "name": "archie-secret",
+        "tags": {
+          "Name": "archie-secret-{environment}",
+          "ManagedBy": "Archie"
+        }
+      },
+      "optional": false,
+      "dependencies": [],
+      "dependents": []
+    }
+  ],
+  "pillars": {
+    "security": {
+      "score": "good",
+      "description": "Implements security best practices for cloud infrastructure with network isolation, IAM roles, and secure access patterns.",
+      "best_practices": [
+        "Data encryption at rest and in transit"
+      ]
+    },
+    "reliability": {
+      "score": "fair",
+      "description": "Ensures high availability and fault tolerance.",
+      "best_practices": [
+        "Automated recovery mechanisms",
+        "Fault-tolerant architecture patterns"
+      ]
+    },
+    "performance_efficiency": {
+      "score": "good",
+      "description": "Optimizes resource utilization and performance with scalable compute resources and efficient networking.",
+      "best_practices": [
+        "Scalable resource provisioning"
+      ]
+    },
+    "cost_optimization": {
+      "score": "good",
+      "description": "Balances cost efficiency with reliability through appropriate resource sizing and usage-based pricing.",
+      "best_practices": [
+        "Environment-specific parameter handling",
+        "Reusable infrastructure patterns reducing overhead",
+        "On-demand resource provisioning"
+      ]
+    },
+    "operational_excellence": {
+      "score": "good",
+      "description": "Enables operational best practices with infrastructure as code, monitoring, and automated management.",
+      "best_practices": [
+        "Infrastructure as Code with Pulumi for automated deployments",
+        "Version-controlled configuration"
+      ]
+    },
+    "sustainability": {
+      "score": "good",
+      "description": "Supports sustainable practices through efficient resource utilization and regional service usage.",
+      "best_practices": [
+        "Efficient resource utilization patterns",
+        "Automated scaling reducing over-provisioning"
+      ]
+    }
+  }
+}

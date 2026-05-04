@@ -1,0 +1,5 @@
+# compute_nonprod - Default Configuration
+# All resource configurations in one place for easy modification
+
+features:
+  allow_stopping_for_update: true

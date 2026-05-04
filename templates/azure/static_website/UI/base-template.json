@@ -1,0 +1,65 @@
+{
+  "_meta": {
+    "template_type": "base",
+    "template_id": "azure-static-website",
+    "description": "Base azure-static-website template extracted from Pulumi code",
+    "version": "1.0",
+    "generated_from": "pulumi.py",
+    "source_of_truth": "pulumi.py - This file is GENERATED. Edit pulumi.py instead."
+  },
+  "base_resources": [
+    {
+      "id": "azure-static-website:{project_name}-rg",
+      "type": "azure-native:resources:ResourceGroup",
+      "name": "{project_name}-rg",
+      "description": "azure-native:resources:ResourceGroup resource",
+      "optional": false,
+      "full_defaults": {
+        "location": "{config_location}",
+        "tags": {
+          "ManagedBy": "Archie",
+          "Template": "azure-static-website"
+        }
+      },
+      "dependencies": [],
+      "dependents": []
+    },
+    {
+      "id": "azure-static-website:{project_name}-storage",
+      "type": "azure-native:storage:StorageAccount",
+      "name": "{project_name}-storage",
+      "description": "azure-native:storage:StorageAccount resource",
+      "optional": false,
+      "full_defaults": {
+        "account_name": "{sa_name}",
+        "resource_group_name": "{config_name}",
+        "location": "{config_location}",
+        "sku": {
+          "name": "Standard_LRS"
+        },
+        "kind": "StorageV2",
+        "enable_https_traffic_only": true,
+        "tags": {
+          "ManagedBy": "Archie"
+        }
+      },
+      "dependencies": [],
+      "dependents": []
+    },
+    {
+      "id": "azure-static-website:{project_name}-static",
+      "type": "azure-native:storage:StorageAccountStaticWebsite",
+      "name": "{project_name}-static",
+      "description": "azure-native:storage:StorageAccountStaticWebsite resource",
+      "optional": false,
+      "full_defaults": {
+        "account_name": "{config_name}",
+        "resource_group_name": "{config_name}",
+        "index_document": "index.html",
+        "error404_document": "index.html"
+      },
+      "dependencies": [],
+      "dependents": []
+    }
+  ]
+}

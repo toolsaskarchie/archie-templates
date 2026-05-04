@@ -1,0 +1,989 @@
+metadata:
+  name: aws-rds-postgres
+  title: RDS PostgreSQL (Production)
+  description: Enterprise-ready PostgreSQL with Multi-AZ high availability, encryption, and automated backups.
+  category: database
+  version: latest
+  author: InnovativeApps
+  cloud: aws
+  environment: prod
+  base_cost: $50/month
+  features:
+  - High-availability Multi-AZ deployment with automatic failover
+  - Auto-scaling GP3 storage with encryption at rest
+  - Secure password management via AWS Secrets Manager
+  - Full VPC isolation with managed security groups
+  - Performance Insights and CloudWatch monitoring enabled
+  tags:
+  - database
+  - postgresql
+  - rds
+  - production
+  - high-availability
+  deployment_time: 15-20 minutes
+  complexity: advanced
+  pillars:
+  - title: Security
+    score: excellent
+    score_color: '#10b981'
+    description: Enterprise-grade security with encryption, VPC isolation, and IAM authentication
+    practices:
+    - Storage encryption at rest with AWS KMS managed keys
+    - SSL/TLS encryption enforced for all connections in transit
+    - VPC isolation with dedicated database-tier security groups
+    - Password stored and rotated via AWS Secrets Manager
+    - IAM database authentication for credential-free access
+  - title: Reliability
+    score: excellent
+    score_color: '#10b981'
+    description: Multi-AZ architecture with automated failover and comprehensive backup strategy
+    practices:
+    - Multi-AZ deployment with synchronous standby replication
+    - Automated daily backups with 30-day retention period
+    - Point-in-time recovery to any second within retention window
+    - Deletion protection enabled to prevent accidental data loss
+    - Final snapshot on deletion ensures data preservation
+  - title: Operational Excellence
+    score: good
+    score_color: '#f59e0b'
+    description: Fully managed service with comprehensive monitoring and automated maintenance
+    practices:
+    - Infrastructure as Code with Pulumi for repeatable deployments
+    - Performance Insights enabled for query-level diagnostics
+    - CloudWatch metrics and alarms for proactive monitoring
+    - Automated minor version upgrades and maintenance windows
+    - Parameter groups for engine-level performance tuning
+  - title: Performance Efficiency
+    score: good
+    score_color: '#f59e0b'
+    description: Production-grade instances with GP3 storage and read replica support
+    practices:
+    - GP3 storage provides baseline 3,000 IOPS with burst capability
+    - Read replicas available for horizontal read scaling
+    - Configurable instance types from db.m5 to db.r6g families
+    - Auto-scaling storage eliminates manual capacity planning
+    - Performance Insights identifies slow queries and lock contention
+  - title: Cost Optimization
+    score: good
+    score_color: '#f59e0b'
+    description: Right-sized production instances with reserved capacity options
+    practices:
+    - Reserved instance pricing available for 1-year or 3-year terms
+    - Auto-scaling storage avoids over-provisioning disk capacity
+    - Right-sizing recommendations via Performance Insights
+    - GP3 storage eliminates IOPS provisioning costs for most workloads
+    - Copy-tags-to-snapshot enables cost allocation tracking
+  - title: Sustainability
+    score: good
+    score_color: '#f59e0b'
+    description: Managed service with Graviton support and efficient resource utilization
+    practices:
+    - Graviton-based db.r6g/db.m6g instances for energy efficiency
+    - Auto-scaling storage reduces over-provisioned capacity waste
+    - Managed service eliminates idle infrastructure overhead
+    - Multi-AZ uses synchronous replication minimizing data duplication
+    - Regional deployment reduces cross-region data transfer
+  architecture:
+    summary: RDS PostgreSQL Production Template
+  action_name: aws-rds-postgres
+  tier: template
+  use_cases:
+  - Production workloads
+  - Mission-critical applications
+  - Enterprise-grade infrastructure
+resources:
+  '{project_name}-postgres-ingress':
+    type: aws:ec2:SecurityGroupRule
+    name: '{project_name}-postgres-ingress'
+    always_created: true
+    description: SecurityGroupRule resource
+    smart_defaults:
+      type: ingress
+      security_group_id: '{config_id}'
+      protocol: tcp
+      from_port: 5432
+      to_port: 5432
+      cidr_blocks: '{config_allowed_cidr_blocks}'
+      description: PostgreSQL access for {db_identifier}
+  '{project_name}-password':
+    type: aws:secretsmanager:Secret
+    name: '{project_name}-password'
+    always_created: true
+    description: Secret resource
+    smart_defaults:
+      name: secret-db-{config_project}-password-nonprod-{config_region_short}
+      description: Master password for {db_identifier}
+      recovery_window_in_days: 7
+      tags: '{tags}'
+  '{project_name}-password-version':
+    type: aws:secretsmanager:SecretVersion
+    name: '{project_name}-password-version'
+    always_created: true
+    description: SecretVersion resource
+    smart_defaults:
+      secret_id: '{config_id}'
+      secret_string: '{computed}'
+  '{namer_rds}':
+    type: aws:rds:Instance
+    name: '{namer_rds}'
+    always_created: true
+    description: Instance resource
+    smart_defaults:
+      instance_class: '{config_db_instance_class}'
+      allocated_storage: '{config_allocated_storage}'
+      engine: postgres
+      engine_version: '{config_engine_version}'
+      identifier: '{namer_rds}'
+      db_name: '{config_db_name}'
+      username: '{config_db_username}'
+      password: '{db_password}'
+      db_subnet_group_name: '{config_name}'
+      vpc_security_group_ids:
+      - '{sg_id}'
+      publicly_accessible: '{config_publicly_accessible}'
+      multi_az: '{computed}'
+      storage_type: gp3
+      storage_encrypted: '{config_storage_encrypted}'
+      backup_retention_period: '{config_backup_retention_days}'
+      skip_final_snapshot: '{config_skip_final_snapshot}'
+      performance_insights_enabled: true
+      performance_insights_retention_period: 7
+      copy_tags_to_snapshot: true
+      deletion_protection: true
+      tags:
+        Name: '{db_identifier}'
+  secg-db-{project}-{environment}-{region_short}:
+    type: aws:ec2:SecurityGroup
+    name: secg-db-{project}-{environment}-{region_short}
+    always_created: true
+    description: Security group for database tier
+    smart_defaults:
+      vpc_id: '{config_id}'
+      description: Security group for database tier
+      egress:
+      - protocol: '-1'
+        from_port: 0
+        to_port: 0
+        cidr_blocks:
+        - 0.0.0.0/0
+      tags:
+        Name: '{db_sg_name}'
+        Project: '{project_name}'
+        Environment: prod
+        Tier: db
+        ManagedBy: Archie
+  sng-db-{config_project}-main-nonprod-{config_region_short}:
+    type: aws:rds:SubnetGroup
+    name: sng-db-{config_project}-main-nonprod-{config_region_short}
+    always_created: true
+    description: SubnetGroup resource
+    smart_defaults:
+      subnet_ids: '{config_subnet_ids}'
+      description: Subnet group for {db_identifier}
+      tags:
+        Name: '{sng_name}'
+  vpc-{project}-{environment}-{region_short}-{network_num}:
+    type: aws:ec2:Vpc
+    name: vpc-{project}-{environment}-{region_short}-{network_num}
+    always_created: true
+    description: Virtual Private Cloud with CIDR {cidr_block}, DNS support enabled
+    smart_defaults:
+      cidr_block: '{cidr_block}'
+      enable_dns_support: '{computed}'
+      enable_dns_hostnames: '{computed}'
+      instance_tenancy: '{computed}'
+      tags:
+        Name: '{vpc_resource_name}'
+        Project: '{project_name}'
+        Environment: prod
+        ManagedBy: Archie
+  igw-main-{project}-{environment}-{region_short}:
+    type: aws:ec2:InternetGateway
+    name: igw-main-{project}-{environment}-{region_short}
+    always_created: true
+    description: Internet Gateway providing public internet connectivity for the VPC
+    smart_defaults:
+      vpc_id: '{config_id}'
+      tags:
+        Name: '{igw_name}'
+        Project: '{project_name}'
+        Environment: prod
+  rt-public-{project}-{environment}-{region_short}:
+    type: aws:ec2:RouteTable
+    name: rt-public-{project}-{environment}-{region_short}
+    always_created: true
+    description: Route table for public tier network traffic routing
+    smart_defaults:
+      vpc_id: '{config_id}'
+      tags:
+        Name: '{public_rt_name}'
+        Project: '{project_name}'
+        Environment: prod
+        Tier: public
+  vpce-s3-{project}-{environment}-{region_short}-gw:
+    type: aws:ec2:VpcEndpoint
+    name: vpce-s3-{project}-{environment}-{region_short}-gw
+    always_created: true
+    description: S3 Gateway VPC Endpoint for private S3 service access
+    smart_defaults:
+      vpc_id: '{config_id}'
+      service_name: com.amazonaws.{region}.s3
+      vpc_endpoint_type: Gateway
+      route_table_ids: '{endpoint_rt_ids}'
+      tags:
+        Name: '{s3_name}'
+        Project: '{project_name}'
+        Environment: prod
+  vpce-dynamodb-{project}-{environment}-{region_short}-gw:
+    type: aws:ec2:VpcEndpoint
+    name: vpce-dynamodb-{project}-{environment}-{region_short}-gw
+    always_created: true
+    description: DYNAMODB Gateway VPC Endpoint for private DYNAMODB service access
+    smart_defaults:
+      vpc_id: '{config_id}'
+      service_name: com.amazonaws.{region}.dynamodb
+      vpc_endpoint_type: Gateway
+      route_table_ids: '{endpoint_rt_ids}'
+      tags:
+        Name: '{ddb_name}'
+        Project: '{project_name}'
+        Environment: prod
+  secg-web-{project}-{environment}-{region_short}:
+    type: aws:ec2:SecurityGroup
+    name: secg-web-{project}-{environment}-{region_short}
+    always_created: true
+    description: Security group for web tier - allows HTTP/HTTPS traffic
+    smart_defaults:
+      vpc_id: '{config_id}'
+      description: Security group for web tier - allows HTTP/HTTPS traffic
+      ingress:
+      - protocol: tcp
+        from_port: 80
+        to_port: 80
+        cidr_blocks:
+        - 0.0.0.0/0
+      - protocol: tcp
+        from_port: 443
+        to_port: 443
+        cidr_blocks:
+        - 0.0.0.0/0
+      egress:
+      - protocol: '-1'
+        from_port: 0
+        to_port: 0
+        cidr_blocks:
+        - 0.0.0.0/0
+      tags:
+        Name: '{web_sg_name}'
+        Project: '{project_name}'
+        Environment: prod
+        Tier: web
+        ManagedBy: Archie
+  secg-app-{project}-{environment}-{region_short}:
+    type: aws:ec2:SecurityGroup
+    name: secg-app-{project}-{environment}-{region_short}
+    always_created: true
+    description: Security group for application tier
+    smart_defaults:
+      vpc_id: '{config_id}'
+      description: Security group for application tier
+      egress:
+      - protocol: '-1'
+        from_port: 0
+        to_port: 0
+        cidr_blocks:
+        - 0.0.0.0/0
+      tags:
+        Name: '{app_sg_name}'
+        Project: '{project_name}'
+        Environment: prod
+        Tier: app
+        ManagedBy: Archie
+  secg-access-{project}-{environment}-{region_short}:
+    type: aws:ec2:SecurityGroup
+    name: secg-access-{project}-{environment}-{region_short}
+    always_created: true
+    description: Security group for SSH/RDP access
+    smart_defaults:
+      vpc_id: '{config_id}'
+      description: Security group for SSH/RDP access
+      ingress: '{access_sg_ingress}'
+      egress:
+      - protocol: '-1'
+        from_port: 0
+        to_port: 0
+        cidr_blocks:
+        - 0.0.0.0/0
+      tags:
+        Name: '{access_sg_name}'
+        Project: '{project_name}'
+        Environment: prod
+        Tier: access
+        ManagedBy: Archie
+  route-00000-{project}-{environment}-{region_short}-igw:
+    type: aws:ec2:Route
+    name: route-00000-{project}-{environment}-{region_short}-igw
+    always_created: true
+    description: Route directing 0.0.0.0/0 traffic to Internet Gateway
+    smart_defaults:
+      route_table_id: '{config_id}'
+      destination_cidr_block: 0.0.0.0/0
+      gateway_id: '{config_id}'
+  rt-private-{project}-{environment}-{region_short}-1:
+    type: aws:ec2:RouteTable
+    name: rt-private-{project}-{environment}-{region_short}-1
+    always_created: true
+    description: Route table for private tier network traffic routing
+    smart_defaults:
+      vpc_id: '{config_id}'
+      tags:
+        Name: '{priv_rt_name}'
+        Project: '{project_name}'
+        Environment: prod
+        Tier: private
+        AZ: '{az}'
+  rt-private-{project}-{environment}-{region_short}-2:
+    type: aws:ec2:RouteTable
+    name: rt-private-{project}-{environment}-{region_short}-2
+    always_created: true
+    description: Route table for private tier network traffic routing
+    smart_defaults:
+      vpc_id: '{config_id}'
+      tags:
+        Name: '{priv_rt_name}'
+        Project: '{project_name}'
+        Environment: prod
+        Tier: private
+        AZ: '{az}'
+  rt-private-{project}-{environment}-{region_short}-3:
+    type: aws:ec2:RouteTable
+    name: rt-private-{project}-{environment}-{region_short}-3
+    always_created: true
+    description: Route table for private tier network traffic routing
+    smart_defaults:
+      vpc_id: '{config_id}'
+      tags:
+        Name: '{priv_rt_name}'
+        Project: '{project_name}'
+        Environment: prod
+        Tier: private
+        AZ: '{az}'
+  pubsub-{project}-{environment}-{region_short}-{az_short}-{subnet_num}-1:
+    type: aws:ec2:Subnet
+    name: pubsub-{project}-{environment}-{region_short}-{az_short}-{subnet_num}-1
+    always_created: true
+    description: 'Public subnet for public tier workloads (CIDR: {pub_cidr})'
+    smart_defaults:
+      vpc_id: '{config_id}'
+      cidr_block: '{pub_cidr}'
+      availability_zone: '{az}'
+      map_public_ip_on_launch: true
+      tags:
+        Name: '{pub_sub_name}'
+        Project: '{project_name}'
+        Environment: prod
+        Tier: public
+        AZ: '{az}'
+  pubsub-{project}-{environment}-{region_short}-{az_short}-{subnet_num}-2:
+    type: aws:ec2:Subnet
+    name: pubsub-{project}-{environment}-{region_short}-{az_short}-{subnet_num}-2
+    always_created: true
+    description: 'Public subnet for public tier workloads (CIDR: {pub_cidr})'
+    smart_defaults:
+      vpc_id: '{config_id}'
+      cidr_block: '{pub_cidr}'
+      availability_zone: '{az}'
+      map_public_ip_on_launch: true
+      tags:
+        Name: '{pub_sub_name}'
+        Project: '{project_name}'
+        Environment: prod
+        Tier: public
+        AZ: '{az}'
+  pubsub-{project}-{environment}-{region_short}-{az_short}-{subnet_num}-3:
+    type: aws:ec2:Subnet
+    name: pubsub-{project}-{environment}-{region_short}-{az_short}-{subnet_num}-3
+    always_created: true
+    description: 'Public subnet for public tier workloads (CIDR: {pub_cidr})'
+    smart_defaults:
+      vpc_id: '{config_id}'
+      cidr_block: '{pub_cidr}'
+      availability_zone: '{az}'
+      map_public_ip_on_launch: true
+      tags:
+        Name: '{pub_sub_name}'
+        Project: '{project_name}'
+        Environment: prod
+        Tier: public
+        AZ: '{az}'
+  privsub-{project}-{environment}-{region_short}-{az_short}-{subnet_num}-1:
+    type: aws:ec2:Subnet
+    name: privsub-{project}-{environment}-{region_short}-{az_short}-{subnet_num}-1
+    always_created: true
+    description: 'Private subnet for private tier workloads (CIDR: {priv_cidr})'
+    smart_defaults:
+      vpc_id: '{config_id}'
+      cidr_block: '{priv_cidr}'
+      availability_zone: '{az}'
+      map_public_ip_on_launch: false
+      tags:
+        Name: '{priv_sub_name}'
+        Project: '{project_name}'
+        Environment: prod
+        Tier: private
+        AZ: '{az}'
+  privsub-{project}-{environment}-{region_short}-{az_short}-{subnet_num}-2:
+    type: aws:ec2:Subnet
+    name: privsub-{project}-{environment}-{region_short}-{az_short}-{subnet_num}-2
+    always_created: true
+    description: 'Private subnet for private tier workloads (CIDR: {priv_cidr})'
+    smart_defaults:
+      vpc_id: '{config_id}'
+      cidr_block: '{priv_cidr}'
+      availability_zone: '{az}'
+      map_public_ip_on_launch: false
+      tags:
+        Name: '{priv_sub_name}'
+        Project: '{project_name}'
+        Environment: prod
+        Tier: private
+        AZ: '{az}'
+  privsub-{project}-{environment}-{region_short}-{az_short}-{subnet_num}-3:
+    type: aws:ec2:Subnet
+    name: privsub-{project}-{environment}-{region_short}-{az_short}-{subnet_num}-3
+    always_created: true
+    description: 'Private subnet for private tier workloads (CIDR: {priv_cidr})'
+    smart_defaults:
+      vpc_id: '{config_id}'
+      cidr_block: '{priv_cidr}'
+      availability_zone: '{az}'
+      map_public_ip_on_launch: false
+      tags:
+        Name: '{priv_sub_name}'
+        Project: '{project_name}'
+        Environment: prod
+        Tier: private
+        AZ: '{az}'
+  isolatedsub-{project}-{environment}-{region_short}-{az_short}-{subnet_num}-1:
+    type: aws:ec2:Subnet
+    name: isolatedsub-{project}-{environment}-{region_short}-{az_short}-{subnet_num}-1
+    always_created: true
+    description: 'Private subnet for isolated tier workloads (CIDR: {iso_cidr})'
+    smart_defaults:
+      vpc_id: '{config_id}'
+      cidr_block: '{iso_cidr}'
+      availability_zone: '{az}'
+      map_public_ip_on_launch: false
+      tags:
+        Name: '{iso_sub_name}'
+        Project: '{project_name}'
+        Environment: prod
+        Tier: isolated
+        AZ: '{az}'
+  isolatedsub-{project}-{environment}-{region_short}-{az_short}-{subnet_num}-2:
+    type: aws:ec2:Subnet
+    name: isolatedsub-{project}-{environment}-{region_short}-{az_short}-{subnet_num}-2
+    always_created: true
+    description: 'Private subnet for isolated tier workloads (CIDR: {iso_cidr})'
+    smart_defaults:
+      vpc_id: '{config_id}'
+      cidr_block: '{iso_cidr}'
+      availability_zone: '{az}'
+      map_public_ip_on_launch: false
+      tags:
+        Name: '{iso_sub_name}'
+        Project: '{project_name}'
+        Environment: prod
+        Tier: isolated
+        AZ: '{az}'
+  isolatedsub-{project}-{environment}-{region_short}-{az_short}-{subnet_num}-3:
+    type: aws:ec2:Subnet
+    name: isolatedsub-{project}-{environment}-{region_short}-{az_short}-{subnet_num}-3
+    always_created: true
+    description: 'Private subnet for isolated tier workloads (CIDR: {iso_cidr})'
+    smart_defaults:
+      vpc_id: '{config_id}'
+      cidr_block: '{iso_cidr}'
+      availability_zone: '{az}'
+      map_public_ip_on_launch: false
+      tags:
+        Name: '{iso_sub_name}'
+        Project: '{project_name}'
+        Environment: prod
+        Tier: isolated
+        AZ: '{az}'
+  rta-{tier}-{project}-{environment}-{region_short}-1-1:
+    type: aws:ec2:RouteTableAssociation
+    name: rta-{tier}-{project}-{environment}-{region_short}-1-1
+    always_created: true
+    description: Associates a route table with a subnet for traffic routing
+    smart_defaults:
+      subnet_id: '{id}'
+      route_table_id: '{id}'
+  rta-{tier}-{project}-{environment}-{region_short}-1-2:
+    type: aws:ec2:RouteTableAssociation
+    name: rta-{tier}-{project}-{environment}-{region_short}-1-2
+    always_created: true
+    description: Associates a route table with a subnet for traffic routing
+    smart_defaults:
+      subnet_id: '{id}'
+      route_table_id: '{id}'
+  rta-{tier}-{project}-{environment}-{region_short}-1-3:
+    type: aws:ec2:RouteTableAssociation
+    name: rta-{tier}-{project}-{environment}-{region_short}-1-3
+    always_created: true
+    description: Associates a route table with a subnet for traffic routing
+    smart_defaults:
+      subnet_id: '{id}'
+      route_table_id: '{id}'
+  vpce-rds-{project}-{environment}-{region_short}-if:
+    type: aws:ec2:VpcEndpoint
+    name: vpce-rds-{project}-{environment}-{region_short}-if
+    description: RDS Interface VPC Endpoint for private RDS service access
+    conditional:
+      field: enable_rds_endpoint
+    smart_defaults:
+      vpc_id: '{config_id}'
+      service_name: com.amazonaws.{region}.rds
+      vpc_endpoint_type: Interface
+      subnet_ids: '{private_subnet_ids}'
+      security_group_ids:
+      - '{id}'
+      private_dns_enabled: true
+      tags:
+        Name: '{rds_svc_name}'
+        Project: '{project_name}'
+        Environment: prod
+  s3-{purpose}-{project}-{environment}-{region_short}:
+    type: aws:s3:Bucket
+    name: s3-{purpose}-{project}-{environment}-{region_short}
+    description: S3 bucket for VPC Flow Logs storage
+    conditional:
+      field: enable_flow_logs
+    smart_defaults:
+      bucket: '{bucket_name}'
+      force_destroy: true
+      tags:
+        Name: '{bucket_name}'
+        Project: '{project_name}'
+        Environment: prod
+        Purpose: VPC Flow Logs
+  '{bucket_name}-lifecycle':
+    type: aws:s3:BucketLifecycleConfigurationV2
+    name: '{bucket_name}-lifecycle'
+    description: S3 bucket lifecycle rules for automatic log retention and deletion
+    conditional:
+      field: enable_flow_logs
+    smart_defaults:
+      bucket: '{id}'
+      rules:
+      - status: Enabled
+  fl-{scope}-{project}-{environment}-{region_short}-{traffic}:
+    type: aws:ec2:FlowLog
+    name: fl-{scope}-{project}-{environment}-{region_short}-{traffic}
+    description: VPC Flow Logs capturing ALL network traffic to S3
+    conditional:
+      field: enable_flow_logs
+    smart_defaults:
+      vpc_id: '{config_id}'
+      traffic_type: ALL
+      log_destination_type: s3
+      log_destination: '{arn}'
+      max_aggregation_interval: 600
+      destination_options:
+        file_format: plain-text
+        hive_compatible_partitions: false
+        per_hour_partition: false
+      tags:
+        Name: '{flow_name}'
+        Project: '{project_name}'
+        Environment: prod
+  route-00000-{project}-{environment}-{region_short}-{target}-1:
+    type: aws:ec2:Route
+    name: route-00000-{project}-{environment}-{region_short}-{target}-1
+    description: Route directing 0.0.0.0/0 traffic to NAT Gateway
+    conditional: &id001
+      field: enable_nat_gateway
+    smart_defaults:
+      route_table_id: '{id}'
+      destination_cidr_block: 0.0.0.0/0
+      nat_gateway_id: '{id}'
+  route-00000-{project}-{environment}-{region_short}-{target}-2:
+    type: aws:ec2:Route
+    name: route-00000-{project}-{environment}-{region_short}-{target}-2
+    description: Route directing 0.0.0.0/0 traffic to NAT Gateway
+    conditional: *id001
+    smart_defaults:
+      route_table_id: '{id}'
+      destination_cidr_block: 0.0.0.0/0
+      nat_gateway_id: '{id}'
+  route-00000-{project}-{environment}-{region_short}-{target}-3:
+    type: aws:ec2:Route
+    name: route-00000-{project}-{environment}-{region_short}-{target}-3
+    description: Route directing 0.0.0.0/0 traffic to NAT Gateway
+    conditional: *id001
+    smart_defaults:
+      route_table_id: '{id}'
+      destination_cidr_block: 0.0.0.0/0
+      nat_gateway_id: '{id}'
+  vpce-{service}-{project}-{environment}-{region_short}-if:
+    type: aws:ec2:VpcEndpoint
+    name: vpce-{service}-{project}-{environment}-{region_short}-if
+    description: '{SVC} Interface VPC Endpoint for private {SVC} service access'
+    conditional:
+      field: enable_ssm_endpoints
+    smart_defaults:
+      vpc_id: '{config_id}'
+      service_name: com.amazonaws.{region}.{svc}
+      vpc_endpoint_type: Interface
+      subnet_ids: '{private_subnet_ids}'
+      security_group_ids:
+      - '{id}'
+      private_dns_enabled: true
+      tags:
+        Name: '{svc_name}'
+        Project: '{project_name}'
+        Environment: prod
+  eip-{purpose}-{project}-{environment}-{region_short}-{az_short}-1:
+    type: aws:ec2:Eip
+    name: eip-{purpose}-{project}-{environment}-{region_short}-{az_short}-1
+    description: Elastic IP address for NAT Gateway attachment
+    conditional: &id002
+      field: enable_nat_gateway
+    smart_defaults:
+      domain: vpc
+      tags:
+        Name: '{nat_eip_name}'
+        Project: '{project_name}'
+        Environment: prod
+        AZ: '{az}'
+  eip-{purpose}-{project}-{environment}-{region_short}-{az_short}-2:
+    type: aws:ec2:Eip
+    name: eip-{purpose}-{project}-{environment}-{region_short}-{az_short}-2
+    description: Elastic IP address for NAT Gateway attachment
+    conditional: *id002
+    smart_defaults:
+      domain: vpc
+      tags:
+        Name: '{nat_eip_name}'
+        Project: '{project_name}'
+        Environment: prod
+        AZ: '{az}'
+  eip-{purpose}-{project}-{environment}-{region_short}-{az_short}-3:
+    type: aws:ec2:Eip
+    name: eip-{purpose}-{project}-{environment}-{region_short}-{az_short}-3
+    description: Elastic IP address for NAT Gateway attachment
+    conditional: *id002
+    smart_defaults:
+      domain: vpc
+      tags:
+        Name: '{nat_eip_name}'
+        Project: '{project_name}'
+        Environment: prod
+        AZ: '{az}'
+  nat-gw-{project}-{environment}-{region_short}-{az_short}-1:
+    type: aws:ec2:NatGateway
+    name: nat-gw-{project}-{environment}-{region_short}-{az_short}-1
+    description: NAT Gateway providing outbound internet access for private subnets
+    conditional: &id003
+      field: enable_nat_gateway
+    smart_defaults:
+      subnet_id: '{id}'
+      allocation_id: '{id}'
+      tags:
+        Name: '{nat_gw_name}'
+        Project: '{project_name}'
+        Environment: prod
+        AZ: '{az}'
+  nat-gw-{project}-{environment}-{region_short}-{az_short}-2:
+    type: aws:ec2:NatGateway
+    name: nat-gw-{project}-{environment}-{region_short}-{az_short}-2
+    description: NAT Gateway providing outbound internet access for private subnets
+    conditional: *id003
+    smart_defaults:
+      subnet_id: '{id}'
+      allocation_id: '{id}'
+      tags:
+        Name: '{nat_gw_name}'
+        Project: '{project_name}'
+        Environment: prod
+        AZ: '{az}'
+  nat-gw-{project}-{environment}-{region_short}-{az_short}-3:
+    type: aws:ec2:NatGateway
+    name: nat-gw-{project}-{environment}-{region_short}-{az_short}-3
+    description: NAT Gateway providing outbound internet access for private subnets
+    conditional: *id003
+    smart_defaults:
+      subnet_id: '{id}'
+      allocation_id: '{id}'
+      tags:
+        Name: '{nat_gw_name}'
+        Project: '{project_name}'
+        Environment: prod
+        AZ: '{az}'
+configuration:
+  properties:
+    cidr_block:
+      type: string
+      default: random
+      title: VPC CIDR Block
+      description: IPv4 CIDR block for the VPC (use 'random' for auto-generated)
+      order: 10
+      group: Network Configuration
+    enable_dns_support:
+      type: boolean
+      default: true
+      title: Enable DNS Support
+      description: Enable DNS resolution in the VPC
+      order: 11
+      group: Network Configuration
+    enable_dns_hostnames:
+      type: boolean
+      default: true
+      title: Enable DNS Hostnames
+      description: Enable DNS hostnames for instances
+      order: 12
+      group: Network Configuration
+    az_1:
+      type: string
+      default: ''
+      title: Availability Zone 1
+      description: First availability zone (auto-selected if empty)
+      order: 20
+      group: Availability Zones
+    az_2:
+      type: string
+      default: ''
+      title: Availability Zone 2
+      description: Second availability zone (auto-selected if empty)
+      order: 21
+      group: Availability Zones
+    az_3:
+      type: string
+      default: ''
+      title: Availability Zone 3
+      description: Third availability zone (auto-selected if empty)
+      order: 22
+      group: Availability Zones
+    enable_nat_gateway:
+      type: boolean
+      default: true
+      title: Enable NAT Gateway
+      description: Creates NAT Gateway(s) for private subnet internet access
+      order: 100
+      group: High Availability & Cost
+      cost_impact: +$96/month
+    nat_gateway_count:
+      type: integer
+      default: 3
+      title: NAT Gateway Count
+      description: Number of NAT Gateways (1 or 3 for HA)
+      order: 101
+      group: High Availability & Cost
+      cost_impact: +$32-96/month
+    enable_flow_logs:
+      type: boolean
+      default: true
+      title: Enable VPC Flow Logs
+      description: Capture network traffic logs to S3 for security monitoring
+      order: 110
+      group: High Availability & Cost
+      cost_impact: +$3/month
+    flow_log_retention:
+      type: integer
+      default: 30
+      title: Flow Logs Retention (days)
+      description: How long to retain flow logs in S3 before auto-deletion
+      order: 111
+      group: High Availability & Cost
+    enable_nacls:
+      type: boolean
+      default: true
+      title: Enable Network ACLs
+      description: Create Network ACLs for subnet-level security
+      order: 120
+      group: Security Settings
+      cost_impact: $0/month
+    enable_rds_endpoint:
+      type: boolean
+      default: false
+      title: Enable RDS VPC Endpoint
+      description: Interface endpoint for RDS API calls
+      order: 132
+      group: VPC Endpoints
+      cost_impact: +$42/month
+    enable_ssm_endpoints:
+      type: boolean
+      title: Enable SSM Endpoints
+      description: Interface Endpoints for secure management
+      default: true
+      help_text: Required for secure instance access without SSH/IGW.
+      group: Security & Connectivity
+      isEssential: true
+      order: 171
+    ssh_access_ip:
+      type: string
+      title: Admin Access IP (SSH/RDP)
+      description: IP address or CIDR block (required for advanced mode)
+      placeholder: e.g. 203.0.113.25/32
+      group: Security & Connectivity
+      visibleIf:
+        ssh_mode: enabled
+      isEssential: true
+      order: 161
+    db_header:
+      type: separator
+      title: Database Configuration
+      group: Database Settings
+      isEssential: true
+      order: 80
+    dbName:
+      type: string
+      title: Database Name
+      description: Primary database name
+      default: mydb
+      group: Database Settings
+      isEssential: true
+      order: 81
+    dbUsername:
+      type: string
+      title: Master Username
+      description: Database administrator username
+      default: postgres
+      group: Database Settings
+      isEssential: true
+      order: 82
+    engineVersion:
+      type: string
+      title: Engine Version
+      description: Version of postgres
+      default: '15'
+      group: Database Settings
+      order: 83
+    instanceClass:
+      type: string
+      title: Instance Class
+      description: Compute and memory capacity
+      default: db.t3.micro
+      enum:
+      - db.t3.micro
+      - db.t3.small
+      - db.t3.medium
+      - db.t3.large
+      - db.m5.large
+      group: Database Settings
+      isEssential: true
+      order: 84
+    allocatedStorage:
+      type: number
+      title: Allocated Storage (GB)
+      description: Initial storage capacity
+      default: 20
+      group: Database Settings
+      order: 85
+    maxAllocatedStorage:
+      type: number
+      title: Max Storage (GB)
+      description: Auto-scaling storage limit
+      default: 100
+      group: Database Settings
+      order: 86
+    backupRetentionDays:
+      type: number
+      title: Backup Retention (Days)
+      description: Number of days to keep backups
+      default: 3
+      group: Database Settings
+      order: 87
+    security_header:
+      type: separator
+      title: Security Group Configuration
+      group: Security & Connectivity
+      isEssential: true
+      order: 155
+    ssh_mode:
+      type: select
+      title: Access Mode
+      description: Choose between secure SSM access or emergency SSH/RDP
+      default: ssm-only
+      options:
+      - label: Standard (SSM Only)
+        value: ssm-only
+      - label: Advanced (Enable SSH/RDP)
+        value: enabled
+      group: Security & Connectivity
+      isEssential: false
+      order: 160
+      help_text: 'Standard Security Policy
+
+        SSH and RDP ports remain closed. Secure management via AWS Systems Manager (SSM) is enabled by default.'
+    endpoint_header:
+      type: separator
+      title: Endpoint Configuration
+      group: Security & Connectivity
+      isEssential: true
+      order: 170
+    enable_s3_endpoint:
+      type: boolean
+      title: Enable S3 Endpoint
+      description: Private gateway access to S3
+      default: true
+      group: Security & Connectivity
+      isEssential: true
+      order: 172
+    enable_dynamodb_endpoint:
+      type: boolean
+      title: Enable DynamoDB Endpoint
+      description: Private gateway access to DynamoDB
+      default: true
+      group: Security & Connectivity
+      isEssential: true
+      order: 173
+    port_header:
+      type: separator
+      title: Custom Port Overrides
+      group: Security & Connectivity
+      isEssential: true
+      order: 180
+    web_port:
+      type: number
+      title: Web Traffic Port
+      description: Standard port for web traffic (HTTP)
+      default: 80
+      group: Security & Connectivity
+      isEssential: true
+      order: 181
+    app_port:
+      type: number
+      title: Application Port
+      description: Port for internal application services
+      default: 8080
+      group: Security & Connectivity
+      isEssential: true
+      order: 182
+    db_port:
+      type: number
+      title: Database Port
+      description: Port for database connections
+      default: 5432
+      group: Security & Connectivity
+      isEssential: true
+      order: 183
+  required:
+  - project_name
+  - dbUsername
+  - dbName
+  - region
+outputs:
+- name: db_instance_id
+  description: 'Output: db_instance_id'
+- name: db_endpoint
+  description: 'Output: db_endpoint'
+- name: db_address
+  description: 'Output: db_address'
+- name: db_port
+  description: 'Output: db_port'
+- name: connection_string
+  description: 'Output: connection_string'
+- name: db_password_secret_arn
+  description: 'Output: db_password_secret_arn'

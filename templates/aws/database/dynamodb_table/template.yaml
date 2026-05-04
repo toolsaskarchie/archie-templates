@@ -1,0 +1,203 @@
+metadata:
+  name: dynamodb-table
+  title: DynamoDB NoSQL Table
+  description: A high-performance serverless NoSQL database designed for fast, granular data access.
+  category: database
+  version: latest
+  author: InnovativeApps
+  cloud: aws
+  tags:
+  - dynamodb
+  - nosql
+  - aws
+  - serverless
+  features:
+  - Serverless On-Demand Scaling
+  - Global Secondary Indexes (GSI)
+  - Native SSE Encryption
+  - Automated TTL Expiration
+  - 99.99% Availability SLA
+  estimated_cost: $1-25/month
+  complexity: intermediate
+  deployment_time: 2-4 minutes
+  marketplace_group: DATABASES
+  pillars:
+  - title: Operational Excellence
+    score: excellent
+    score_color: '#10b981'
+    description: Fully managed serverless database with zero operational overhead.
+    practices:
+    - AWS-managed infrastructure eliminates patching and maintenance
+    - Infrastructure as Code with Pulumi for repeatable deployments
+    - Standard tagging for cost allocation and resource tracking
+    - On-demand capacity mode auto-scales without manual intervention
+    - TTL automates data lifecycle management
+  - title: Security
+    score: excellent
+    score_color: '#10b981'
+    description: Encrypted at rest with KMS and fine-grained IAM access control.
+    practices:
+    - Server-side encryption at rest with AWS KMS
+    - IAM-based access control for fine-grained permissions
+    - VPC endpoint support for private network access
+    - CloudTrail integration for API-level audit logging
+    - Encryption in transit via TLS for all connections
+  - title: Reliability
+    score: excellent
+    score_color: '#10b981'
+    description: 99.99% SLA with automatic multi-AZ replication.
+    practices:
+    - Automatic data replication across three availability zones
+    - Point-in-time recovery for continuous backups
+    - On-demand backup and restore for disaster recovery
+    - 99.99% availability SLA for single-region tables
+    - Global tables option for multi-region resilience
+  - title: Performance Efficiency
+    score: excellent
+    score_color: '#10b981'
+    description: Single-digit millisecond latency at any scale.
+    practices:
+    - Consistent single-digit millisecond read and write latency
+    - Global Secondary Indexes for flexible query patterns
+    - On-demand mode scales instantly to handle traffic spikes
+    - DAX caching option for microsecond read latency
+    - Partition-level throughput for predictable performance
+  - title: Cost Optimization
+    score: excellent
+    score_color: '#10b981'
+    description: Pay-per-request pricing with no minimum commitments.
+    practices:
+    - On-demand billing charges only for actual reads and writes
+    - No idle costs when table is not being accessed
+    - TTL automatically deletes expired data to reduce storage costs
+    - Reserved capacity option for predictable workloads
+    - Free tier includes 25 GB storage and 25 WCU/RCU
+  - title: Sustainability
+    score: excellent
+    score_color: '#10b981'
+    description: Serverless architecture eliminates idle resource waste.
+    practices:
+    - Serverless model shares infrastructure across customers
+    - On-demand scaling eliminates over-provisioned capacity
+    - TTL reduces unnecessary data storage over time
+    - AWS commitment to 100% renewable energy by 2025
+  cost_tier: low
+  use_cases:
+  - User sessions & profiles
+  - High-volume catalog data
+  - Serverless application state
+  required_config:
+  - project_name
+  - table_name
+  outputs:
+  - table_name - The unique table identifier
+  - table_arn - Resource Name for IAM
+  - table_id - Short identifier
+  architecture:
+    summary: DynamoDB Table Template
+  action_name: aws-dynamodb-table
+  environment: prod
+  tier: template
+resources:
+  '{project_name}':
+    type: aws:dynamodb:Table
+    name: '{project_name}'
+    always_created: true
+    description: Table resource
+    smart_defaults:
+      attributes: '{config_attributes}'
+      hash_key: '{config_hash_key}'
+      range_key: '{config_range_key}'
+      billing_mode: '{config_billing_mode}'
+      read_capacity: '{config_read_capacity}'
+      write_capacity: '{config_write_capacity}'
+      global_secondary_indexes: '{config_global_secondary_indexes}'
+      server_side_encryption: '{config_server_side_encryption}'
+      ttl: '{config_ttl}'
+      tags: '{tags}'
+configuration:
+  properties:
+    essentials_header:
+      type: separator
+      title: Template Essentials
+      group: Essentials
+      isEssential: true
+      order: 0
+    project_name:
+      type: string
+      title: Project Name
+      description: Unique name for this deployment (lowercase, no spaces)
+      default: archie-db
+      group: Essentials
+      isEssential: true
+      order: 1
+    region:
+      type: string
+      title: AWS Region
+      description: Region to deploy the table
+      default: us-east-1
+      group: Essentials
+      isEssential: true
+      order: 2
+    table_header:
+      type: separator
+      title: Table Settings
+      group: Table Settings
+      isEssential: true
+      order: 10
+    tableName:
+      type: string
+      title: Table Name
+      description: Name of the DynamoDB table
+      group: Table Settings
+      isEssential: true
+      order: 11
+    hashKey:
+      type: string
+      title: Partition Key (Hash Key)
+      description: Primary key attribute name
+      default: id
+      group: Table Settings
+      isEssential: true
+      order: 12
+    rangeKey:
+      type: string
+      title: Sort Key (Range Key)
+      description: Optional sort key attribute name
+      group: Table Settings
+      order: 13
+    billingMode:
+      type: string
+      title: Billing Mode
+      description: Capacity billing model
+      default: PAY_PER_REQUEST
+      enum:
+      - PAY_PER_REQUEST
+      - PROVISIONED
+      group: Table Settings
+      isEssential: true
+      order: 14
+    readCapacity:
+      type: number
+      title: Read Capacity Units
+      description: Provisioned read throughput (only if billing mode is PROVISIONED)
+      default: 5
+      group: Table Settings
+      order: 15
+    writeCapacity:
+      type: number
+      title: Write Capacity Units
+      description: Provisioned write throughput (only if billing mode is PROVISIONED)
+      default: 5
+      group: Table Settings
+      order: 16
+  required:
+  - project_name
+  - region
+  - tableName
+  - hashKey
+outputs:
+- name: table_name
+  description: 'Output: table_name'
+- name: table_arn
+  description: 'Output: table_arn'

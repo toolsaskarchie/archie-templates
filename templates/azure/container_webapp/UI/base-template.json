@@ -1,0 +1,106 @@
+{
+  "_meta": {
+    "template_type": "base",
+    "template_id": "azure-container-webapp",
+    "description": "Base azure-container-webapp template extracted from Pulumi code",
+    "version": "1.0",
+    "generated_from": "pulumi.py",
+    "source_of_truth": "pulumi.py - This file is GENERATED. Edit pulumi.py instead."
+  },
+  "base_resources": [
+    {
+      "id": "azure-container-webapp:index-html",
+      "type": "aws:s3:BucketObject",
+      "name": "index-html",
+      "description": "Archie-branded congratulations page (index.html)",
+      "category": "Storage",
+      "full_defaults": {
+        "key": "index.html",
+        "content_type": "text/html",
+        "tags": {
+          "Name": "archie-index-html-{environment}",
+          "ManagedBy": "Archie"
+        }
+      },
+      "dependencies": [],
+      "dependents": [],
+      "optional": false
+    },
+    {
+      "id": "azure-container-webapp:styles-css",
+      "type": "aws:s3:BucketObject",
+      "name": "styles-css",
+      "description": "Styles with dark/light theme support (styles.css)",
+      "category": "Storage",
+      "full_defaults": {
+        "key": "styles.css",
+        "content_type": "text/css",
+        "tags": {
+          "Name": "archie-styles-css-{environment}",
+          "ManagedBy": "Archie"
+        }
+      },
+      "dependencies": [],
+      "dependents": [],
+      "optional": false
+    },
+    {
+      "id": "azure-container-webapp:{project_name}-rg",
+      "type": "azure-native:resources:ResourceGroup",
+      "name": "{project_name}-rg",
+      "description": "azure-native:resources:ResourceGroup resource",
+      "optional": false,
+      "full_defaults": {
+        "location": "{config_location}",
+        "tags": {
+          "ManagedBy": "Archie"
+        }
+      },
+      "dependencies": [],
+      "dependents": []
+    },
+    {
+      "id": "azure-container-webapp:{project_name}-plan",
+      "type": "azure-native:web:AppServicePlan",
+      "name": "{project_name}-plan",
+      "description": "azure-native:web:AppServicePlan resource",
+      "optional": false,
+      "full_defaults": {
+        "name": "plan-{safe_project}-{random_suffix}",
+        "resource_group_name": "{config_name}",
+        "location": "{config_location}",
+        "kind": "Linux",
+        "reserved": true,
+        "sku": {
+          "name": "F1",
+          "tier": "Free"
+        },
+        "tags": {
+          "ManagedBy": "Archie"
+        }
+      },
+      "dependencies": [],
+      "dependents": []
+    },
+    {
+      "id": "azure-container-webapp:{project_name}-app",
+      "type": "azure-native:web:WebApp",
+      "name": "{project_name}-app",
+      "description": "azure-native:web:WebApp resource",
+      "optional": false,
+      "full_defaults": {
+        "name": "{safe_project}-app-{random_suffix}",
+        "resource_group_name": "{config_name}",
+        "location": "{config_location}",
+        "server_farm_id": "{config_id}",
+        "https_only": true,
+        "site_config": "{computed}",
+        "tags": {
+          "ManagedBy": "Archie"
+        }
+      },
+      "dependencies": [],
+      "dependents": []
+    }
+  ]
+}

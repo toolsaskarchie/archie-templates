@@ -1,0 +1,7 @@
+# rds_postgres - Default Configuration
+# All resource configurations in one place for easy modification
+
+database:
+  engine: postgres
+  storage_type: gp3
+  port: 5432

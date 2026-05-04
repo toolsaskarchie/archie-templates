@@ -1,0 +1,163 @@
+metadata:
+  name: gcp-compute-nonprod
+  title: Compute Engine Instance
+  description: Standard virtual machine instance in Google Cloud Platform for development and testing.
+  category: compute
+  version: latest
+  author: InnovativeApps
+  cloud: gcp
+  environment: nonprod
+  base_cost: $10/month
+  tags:
+  - gcp
+  - compute
+  - vm
+  complexity: low
+  deployment_time: 2-5 minutes
+  marketplace_group: gcp-compute-group
+  pillars:
+  - title: Operational Excellence
+    score: good
+    score_color: '#f59e0b'
+    description: Automated VM provisioning with configurable parameters.
+    practices:
+    - Infrastructure as Code with Pulumi for repeatable deployments
+    - Configurable machine type, disk size, and image selection
+    - Allow stopping for update enables live configuration changes
+    - Resource labeling for cost tracking and organization
+    - SSH command output for immediate instance access
+  - title: Security
+    score: good
+    score_color: '#f59e0b'
+    description: Firewall rules scoped to specific protocols and sources.
+    practices:
+    - SSH access restricted to configurable source IP ranges
+    - HTTP/HTTPS firewall rules are optional and independently toggled
+    - Network tags isolate firewall rules to specific instances
+    - Optional external IP assignment for private-only deployments
+  - title: Reliability
+    score: good
+    score_color: '#f59e0b'
+    description: Single-instance deployment suitable for non-production workloads.
+    practices:
+    - Configurable boot disk type for performance requirements
+    - Zone-level deployment within regional infrastructure
+    - Allow stopping for update prevents unexpected termination
+    - Configurable disk size for workload-appropriate storage
+  - title: Performance Efficiency
+    score: good
+    score_color: '#f59e0b'
+    description: Right-sized compute with configurable machine types.
+    practices:
+    - Configurable machine type from e2-micro to n2-standard-8
+    - SSD persistent disk option for I/O-intensive workloads
+    - Configurable boot disk size up to 500 GB
+    - Network interface with optional external IP for direct access
+  - title: Cost Optimization
+    score: excellent
+    score_color: '#10b981'
+    description: Cost-effective compute for development and testing.
+    practices:
+    - Default e2-micro instance type minimizes hourly costs
+    - Optional external IP avoids static IP charges when not needed
+    - Non-production sizing avoids over-provisioning
+    - Single instance deployment with no redundant resources
+  - title: Sustainability
+    score: good
+    score_color: '#f59e0b'
+    description: Right-sized instance with minimal resource waste.
+    practices:
+    - E2 machine series uses dynamic resource management
+    - Configurable sizing prevents over-provisioning
+    - Google Cloud carbon-neutral infrastructure
+    - Single instance avoids unnecessary redundancy for non-production
+  architecture:
+    summary: GCP Compute Engine Non-Prod Template - Pattern B Implementation
+  action_name: gcp-compute-nonprod
+  tier: template
+  use_cases:
+  - Development and testing environments
+  - Staging infrastructure
+  - Non-production workloads
+resources:
+  '{instance_name}-allow-ssh':
+    type: gcp:compute:Firewall
+    name: '{instance_name}-allow-ssh'
+    always_created: true
+    description: Firewall resource
+    smart_defaults:
+      name: '{instance_name}-allow-ssh'
+      network: '{config_network}'
+      project: '{config_project}'
+      source_ranges: '{config_allowed_ssh_sources}'
+      target_tags: []
+      allows:
+      - protocol: tcp
+        ports:
+        - '22'
+      description: Allow SSH access to {instance_name}
+  '{config_instance_name}':
+    type: gcp:compute:Instance
+    name: '{config_instance_name}'
+    always_created: true
+    description: Instance resource
+    smart_defaults:
+      machine_type: '{config_machine_type}'
+      zone: '{config_zone}'
+      project: '{config_project}'
+      boot_disk: {}
+      network_interfaces:
+      - network: '{network}'
+      tags: <computed_network_tags>
+      labels: <resource_labels>
+      allow_stopping_for_update: true
+  '{instance_name}-allow-http':
+    type: gcp:compute:Firewall
+    name: '{instance_name}-allow-http'
+    description: Firewall resource
+    conditional:
+      field: enable_http
+    smart_defaults:
+      name: '{instance_name}-allow-http'
+      network: '{config_network}'
+      project: '{config_project}'
+      source_ranges: '{config_allowed_http_sources}'
+      target_tags:
+      - http-server
+      allows:
+      - protocol: tcp
+        ports:
+        - '80'
+      description: Allow HTTP access to {instance_name}
+  '{instance_name}-allow-https':
+    type: gcp:compute:Firewall
+    name: '{instance_name}-allow-https'
+    description: Firewall resource
+    conditional:
+      field: enable_https
+    smart_defaults:
+      name: '{instance_name}-allow-https'
+      network: '{config_network}'
+      project: '{config_project}'
+      source_ranges: '{config_allowed_http_sources}'
+      target_tags:
+      - https-server
+      allows:
+      - protocol: tcp
+        ports:
+        - '443'
+      description: Allow HTTPS access to {instance_name}
+configuration:
+  properties:
+    resource_labels:
+      type: string
+      title: Resource Labels
+      description: Get resource labels
+      group: General Settings
+      order: 1
+    computed_network_tags:
+      type: string
+      title: Computed Network Tags
+      description: Get computed network tags
+      group: General Settings
+      order: 2
