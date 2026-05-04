@@ -1,0 +1,377 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EC2 Load Balanced Deployment - Archie</title>
+    <link rel="stylesheet" href="styles.css">
+    <style>
+        /* Additional EC2-specific styles */
+        .instance-badge {
+            display: inline-block;
+            padding: 8px 16px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-radius: 20px;
+            font-weight: 600;
+            font-size: 14px;
+            margin: 10px 0;
+        }
+        
+        .lb-indicator {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            padding: 20px;
+            border-radius: 12px;
+            margin: 20px 0;
+            text-align: center;
+        }
+        
+        .lb-indicator h3 {
+            color: white;
+            margin: 0 0 10px 0;
+        }
+        
+        .lb-indicator p {
+            color: rgba(255, 255, 255, 0.9);
+            margin: 5px 0;
+        }
+        
+        .refresh-hint {
+            background: rgba(16, 185, 129, 0.1);
+            border: 2px solid #10b981;
+            border-radius: 8px;
+            padding: 15px;
+            margin: 20px 0;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        
+        .refresh-hint svg {
+            flex-shrink: 0;
+            color: #10b981;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <header class="header">
+            <div class="logo">
+                <img src="archie-logo.png" alt="Archie Logo" class="logo-image">
+                <div class="logo-content">
+                    <span class="logo-text">Archie</span>
+                    <span class="logo-subtitle">AI DevOps Assistant</span>
+                </div>
+            </div>
+            <div class="status-badge">
+                <span class="status-dot"></span>
+                Load Balanced EC2
+            </div>
+        </header>
+
+        <!-- Hero Section -->
+        <div class="hero">
+            <div class="success-icon">
+                <svg width="64" height="64" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <circle cx="32" cy="32" r="32" fill="#10b981" opacity="0.1"/>
+                    <circle cx="32" cy="32" r="24" fill="#10b981" opacity="0.2"/>
+                    <path d="M20 32L28 40L44 24" stroke="#10b981" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+            </div>
+            <h1>Load Balancing Active!</h1>
+            <p class="hero-subtitle">You're viewing content from an EC2 instance behind an Application Load Balancer</p>
+            <div class="instance-badge">Instance: {{INSTANCE_ID}}</div>
+        </div>
+
+        <!-- Load Balancer Info -->
+        <div class="lb-indicator">
+            <h3>🔄 Load Balancer in Action</h3>
+            <p><strong>ALB DNS:</strong> {{ALB_DNS}}</p>
+            <p><strong>Current Backend:</strong> {{INSTANCE_ID}} ({{PRIVATE_IP}})</p>
+        </div>
+
+        <!-- Refresh Hint -->
+        <div class="refresh-hint">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M21 10C21 10 18.995 7.26822 17.3662 5.63824C15.7373 4.00827 13.4864 3 11 3C6.02944 3 2 7.02944 2 12C2 16.9706 6.02944 21 11 21C15.1031 21 18.5649 18.2543 19.6482 14.5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                <path d="M21 10V4M21 10H15" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+            <div>
+                <strong>Pro Tip:</strong> Refresh this page multiple times to see different EC2 instances responding. 
+                The Instance ID and Private IP will change, proving load balancing is working!
+            </div>
+        </div>
+
+        <!-- EC2 Instance Details -->
+        <div class="deployment-info">
+            <h2>
+                <svg class="section-icon" width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <rect x="2" y="3" width="20" height="18" rx="2" stroke="currentColor" stroke-width="2"/>
+                    <path d="M7 3V21M17 3V21" stroke="currentColor" stroke-width="2"/>
+                    <path d="M2 8H22M2 13H22M2 18H22" stroke="currentColor" stroke-width="2"/>
+                </svg>
+                EC2 Instance Metadata
+            </h2>
+            <div class="info-grid">
+                <div class="info-card highlight">
+                    <div class="info-label">Instance ID</div>
+                    <div class="info-value mono">{{INSTANCE_ID}}</div>
+                </div>
+                <div class="info-card highlight">
+                    <div class="info-label">Instance Type</div>
+                    <div class="info-value">{{INSTANCE_TYPE}}</div>
+                </div>
+                <div class="info-card">
+                    <div class="info-label">Private IP</div>
+                    <div class="info-value mono">{{PRIVATE_IP}}</div>
+                </div>
+                <div class="info-card">
+                    <div class="info-label">Public IP</div>
+                    <div class="info-value mono">{{PUBLIC_IP}}</div>
+                </div>
+                <div class="info-card">
+                    <div class="info-label">Availability Zone</div>
+                    <div class="info-value">{{AVAILABILITY_ZONE}}</div>
+                </div>
+                <div class="info-card">
+                    <div class="info-label">AMI ID</div>
+                    <div class="info-value mono small">{{AMI_ID}}</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Deployment Information -->
+        <div class="deployment-info">
+            <h2>Deployment Information</h2>
+            <div class="info-grid">
+                <div class="info-card">
+                    <div class="info-label">Project Name</div>
+                    <div class="info-value">{{PROJECT_NAME}}</div>
+                </div>
+                <div class="info-card">
+                    <div class="info-label">Environment</div>
+                    <div class="info-value env-badge">{{ENVIRONMENT}}</div>
+                </div>
+                <div class="info-card">
+                    <div class="info-label">Stack Name</div>
+                    <div class="info-value mono">{{STACK_NAME}}</div>
+                </div>
+                <div class="info-card">
+                    <div class="info-label">AWS Region</div>
+                    <div class="info-value">{{REGION}}</div>
+                </div>
+                <div class="info-card">
+                    <div class="info-label">Deployed At</div>
+                    <div class="info-value">{{TIMESTAMP}}</div>
+                </div>
+                <div class="info-card">
+                    <div class="info-label">Template</div>
+                    <div class="info-value">{{TEMPLATE_NAME}}</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Resources Created -->
+        <div class="resources-section">
+            <h2>
+                <svg class="section-icon" width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <rect x="3" y="3" width="7" height="7" rx="1" stroke="currentColor" stroke-width="2"/>
+                    <rect x="14" y="3" width="7" height="7" rx="1" stroke="currentColor" stroke-width="2"/>
+                    <rect x="3" y="14" width="7" height="7" rx="1" stroke="currentColor" stroke-width="2"/>
+                    <rect x="14" y="14" width="7" height="7" rx="1" stroke="currentColor" stroke-width="2"/>
+                </svg>
+                Infrastructure Resources
+            </h2>
+            <div class="resource-list">
+                <div class="resource-item">
+                    <div class="resource-icon">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M21 16V8C21 6.89543 20.1046 6 19 6H5C3.89543 6 3 6.89543 3 8V16C3 17.1046 3.89543 18 5 18H19C20.1046 18 21 17.1046 21 16Z" stroke="currentColor" stroke-width="2"/>
+                            <path d="M11 12H13" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                        </svg>
+                    </div>
+                    <div class="resource-details">
+                        <div class="resource-name">Application Load Balancer</div>
+                        <div class="resource-desc">Distributes traffic across EC2 instances</div>
+                    </div>
+                    <div class="resource-status">✓ Active</div>
+                </div>
+                <div class="resource-item">
+                    <div class="resource-icon">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <rect x="2" y="3" width="20" height="18" rx="2" stroke="currentColor" stroke-width="2"/>
+                            <path d="M7 3V21" stroke="currentColor" stroke-width="2"/>
+                        </svg>
+                    </div>
+                    <div class="resource-details">
+                        <div class="resource-name">EC2 Instances (x2)</div>
+                        <div class="resource-desc">Running Nginx web servers</div>
+                    </div>
+                    <div class="resource-status">✓ Healthy</div>
+                </div>
+                <div class="resource-item">
+                    <div class="resource-icon">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="2"/>
+                            <path d="M12 6V12L16 14" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                        </svg>
+                    </div>
+                    <div class="resource-details">
+                        <div class="resource-name">Target Group</div>
+                        <div class="resource-desc">Health checks passing</div>
+                    </div>
+                    <div class="resource-status">✓ Created</div>
+                </div>
+                <div class="resource-item">
+                    <div class="resource-icon">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <rect x="3" y="3" width="18" height="18" rx="2" stroke="currentColor" stroke-width="2"/>
+                            <path d="M9 3V21" stroke="currentColor" stroke-width="2"/>
+                            <path d="M3 9H21" stroke="currentColor" stroke-width="2"/>
+                        </svg>
+                    </div>
+                    <div class="resource-details">
+                        <div class="resource-name">VPC with NAT Gateway</div>
+                        <div class="resource-desc">Secure network architecture</div>
+                    </div>
+                    <div class="resource-status">✓ Created</div>
+                </div>
+                <div class="resource-item">
+                    <div class="resource-icon">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <rect x="5" y="11" width="14" height="10" rx="2" stroke="currentColor" stroke-width="2"/>
+                            <path d="M7 11V7C7 4.79086 8.79086 3 11 3H13C15.2091 3 17 4.79086 17 7V11" stroke="currentColor" stroke-width="2"/>
+                        </svg>
+                    </div>
+                    <div class="resource-details">
+                        <div class="resource-name">Security Groups</div>
+                        <div class="resource-desc">ALB → EC2 traffic configured</div>
+                    </div>
+                    <div class="resource-status">✓ Created</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Architecture Diagram -->
+        <div class="verification-section">
+            <h2>
+                <svg class="section-icon" width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M4 6H20M4 12H20M4 18H20" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                </svg>
+                Architecture
+            </h2>
+            <div class="demo-notice">
+                <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <circle cx="10" cy="10" r="9" stroke="currentColor" stroke-width="2"/>
+                    <path d="M10 6V10" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                    <circle cx="10" cy="14" r="1" fill="currentColor"/>
+                </svg>
+                <div>
+                    <strong>High Availability Setup:</strong>
+                    <br>Internet → ALB (Public Subnets) → Target Group → EC2 Instances (Private Subnets) → NAT Gateway → Internet
+                    <br><br>
+                    This architecture ensures:
+                    • <strong>Load Distribution:</strong> Traffic spread across multiple instances
+                    <br>• <strong>High Availability:</strong> If one instance fails, traffic routes to healthy ones
+                    <br>• <strong>Security:</strong> EC2 instances isolated in private subnets
+                    <br>• <strong>Auto Healing:</strong> Unhealthy instances automatically removed from rotation
+                </div>
+            </div>
+        </div>
+
+        <!-- Next Steps -->
+        <div class="next-steps">
+            <h2>
+                <svg class="section-icon" width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M13 2L3 14H12L11 22L21 10H12L13 2Z" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>
+                </svg>
+                What's Next?
+            </h2>
+            <div class="steps-grid">
+                <div class="step-card">
+                    <div class="step-number">1</div>
+                    <div class="step-content">
+                        <h3>Add Auto Scaling</h3>
+                        <p>Automatically scale EC2 instances based on traffic demands</p>
+                    </div>
+                </div>
+                <div class="step-card">
+                    <div class="step-number">2</div>
+                    <div class="step-content">
+                        <h3>Add SSL/TLS Certificate</h3>
+                        <p>Configure HTTPS with AWS Certificate Manager</p>
+                    </div>
+                </div>
+                <div class="step-card">
+                    <div class="step-number">3</div>
+                    <div class="step-content">
+                        <h3>Deploy Your Application</h3>
+                        <p>Replace this demo page with your actual application</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Footer -->
+        <footer class="footer">
+            <div class="footer-content">
+                <div class="footer-section">
+                    <p class="footer-text">Powered by <strong>Archie</strong> - Infrastructure as Code, Simplified</p>
+                    <p class="footer-subtext">Deploy production-ready cloud infrastructure in minutes, not weeks</p>
+                </div>
+                <div class="footer-links">
+                    <a href="https://askarchie.io" class="footer-link">askarchie.io</a>
+                    <span class="footer-separator">•</span>
+                    <a href="https://docs.askarchie.io" class="footer-link">Documentation</a>
+                    <span class="footer-separator">•</span>
+                    <a href="https://github.com/toolsaskarchie" class="footer-link">GitHub</a>
+                </div>
+            </div>
+        </footer>
+    </div>
+
+    <!-- Theme Toggle -->
+    <button class="theme-toggle" onclick="toggleTheme()" aria-label="Toggle theme">
+        <svg class="sun-icon" width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <circle cx="10" cy="10" r="4" fill="currentColor"/>
+            <path d="M10 2V4M10 16V18M18 10H16M4 10H2M15.66 4.34L14.24 5.76M5.76 14.24L4.34 15.66M15.66 15.66L14.24 14.24M5.76 5.76L4.34 4.34" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+        </svg>
+        <svg class="moon-icon" width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M17 10.5C16.5 14.5 13 18 8.5 18C4 18 1 15 1 10.5C1 6 4.5 2.5 8.5 2C8 3.5 8 5.5 9 7.5C10 9.5 12 11 14 11.5C15.5 12 17 11 17 10.5Z" fill="currentColor"/>
+        </svg>
+    </button>
+
+    <script>
+        // Theme toggle
+        function toggleTheme() {
+            const html = document.documentElement;
+            const currentTheme = html.getAttribute('data-theme');
+            const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+            html.setAttribute('data-theme', newTheme);
+            localStorage.setItem('theme', newTheme);
+        }
+
+        // Load saved theme
+        const savedTheme = localStorage.getItem('theme') ||
+            (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+        document.documentElement.setAttribute('data-theme', savedTheme);
+
+        // Add animation on load
+        window.addEventListener('load', () => {
+            document.body.classList.add('loaded');
+        });
+
+        // Auto-refresh hint (optional)
+        let refreshCount = parseInt(sessionStorage.getItem('refreshCount') || '0');
+        refreshCount++;
+        sessionStorage.setItem('refreshCount', refreshCount.toString());
+        
+        if (refreshCount === 1) {
+            console.log('🔄 First visit! Refresh the page to see load balancing in action.');
+        } else {
+            console.log(`🔄 Refresh #${refreshCount} - You're seeing instance: {{INSTANCE_ID}}`);
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,162 @@
+{
+  "metadata": {
+    "name": "azure-static-website",
+    "title": "Demo Static Website",
+    "description": "Deploy an Archie-branded congratulations page on Azure Storage - perfect for your first Azure deployment!",
+    "category": "website",
+    "cloud": "azure",
+    "version": "latest",
+    "author": "InnovativeApps",
+    "tags": [
+      "azure",
+      "storage",
+      "website",
+      "static",
+      "free"
+    ],
+    "base_cost": "$0.00/month",
+    "complexity": "low",
+    "deployment_time": "3-5 minutes",
+    "marketplace_group": "WEBSITES",
+    "action_name": "azure-static-website",
+    "environment": "prod",
+    "tier": "template",
+    "use_cases": [
+      "Production workloads",
+      "Mission-critical applications",
+      "Enterprise-grade infrastructure"
+    ]
+  },
+  "configuration": {
+    "type": "object",
+    "required": [
+      "websiteName",
+      "resourceGroup"
+    ],
+    "properties": {
+      "websiteName": {
+        "type": "string",
+        "title": "Website Name",
+        "default": "my-azure-site"
+      },
+      "resourceGroup": {
+        "type": "string",
+        "title": "Resource Group"
+      },
+      "location": {
+        "type": "string",
+        "title": "Azure Region",
+        "default": "eastus"
+      }
+    },
+    "smart_defaults": {}
+  },
+  "resources": [
+    {
+      "id": "azure-static-website:{project_name}-rg",
+      "type": "azure-native:resources:ResourceGroup",
+      "name": "{project_name}-rg",
+      "description": "azure-native:resources:ResourceGroup resource",
+      "category": "Other",
+      "smart_defaults": {
+        "location": "{config_location}",
+        "tags": {
+          "ManagedBy": "Archie",
+          "Template": "azure-static-website"
+        }
+      },
+      "optional": false,
+      "dependencies": [],
+      "dependents": []
+    },
+    {
+      "id": "azure-static-website:{project_name}-storage",
+      "type": "azure-native:storage:StorageAccount",
+      "name": "{project_name}-storage",
+      "description": "azure-native:storage:StorageAccount resource",
+      "category": "Other",
+      "smart_defaults": {
+        "account_name": "{sa_name}",
+        "resource_group_name": "{config_name}",
+        "location": "{config_location}",
+        "sku": {
+          "name": "Standard_LRS"
+        },
+        "kind": "StorageV2",
+        "enable_https_traffic_only": true,
+        "tags": {
+          "ManagedBy": "Archie"
+        }
+      },
+      "optional": false,
+      "dependencies": [],
+      "dependents": []
+    },
+    {
+      "id": "azure-static-website:{project_name}-static",
+      "type": "azure-native:storage:StorageAccountStaticWebsite",
+      "name": "{project_name}-static",
+      "description": "azure-native:storage:StorageAccountStaticWebsite resource",
+      "category": "Other",
+      "smart_defaults": {
+        "account_name": "{config_name}",
+        "resource_group_name": "{config_name}",
+        "index_document": "index.html",
+        "error404_document": "index.html"
+      },
+      "optional": false,
+      "dependencies": [],
+      "dependents": []
+    }
+  ],
+  "pillars": {
+    "security": {
+      "score": "fair",
+      "description": "Implements security best practices for cloud infrastructure.",
+      "best_practices": [
+        "Basic security configurations",
+        "Access control mechanisms"
+      ]
+    },
+    "reliability": {
+      "score": "fair",
+      "description": "Ensures high availability and fault tolerance.",
+      "best_practices": [
+        "Automated recovery mechanisms",
+        "Fault-tolerant architecture patterns"
+      ]
+    },
+    "performance_efficiency": {
+      "score": "good",
+      "description": "Optimizes resource utilization and performance with scalable compute resources and efficient networking.",
+      "best_practices": [
+        "Elastic Load Balancing for traffic distribution"
+      ]
+    },
+    "cost_optimization": {
+      "score": "good",
+      "description": "Balances cost efficiency with reliability through appropriate resource sizing and usage-based pricing.",
+      "best_practices": [
+        "Environment-specific parameter handling",
+        "On-demand resource provisioning"
+      ]
+    },
+    "operational_excellence": {
+      "score": "good",
+      "description": "Enables operational best practices with infrastructure as code, monitoring, and automated management.",
+      "best_practices": [
+        "Infrastructure as Code with Pulumi for automated deployments",
+        "Version-controlled configuration"
+      ]
+    },
+    "sustainability": {
+      "score": "good",
+      "description": "Supports sustainable practices through efficient resource utilization and regional service usage.",
+      "best_practices": [
+        "Regional AWS services reducing data transfer distances",
+        "Efficient resource utilization patterns",
+        "Automated scaling reducing over-provisioning"
+      ]
+    }
+  }
+}

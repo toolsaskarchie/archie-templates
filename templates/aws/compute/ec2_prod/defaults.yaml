@@ -1,0 +1,12 @@
+# ec2_prod - Default Configuration
+# All resource configurations in one place for easy modification
+
+security_groups:
+  default:
+    egress:
+    - protocol: '-1'
+      from_port: 0
+      to_port: 0
+      cidr_blocks:
+      - 0.0.0.0/0
+      description: Allow all outbound

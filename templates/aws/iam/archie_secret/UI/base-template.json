@@ -1,0 +1,29 @@
+{
+  "_meta": {
+    "template_type": "base",
+    "template_id": "aws-archie-secret",
+    "description": "Base aws-archie-secret template extracted from Pulumi code",
+    "version": "1.0",
+    "generated_from": "pulumi.py",
+    "source_of_truth": "pulumi.py - This file is GENERATED. Edit pulumi.py instead."
+  },
+  "base_resources": [
+    {
+      "id": "aws-archie-secret:secret",
+      "type": "aws:secretsmanager:Secret",
+      "name": "secret",
+      "description": "Resource - secret",
+      "category": "Security",
+      "full_defaults": {
+        "name": "archie-secret",
+        "tags": {
+          "Name": "archie-secret-{environment}",
+          "ManagedBy": "Archie"
+        }
+      },
+      "dependencies": [],
+      "dependents": [],
+      "optional": false
+    }
+  ]
+}

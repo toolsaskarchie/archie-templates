@@ -1,0 +1,767 @@
+{
+  "_meta": {
+    "template_type": "base",
+    "template_id": "aws-rds-postgres-nonprod",
+    "description": "Base aws-rds-postgres-nonprod template extracted from Pulumi code",
+    "version": "1.0",
+    "generated_from": "pulumi.py",
+    "source_of_truth": "pulumi.py - This file is GENERATED. Edit pulumi.py instead."
+  },
+  "base_resources": [
+    {
+      "id": "aws-rds-postgres-nonprod:{namer_resource}",
+      "type": "aws:rds:SubnetGroup",
+      "name": "{namer_resource}",
+      "description": "SubnetGroup resource",
+      "optional": false,
+      "full_defaults": {
+        "subnet_ids": "{config_subnet_ids}",
+        "description": "Subnet group for {db_identifier}",
+        "tags": {
+          "Name": "{sng_name}"
+        }
+      },
+      "dependencies": [],
+      "dependents": []
+    },
+    {
+      "id": "aws-rds-postgres-nonprod:{namer_rds}",
+      "type": "aws:rds:Instance",
+      "name": "{namer_rds}",
+      "description": "Instance resource",
+      "optional": false,
+      "full_defaults": {
+        "engine": "postgres",
+        "engine_version": "{config_engine_version}",
+        "instance_class": "{config_db_instance_class}",
+        "allocated_storage": "{config_allocated_storage}",
+        "max_allocated_storage": "{config_max_allocated_storage}",
+        "username": "{config_db_username}",
+        "password": "{db_password}",
+        "db_subnet_group_name": "{config_name}",
+        "vpc_security_group_ids": [
+          "{sg_id}"
+        ],
+        "db_name": "{config_db_name}",
+        "storage_type": "gp3",
+        "storage_encrypted": "{config_storage_encrypted}",
+        "publicly_accessible": "{config_publicly_accessible}",
+        "multi_az": "{config_multi_az}",
+        "backup_retention_period": "{config_backup_retention_days}",
+        "skip_final_snapshot": "{config_skip_final_snapshot}",
+        "deletion_protection": "{config_deletion_protection_enabled}",
+        "performance_insights_enabled": "{config_enable_performance_insights}",
+        "tags": {
+          "Name": "{db_identifier}"
+        }
+      },
+      "dependencies": [],
+      "dependents": []
+    },
+    {
+      "id": "aws-rds-postgres-nonprod:{project_name}-password",
+      "type": "aws:secretsmanager:Secret",
+      "name": "{project_name}-password",
+      "description": "Secret resource - {project_name}-password",
+      "category": "Security",
+      "from_sub_template": "aws-rds-postgres-nonprod",
+      "full_defaults": {},
+      "dependencies": [],
+      "dependents": [],
+      "optional": false
+    },
+    {
+      "id": "aws-rds-postgres-nonprod:{project_name}-password-version",
+      "type": "aws:secretsmanager:SecretVersion",
+      "name": "{project_name}-password-version",
+      "description": "SecretVersion resource - {project_name}-password-version",
+      "category": "Security",
+      "from_sub_template": "aws-rds-postgres-nonprod",
+      "full_defaults": {},
+      "dependencies": [],
+      "dependents": [],
+      "optional": false
+    },
+    {
+      "id": "aws-vpc-nonprod:vpc-{project}-{environment}-{region_short}-{network_num}",
+      "type": "aws:ec2:Vpc",
+      "name": "vpc-{project}-{environment}-{region_short}-{network_num}",
+      "description": "Virtual Private Cloud with CIDR {config_custom_cidr_block}, DNS support enabled",
+      "optional": false,
+      "full_defaults": {
+        "cidr_block": "{config_custom_cidr_block}",
+        "enable_dns_support": "{config_enable_dns_support}",
+        "enable_dns_hostnames": "{config_enable_dns_hostnames}",
+        "instance_tenancy": "{config_instance_tenancy}",
+        "tags": {
+          "Name": "{vpc_name}"
+        }
+      },
+      "dependencies": [],
+      "dependents": [],
+      "from_sub_template": "VPCSimpleNonprodTemplate"
+    },
+    {
+      "id": "aws-vpc-nonprod:igw-main-{project}-{environment}-{region_short}",
+      "type": "aws:ec2:InternetGateway",
+      "name": "igw-main-{project}-{environment}-{region_short}",
+      "description": "Internet Gateway providing public internet connectivity for the VPC",
+      "optional": false,
+      "full_defaults": {
+        "vpc_id": "{config_id}",
+        "tags": {
+          "Name": "{igw_name}"
+        }
+      },
+      "dependencies": [],
+      "dependents": [],
+      "from_sub_template": "VPCSimpleNonprodTemplate"
+    },
+    {
+      "id": "aws-vpc-nonprod:isolatedsub-{project}-{environment}-{region_short}-{az_short}-{subnet_num}",
+      "type": "aws:ec2:Subnet",
+      "name": "isolatedsub-{project}-{environment}-{region_short}-{az_short}-{subnet_num}",
+      "description": "Private subnet for isolated tier workloads (CIDR: {isolated_cidr})",
+      "optional": false,
+      "full_defaults": {
+        "vpc_id": "{config_id}",
+        "cidr_block": "{isolated_cidr}",
+        "availability_zone": "{config_region}a",
+        "map_public_ip_on_launch": false,
+        "tags": {
+          "Name": "{isolated_subnet_name}",
+          "Tier": "isolated"
+        }
+      },
+      "conditional": {
+        "field": "enable_isolated_tier"
+      },
+      "dependencies": [],
+      "dependents": [],
+      "from_sub_template": "VPCSimpleNonprodTemplate"
+    },
+    {
+      "id": "aws-vpc-nonprod:privsub-{project}-{environment}-{region_short}-{az_short}-{subnet_num}",
+      "type": "aws:ec2:Subnet",
+      "name": "privsub-{project}-{environment}-{region_short}-{az_short}-{subnet_num}",
+      "description": "Private subnet for private tier workloads (CIDR: {private_cidr})",
+      "optional": false,
+      "full_defaults": {
+        "vpc_id": "{config_id}",
+        "cidr_block": "{private_cidr}",
+        "availability_zone": "{config_region}a",
+        "map_public_ip_on_launch": false,
+        "tags": {
+          "Name": "{private_subnet_name}",
+          "Tier": "private"
+        }
+      },
+      "dependencies": [],
+      "dependents": [],
+      "from_sub_template": "VPCSimpleNonprodTemplate"
+    },
+    {
+      "id": "aws-vpc-nonprod:pubsub-{project}-{environment}-{region_short}-{az_short}-{subnet_num}",
+      "type": "aws:ec2:Subnet",
+      "name": "pubsub-{project}-{environment}-{region_short}-{az_short}-{subnet_num}",
+      "description": "Public subnet for public tier workloads (CIDR: {public_cidr})",
+      "optional": false,
+      "full_defaults": {
+        "vpc_id": "{config_id}",
+        "cidr_block": "{public_cidr}",
+        "availability_zone": "{config_region}a",
+        "map_public_ip_on_launch": true,
+        "tags": {
+          "Name": "{public_subnet_name}",
+          "Tier": "public"
+        }
+      },
+      "dependencies": [],
+      "dependents": [],
+      "from_sub_template": "VPCSimpleNonprodTemplate"
+    },
+    {
+      "id": "aws-vpc-nonprod:rt-isolated-{project}-{environment}-{region_short}",
+      "type": "aws:ec2:RouteTable",
+      "name": "rt-isolated-{project}-{environment}-{region_short}",
+      "description": "Route table for isolated tier network traffic routing",
+      "optional": false,
+      "full_defaults": {
+        "vpc_id": "{config_id}",
+        "tags": {
+          "Name": "{isolated_rt_name}",
+          "Tier": "isolated"
+        }
+      },
+      "conditional": {
+        "field": "enable_isolated_tier"
+      },
+      "dependencies": [],
+      "dependents": [],
+      "from_sub_template": "VPCSimpleNonprodTemplate"
+    },
+    {
+      "id": "aws-vpc-nonprod:rt-private-{project}-{environment}-{region_short}",
+      "type": "aws:ec2:RouteTable",
+      "name": "rt-private-{project}-{environment}-{region_short}",
+      "description": "Route table for private tier network traffic routing",
+      "optional": false,
+      "full_defaults": {
+        "vpc_id": "{config_id}",
+        "tags": {
+          "Name": "{private_rt_name}",
+          "Tier": "private"
+        }
+      },
+      "dependencies": [],
+      "dependents": [],
+      "from_sub_template": "VPCSimpleNonprodTemplate"
+    },
+    {
+      "id": "aws-vpc-nonprod:rt-public-{project}-{environment}-{region_short}",
+      "type": "aws:ec2:RouteTable",
+      "name": "rt-public-{project}-{environment}-{region_short}",
+      "description": "Route table for public tier network traffic routing",
+      "optional": false,
+      "full_defaults": {
+        "vpc_id": "{config_id}",
+        "tags": {
+          "Name": "{public_rt_name}",
+          "Tier": "public"
+        }
+      },
+      "dependencies": [],
+      "dependents": [],
+      "from_sub_template": "VPCSimpleNonprodTemplate"
+    },
+    {
+      "id": "aws-vpc-nonprod:route-00000-{project}-{environment}-{region_short}-igw",
+      "type": "aws:ec2:Route",
+      "name": "route-00000-{project}-{environment}-{region_short}-igw",
+      "description": "Route directing 0.0.0.0/0 traffic to Internet Gateway",
+      "optional": false,
+      "full_defaults": {
+        "route_table_id": "{id}",
+        "destination_cidr_block": "0.0.0.0/0",
+        "gateway_id": "{config_id}"
+      },
+      "dependencies": [],
+      "dependents": [],
+      "from_sub_template": "VPCSimpleNonprodTemplate"
+    },
+    {
+      "id": "aws-vpc-nonprod:route-00000-{project}-{environment}-{region_short}-nat",
+      "type": "aws:ec2:Route",
+      "name": "route-00000-{project}-{environment}-{region_short}-nat",
+      "description": "Route directing 0.0.0.0/0 traffic to NAT Gateway",
+      "optional": false,
+      "full_defaults": {
+        "route_table_id": "{id}",
+        "destination_cidr_block": "0.0.0.0/0",
+        "nat_gateway_id": "{config_id}"
+      },
+      "dependencies": [],
+      "dependents": [],
+      "estimated_monthly_cost": 32.4,
+      "cost_impact_description": "Shared NAT Gateway for private subnet internet access",
+      "from_sub_template": "VPCSimpleNonprodTemplate"
+    },
+    {
+      "id": "aws-vpc-nonprod:rta-isolated-{project}-{environment}-{region_short}-1",
+      "type": "aws:ec2:RouteTableAssociation",
+      "name": "rta-isolated-{project}-{environment}-{region_short}-1",
+      "description": "Associates a route table with a subnet for traffic routing",
+      "optional": false,
+      "full_defaults": {
+        "subnet_id": "{id}",
+        "route_table_id": "{id}"
+      },
+      "conditional": {
+        "field": "enable_isolated_tier"
+      },
+      "dependencies": [],
+      "dependents": [],
+      "from_sub_template": "VPCSimpleNonprodTemplate"
+    },
+    {
+      "id": "aws-vpc-nonprod:rta-private-{project}-{environment}-{region_short}-1",
+      "type": "aws:ec2:RouteTableAssociation",
+      "name": "rta-private-{project}-{environment}-{region_short}-1",
+      "description": "Associates a route table with a subnet for traffic routing",
+      "optional": false,
+      "full_defaults": {
+        "subnet_id": "{id}",
+        "route_table_id": "{id}"
+      },
+      "dependencies": [],
+      "dependents": [],
+      "from_sub_template": "VPCSimpleNonprodTemplate"
+    },
+    {
+      "id": "aws-vpc-nonprod:rta-public-{project}-{environment}-{region_short}-1",
+      "type": "aws:ec2:RouteTableAssociation",
+      "name": "rta-public-{project}-{environment}-{region_short}-1",
+      "description": "Associates a route table with a subnet for traffic routing",
+      "optional": false,
+      "full_defaults": {
+        "subnet_id": "{id}",
+        "route_table_id": "{id}"
+      },
+      "dependencies": [],
+      "dependents": [],
+      "from_sub_template": "VPCSimpleNonprodTemplate"
+    },
+    {
+      "id": "aws-vpc-nonprod:eip-{purpose}-{project}-{environment}-{region_short}-{az_short}",
+      "type": "aws:ec2:Eip",
+      "name": "eip-{purpose}-{project}-{environment}-{region_short}-{az_short}",
+      "description": "Elastic IP address for NAT Gateway attachment",
+      "optional": false,
+      "full_defaults": {
+        "domain": "vpc",
+        "tags": {
+          "Name": "{eip_name}"
+        }
+      },
+      "dependencies": [],
+      "dependents": [],
+      "from_sub_template": "VPCSimpleNonprodTemplate"
+    },
+    {
+      "id": "aws-vpc-nonprod:nat-gw-{project}-{environment}-{region_short}-{az_short}",
+      "type": "aws:ec2:NatGateway",
+      "name": "nat-gw-{project}-{environment}-{region_short}-{az_short}",
+      "description": "NAT Gateway providing outbound internet access for private subnets",
+      "optional": false,
+      "full_defaults": {
+        "subnet_id": "{id}",
+        "allocation_id": "{id}",
+        "tags": {
+          "Name": "{nat_name}"
+        }
+      },
+      "dependencies": [],
+      "dependents": [],
+      "estimated_monthly_cost": 32.4,
+      "cost_impact_description": "Shared NAT Gateway for private subnet internet access",
+      "from_sub_template": "VPCSimpleNonprodTemplate"
+    },
+    {
+      "id": "aws-vpc-nonprod:vpce-dynamodb-{project}-{environment}-{region_short}-gw",
+      "type": "aws:ec2:VpcEndpoint",
+      "name": "vpce-dynamodb-{project}-{environment}-{region_short}-gw",
+      "description": "DYNAMODB Gateway VPC Endpoint for private DYNAMODB service access",
+      "optional": false,
+      "full_defaults": {
+        "vpc_id": "{config_id}",
+        "service_name": "com.amazonaws.{config_region}.dynamodb",
+        "vpc_endpoint_type": "Gateway",
+        "tags": {
+          "Name": "{dynamodb_endpoint_name}"
+        }
+      },
+      "dependencies": [],
+      "dependents": [],
+      "from_sub_template": "VPCSimpleNonprodTemplate"
+    },
+    {
+      "id": "aws-vpc-nonprod:vpce-ec2messages-{project}-{environment}-{region_short}-if",
+      "type": "aws:ec2:VpcEndpoint",
+      "name": "vpce-ec2messages-{project}-{environment}-{region_short}-if",
+      "description": "EC2MESSAGES Interface VPC Endpoint for private EC2MESSAGES service access",
+      "optional": false,
+      "full_defaults": {
+        "vpc_id": "{config_id}",
+        "service_name": "com.amazonaws.{config_region}.ec2messages",
+        "vpc_endpoint_type": "Interface",
+        "subnet_ids": [
+          "{id}"
+        ],
+        "private_dns_enabled": true,
+        "tags": {
+          "Name": "{ec2_messages_endpoint_name}"
+        }
+      },
+      "conditional": {
+        "field": "enable_ssm_endpoints"
+      },
+      "dependencies": [],
+      "dependents": [],
+      "from_sub_template": "VPCSimpleNonprodTemplate"
+    },
+    {
+      "id": "aws-vpc-nonprod:vpce-rds-{project}-{environment}-{region_short}-if",
+      "type": "aws:ec2:VpcEndpoint",
+      "name": "vpce-rds-{project}-{environment}-{region_short}-if",
+      "description": "RDS Interface VPC Endpoint for private RDS service access",
+      "optional": false,
+      "full_defaults": {
+        "vpc_id": "{config_id}",
+        "service_name": "com.amazonaws.{config_region}.rds",
+        "vpc_endpoint_type": "Interface",
+        "subnet_ids": [
+          "{id}"
+        ],
+        "security_group_ids": [
+          "{id}"
+        ],
+        "private_dns_enabled": true,
+        "tags": {
+          "Name": "{rds_endpoint_name}"
+        }
+      },
+      "conditional": {
+        "field": "enable_rds_endpoint"
+      },
+      "dependencies": [],
+      "dependents": [],
+      "from_sub_template": "VPCSimpleNonprodTemplate"
+    },
+    {
+      "id": "aws-vpc-nonprod:vpce-s3-{project}-{environment}-{region_short}-gw",
+      "type": "aws:ec2:VpcEndpoint",
+      "name": "vpce-s3-{project}-{environment}-{region_short}-gw",
+      "description": "S3 Gateway VPC Endpoint for private S3 service access",
+      "optional": false,
+      "full_defaults": {
+        "vpc_id": "{config_id}",
+        "service_name": "com.amazonaws.{config_region}.s3",
+        "vpc_endpoint_type": "Gateway",
+        "tags": {
+          "Name": "{s3_endpoint_name}"
+        }
+      },
+      "dependencies": [],
+      "dependents": [],
+      "from_sub_template": "VPCSimpleNonprodTemplate"
+    },
+    {
+      "id": "aws-vpc-nonprod:vpce-ssm-{project}-{environment}-{region_short}-if",
+      "type": "aws:ec2:VpcEndpoint",
+      "name": "vpce-ssm-{project}-{environment}-{region_short}-if",
+      "description": "SSM Interface VPC Endpoint for private SSM service access",
+      "optional": false,
+      "full_defaults": {
+        "vpc_id": "{config_id}",
+        "service_name": "com.amazonaws.{config_region}.ssm",
+        "vpc_endpoint_type": "Interface",
+        "subnet_ids": [
+          "{id}"
+        ],
+        "private_dns_enabled": true,
+        "tags": {
+          "Name": "{ssm_endpoint_name}"
+        }
+      },
+      "conditional": {
+        "field": "enable_ssm_endpoints"
+      },
+      "dependencies": [],
+      "dependents": [],
+      "from_sub_template": "VPCSimpleNonprodTemplate"
+    },
+    {
+      "id": "aws-vpc-nonprod:vpce-ssmmessages-{project}-{environment}-{region_short}-if",
+      "type": "aws:ec2:VpcEndpoint",
+      "name": "vpce-ssmmessages-{project}-{environment}-{region_short}-if",
+      "description": "SSMMESSAGES Interface VPC Endpoint for private SSMMESSAGES service access",
+      "optional": false,
+      "full_defaults": {
+        "vpc_id": "{config_id}",
+        "service_name": "com.amazonaws.{config_region}.ssmmessages",
+        "vpc_endpoint_type": "Interface",
+        "subnet_ids": [
+          "{id}"
+        ],
+        "private_dns_enabled": true,
+        "tags": {
+          "Name": "{ssm_messages_endpoint_name}"
+        }
+      },
+      "conditional": {
+        "field": "enable_ssm_endpoints"
+      },
+      "dependencies": [],
+      "dependents": [],
+      "from_sub_template": "VPCSimpleNonprodTemplate"
+    },
+    {
+      "id": "aws-vpc-nonprod:fl-{scope}-{project}-{environment}-{region_short}-{traffic}",
+      "type": "aws:ec2:FlowLog",
+      "name": "fl-{scope}-{project}-{environment}-{region_short}-{traffic}",
+      "description": "VPC Flow Logs capturing ALL network traffic to S3",
+      "optional": false,
+      "full_defaults": {
+        "vpc_id": "{config_id}",
+        "traffic_type": "ALL",
+        "log_destination_type": "s3",
+        "log_destination": "{computed}",
+        "max_aggregation_interval": 600,
+        "tags": {
+          "Name": "{flow_log_name}"
+        }
+      },
+      "conditional": {
+        "field": "enable_flow_logs"
+      },
+      "dependencies": [],
+      "dependents": [],
+      "from_sub_template": "VPCSimpleNonprodTemplate"
+    },
+    {
+      "id": "aws-rds-postgres-nonprod:secg-db-{project}-{environment}-{region_short}",
+      "type": "aws:ec2:SecurityGroup",
+      "name": "secg-db-{project}-{environment}-{region_short}",
+      "description": "PostgreSQL access for {config_environment}",
+      "optional": false,
+      "full_defaults": {
+        "vpc_id": "{config_vpc_id}",
+        "description": "PostgreSQL access for {config_environment}",
+        "egress": [
+          {
+            "protocol": "-1",
+            "from_port": 0,
+            "to_port": 0,
+            "cidr_blocks": [
+              "0.0.0.0/0"
+            ],
+            "description": "Allow all outbound traffic"
+          }
+        ],
+        "tags": {
+          "Name": "{sg_name}"
+        }
+      },
+      "dependencies": [],
+      "dependents": []
+    },
+    {
+      "id": "aws-vpc-nonprod:secg-access-{project}-{environment}-{region_short}",
+      "type": "aws:ec2:SecurityGroup",
+      "name": "secg-access-{project}-{environment}-{region_short}",
+      "description": "Management access security group (SSH/RDP)",
+      "optional": false,
+      "full_defaults": {
+        "vpc_id": "{config_id}",
+        "description": "Management access security group (SSH/RDP)",
+        "ingress": "{access_sg_ingress}",
+        "egress": [
+          {
+            "protocol": "-1",
+            "from_port": 0,
+            "to_port": 0,
+            "cidr_blocks": [
+              "0.0.0.0/0"
+            ],
+            "description": "Allow all outbound"
+          }
+        ],
+        "tags": {
+          "Name": "{access_sg_name}",
+          "Tier": "management"
+        }
+      },
+      "conditional": {
+        "field": "enable_ssh"
+      },
+      "dependencies": [],
+      "dependents": [],
+      "from_sub_template": "VPCSimpleNonprodTemplate"
+    },
+    {
+      "id": "aws-vpc-nonprod:secg-app-{project}-{environment}-{region_short}",
+      "type": "aws:ec2:SecurityGroup",
+      "name": "secg-app-{project}-{environment}-{region_short}",
+      "description": "Security group for application tier",
+      "optional": false,
+      "full_defaults": {
+        "vpc_id": "{config_id}",
+        "description": "Security group for application tier",
+        "ingress": [
+          {
+            "protocol": "tcp",
+            "from_port": 3000,
+            "to_port": 3000,
+            "security_groups": [
+              "{security_group_web}"
+            ],
+            "description": "App traffic from web tier"
+          },
+          {
+            "protocol": "tcp",
+            "from_port": 8080,
+            "to_port": 8080,
+            "security_groups": [
+              "{security_group_web}"
+            ],
+            "description": "Alt app port from web tier"
+          }
+        ],
+        "egress": [
+          {
+            "protocol": "-1",
+            "from_port": 0,
+            "to_port": 0,
+            "cidr_blocks": [
+              "0.0.0.0/0"
+            ],
+            "description": "Allow all outbound"
+          }
+        ],
+        "tags": {
+          "Name": "{app_sg_name}",
+          "Tier": "app"
+        }
+      },
+      "dependencies": [],
+      "dependents": [],
+      "from_sub_template": "VPCSimpleNonprodTemplate"
+    },
+    {
+      "id": "aws-vpc-nonprod:secg-db-{project}-{environment}-{region_short}",
+      "type": "aws:ec2:SecurityGroup",
+      "name": "secg-db-{project}-{environment}-{region_short}",
+      "description": "Security group for database tier",
+      "optional": false,
+      "full_defaults": {
+        "vpc_id": "{config_id}",
+        "description": "Security group for database tier",
+        "ingress": [
+          {
+            "protocol": "tcp",
+            "from_port": 3306,
+            "to_port": 3306,
+            "security_groups": [
+              "{security_group_app}"
+            ],
+            "description": "MySQL from app tier"
+          },
+          {
+            "protocol": "tcp",
+            "from_port": 5432,
+            "to_port": 5432,
+            "security_groups": [
+              "{security_group_app}"
+            ],
+            "description": "PostgreSQL from app tier"
+          },
+          {
+            "protocol": "tcp",
+            "from_port": 1433,
+            "to_port": 1433,
+            "security_groups": [
+              "{security_group_app}"
+            ],
+            "description": "SQL Server from app tier"
+          }
+        ],
+        "egress": [
+          {
+            "protocol": "-1",
+            "from_port": 0,
+            "to_port": 0,
+            "cidr_blocks": [
+              "0.0.0.0/0"
+            ],
+            "description": "Allow all outbound"
+          }
+        ]
+      },
+      "dependencies": [],
+      "dependents": [],
+      "from_sub_template": "VPCSimpleNonprodTemplate"
+    },
+    {
+      "id": "aws-vpc-nonprod:secg-web-{project}-{environment}-{region_short}",
+      "type": "aws:ec2:SecurityGroup",
+      "name": "secg-web-{project}-{environment}-{region_short}",
+      "description": "Security group for web tier (HTTP/HTTPS)",
+      "optional": false,
+      "full_defaults": {
+        "vpc_id": "{config_id}",
+        "description": "Security group for web tier (HTTP/HTTPS)",
+        "ingress": [
+          {
+            "protocol": "tcp",
+            "from_port": 80,
+            "to_port": 80,
+            "cidr_blocks": [
+              "0.0.0.0/0"
+            ],
+            "description": "HTTP from internet"
+          },
+          {
+            "protocol": "tcp",
+            "from_port": 443,
+            "to_port": 443,
+            "cidr_blocks": [
+              "0.0.0.0/0"
+            ],
+            "description": "HTTPS from internet"
+          }
+        ],
+        "egress": [
+          {
+            "protocol": "-1",
+            "from_port": 0,
+            "to_port": 0,
+            "cidr_blocks": [
+              "0.0.0.0/0"
+            ],
+            "description": "Allow all outbound"
+          }
+        ],
+        "tags": {
+          "Name": "{web_sg_name}",
+          "Tier": "web"
+        }
+      },
+      "dependencies": [],
+      "dependents": [],
+      "from_sub_template": "VPCSimpleNonprodTemplate"
+    },
+    {
+      "id": "aws-vpc-nonprod:s3-{purpose}-{project}-{environment}-{region_short}",
+      "type": "aws:s3:Bucket",
+      "name": "s3-{purpose}-{project}-{environment}-{region_short}",
+      "description": "S3 bucket for VPC Flow Logs storage",
+      "optional": false,
+      "full_defaults": {
+        "bucket": "{bucket_name}",
+        "force_destroy": true,
+        "tags": {
+          "Name": "{bucket_name}",
+          "Purpose": "VPC Flow Logs"
+        }
+      },
+      "conditional": {
+        "field": "enable_flow_logs"
+      },
+      "dependencies": [],
+      "dependents": [],
+      "from_sub_template": "VPCSimpleNonprodTemplate"
+    },
+    {
+      "id": "aws-vpc-nonprod:{bucket_name}-lifecycle",
+      "type": "aws:s3:BucketLifecycleConfigurationV2",
+      "name": "{bucket_name}-lifecycle",
+      "description": "S3 bucket lifecycle rules for automatic log retention and deletion",
+      "optional": false,
+      "full_defaults": {
+        "bucket": "{config_id}",
+        "rules": [
+          {
+            "id": "delete-old-flow-logs",
+            "status": "Enabled"
+          }
+        ]
+      },
+      "conditional": {
+        "field": "enable_flow_logs"
+      },
+      "dependencies": [],
+      "dependents": [],
+      "from_sub_template": "VPCSimpleNonprodTemplate"
+    }
+  ]
+}

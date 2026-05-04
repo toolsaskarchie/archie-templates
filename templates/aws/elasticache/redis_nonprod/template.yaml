@@ -1,0 +1,235 @@
+metadata:
+  name: aws-redis-nonprod
+  title: ElastiCache Redis
+  description: Managed Redis cluster for development and testing with cost-optimized nodes and automated snapshots.
+  category: database
+  version: latest
+  author: InnovativeApps
+  cloud: aws
+  environment: nonprod
+  base_cost: $15/month
+  features:
+  - High-performance managed Redis engine
+  - Cost-optimized burstable node types (t3 family)
+  - Integrated security group with Redis port isolation
+  - Automated backups and maintenance windows
+  - Multi-AZ support for testing HA failover
+  tags:
+  - redis
+  - elasticache
+  - database
+  - cache
+  - nonprod
+  deployment_time: 5-10 minutes
+  complexity: intermediate
+  pillars:
+  - title: Performance Efficiency
+    score: excellent
+    score_color: '#10b981'
+    description: In-memory data store delivering sub-millisecond latency for caching and session management
+    practices:
+    - In-memory architecture delivers sub-millisecond read/write latency
+    - Configurable node types from cache.t3.micro to cache.r6g for workload matching
+    - Redis data structures (sorted sets, hashes) optimize application-level operations
+    - Multi-node clusters distribute load across cache nodes
+    - Dedicated subnet group ensures low-latency VPC placement
+  - title: Security
+    score: good
+    score_color: '#f59e0b'
+    description: VPC isolation with dedicated security groups and encryption options
+    practices:
+    - Dedicated security group restricts access to Redis port only
+    - VPC subnet group ensures cluster runs in private network
+    - Encryption at rest available with AWS-managed keys
+    - Encryption in transit available for client connections
+    - Configurable CIDR-based access control for ingress rules
+  - title: Reliability
+    score: good
+    score_color: '#f59e0b'
+    description: Automated snapshots and optional Multi-AZ for high availability testing
+    practices:
+    - Automated daily snapshots with configurable retention period
+    - Multi-AZ replication available for failover testing
+    - Automatic node replacement on hardware failure
+    - Configurable maintenance windows for controlled patching
+    - Snapshot-based restore for rapid recovery scenarios
+  - title: Operational Excellence
+    score: good
+    score_color: '#f59e0b'
+    description: Managed service with automated maintenance and monitoring integration
+    practices:
+    - Infrastructure as Code with Pulumi for repeatable deployments
+    - CloudWatch metrics for cache hit ratio, memory, and CPU monitoring
+    - Automated maintenance windows for engine patching
+    - Configurable snapshot windows for backup scheduling
+    - Standard tagging for resource identification and cost tracking
+  - title: Cost Optimization
+    score: good
+    score_color: '#f59e0b'
+    description: Burstable node types and right-sizing options minimize nonprod costs
+    practices:
+    - Burstable cache.t3 nodes for variable development workloads
+    - Single-node default eliminates replication costs for nonprod
+    - Reserved node pricing available for predictable usage
+    - Right-sizing from micro to xlarge based on cache requirements
+    - No storage costs beyond node memory allocation
+  - title: Sustainability
+    score: good
+    score_color: '#f59e0b'
+    description: Efficient in-memory service with right-sized nodes and managed infrastructure
+    practices:
+    - Graviton-based cache.r6g nodes available for energy efficiency
+    - Burstable instances match resource usage to actual demand
+    - In-memory architecture eliminates disk I/O overhead
+    - Managed service reduces idle infrastructure waste
+    - Regional deployment minimizes data transfer distances
+  architecture:
+    optional_features:
+    - Cost-optimized for non-production workloads
+    - Configurable node type and count
+    - Automatic backups with retention
+    - Security group with configurable CIDR access
+    - Multi-AZ support for testing HA scenarios
+    summary: Redis Non-Prod Template
+  action_name: aws-redis-nonprod
+  tier: template
+  use_cases:
+  - Development and testing environments
+  - Staging infrastructure
+  - Non-production workloads
+resources:
+  '{project_name}-sg':
+    type: aws:ec2:SecurityGroup
+    name: '{project_name}-sg'
+    always_created: true
+    description: Security group for {cluster_name} Redis cluster
+    smart_defaults:
+      description: Security group for {cluster_name} Redis cluster
+      vpc_id: <vpc_id>
+      ingress:
+      - description: Redis access
+        from_port: '{port}'
+        to_port: '{port}'
+        protocol: tcp
+        cidr_blocks: '{allowed_cidr_blocks}'
+      egress:
+      - description: Allow all outbound
+        from_port: 0
+        to_port: 0
+        protocol: '-1'
+        cidr_blocks:
+        - 0.0.0.0/0
+      tags: '{tags}'
+  '{project_name}-subnet-group':
+    type: aws:elasticache:SubnetGroup
+    name: '{project_name}-subnet-group'
+    always_created: true
+    description: SubnetGroup resource
+    smart_defaults:
+      description: Subnet group for {cluster_name} Redis cluster
+      subnet_ids: <subnet_ids>
+      tags: '{tags}'
+  '{project_name}-cluster':
+    type: aws:elasticache:Cluster
+    name: '{project_name}-cluster'
+    always_created: true
+    description: Cluster resource
+    smart_defaults:
+      cluster_id: redis-nonprod
+      engine: redis
+      engine_version: '7.0'
+      node_type: cache.t3.micro
+      num_cache_nodes: 1
+      port: 6379
+      subnet_group_name: '{config_name}'
+      security_group_ids:
+      - '{id}'
+      az_mode: <az_mode>
+      snapshot_retention_limit: '{config_snapshot_retention_limit}'
+      snapshot_window: '{config_snapshot_window}'
+      maintenance_window: '{config_maintenance_window}'
+      tags: '{tags}'
+configuration:
+  properties:
+    resource_tags:
+      type: string
+      title: Resource Tags
+      description: Get resource tags
+      group: General Settings
+      order: 1
+    az_mode:
+      type: string
+      title: Az Mode
+      description: Get AZ mode based on multi-AZ setting
+      group: Network Configuration
+      order: 2
+    project_name:
+      type: string
+      title: Project Name
+      description: Unique name for this deployment
+      group: Essentials
+      isEssential: true
+      order: 1
+    region:
+      type: string
+      title: AWS Region
+      default: us-east-1
+      group: Essentials
+      isEssential: true
+      order: 2
+    vpc_id:
+      type: string
+      title: VPC ID
+      description: VPC for the Redis cluster
+      group: Networking
+      order: 10
+    subnet_ids:
+      type: array
+      title: Subnet IDs
+      description: Subnets for the ElastiCache subnet group
+      group: Networking
+      order: 11
+    cluster_name:
+      type: string
+      title: Cluster Name
+      description: Name for the Redis cluster
+      default: redis-nonprod
+      pattern: ^[a-zA-Z][a-zA-Z0-9-]{0,39}$
+      group: Redis Settings
+    engine_version:
+      type: string
+      title: Engine Version
+      description: Redis version
+      default: '7.0'
+      group: Redis Settings
+    node_type:
+      type: string
+      title: Node Type
+      description: Cache node instance type
+      default: cache.t3.micro
+      group: Redis Settings
+    num_cache_nodes:
+      type: number
+      title: Number of Nodes
+      description: Number of cache nodes in the cluster
+      default: 1
+      minimum: 1
+      group: Redis Settings
+    port:
+      type: number
+      title: Port
+      description: Redis connection port
+      default: 6379
+      group: Network Settings
+  required:
+  - project_name
+  - cluster_name
+outputs:
+- name: cluster_id
+  description: 'Output: cluster_id'
+- name: endpoint
+  description: 'Output: endpoint'
+- name: port
+  description: 'Output: port'
+- name: connection_string
+  description: 'Output: connection_string'

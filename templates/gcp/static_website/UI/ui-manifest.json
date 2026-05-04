@@ -1,0 +1,272 @@
+{
+  "metadata": {
+    "name": "gcp-static-website",
+    "title": "Demo Static Website",
+    "description": "Deploy an Archie-branded congratulations page on Google Cloud Storage - perfect for your first GCP deployment!",
+    "category": "website",
+    "cloud": "gcp",
+    "version": "latest",
+    "author": "InnovativeApps",
+    "tags": [
+      "gcp",
+      "storage",
+      "website",
+      "static",
+      "free"
+    ],
+    "base_cost": "$0.00/month",
+    "complexity": "low",
+    "deployment_time": "2-3 minutes",
+    "marketplace_group": "WEBSITES",
+    "action_name": "gcp-static-website",
+    "environment": "prod",
+    "tier": "template",
+    "use_cases": [
+      "Production workloads",
+      "Mission-critical applications",
+      "Enterprise-grade infrastructure"
+    ]
+  },
+  "configuration": {
+    "type": "object",
+    "required": [],
+    "properties": {
+      "bucket_name_prefix": {
+        "type": "string",
+        "title": "Bucket Name Prefix",
+        "description": "Get custom bucket name prefix, defaults to 'archie-gcp'.",
+        "group": "General Settings",
+        "order": 1,
+        "default": "archie-gcp"
+      },
+      "enable_cdn": {
+        "type": "boolean",
+        "title": "Enable Cdn",
+        "description": "Whether to enable Cloud CDN, defaults to False.",
+        "group": "General Settings",
+        "order": 2,
+        "default": false
+      },
+      "custom_domain": {
+        "type": "string",
+        "title": "Custom Domain",
+        "description": "Get custom domain if specified.",
+        "group": "General Settings",
+        "order": 3
+      },
+      "enable_https": {
+        "type": "boolean",
+        "title": "Enable Https",
+        "description": "Whether to enable HTTPS (requires Load Balancer), defaults to False.",
+        "group": "General Settings",
+        "order": 4,
+        "default": false
+      },
+      "index_document": {
+        "type": "string",
+        "title": "Index Document",
+        "description": "Get index document name, defaults to 'index.html'.",
+        "group": "General Settings",
+        "order": 5,
+        "default": "index.html"
+      },
+      "error_document": {
+        "type": "string",
+        "title": "Error Document",
+        "description": "Get error document name if specified.",
+        "group": "General Settings",
+        "order": 6
+      },
+      "enable_versioning": {
+        "type": "boolean",
+        "title": "Enable Versioning",
+        "description": "Whether to enable bucket versioning, defaults to False.",
+        "group": "General Settings",
+        "order": 7,
+        "default": false
+      },
+      "cors_allowed_origins": {
+        "type": "string",
+        "title": "Cors Allowed Origins",
+        "description": "Get CORS allowed origins list, empty if not specified.",
+        "group": "General Settings",
+        "order": 8
+      },
+      "lifecycle_rules": {
+        "type": "string",
+        "title": "Lifecycle Rules",
+        "description": "Get lifecycle rules configuration, empty if not specified.",
+        "group": "General Settings",
+        "order": 9
+      },
+      "location": {
+        "type": "string",
+        "title": "Location",
+        "description": "Get bucket location (alias for region).",
+        "group": "General Settings",
+        "order": 10
+      },
+      "websiteName": {
+        "type": "string",
+        "title": "Website Name",
+        "default": "my-gcp-site"
+      }
+    },
+    "smart_defaults": {}
+  },
+  "resources": [
+    {
+      "id": "gcp-static-website:archie-logo-png",
+      "type": "aws:s3:BucketObject",
+      "name": "archie-logo-png",
+      "description": "Archie brand logo (archie-logo.png)",
+      "category": "Storage",
+      "smart_defaults": {
+        "key": "archie-logo.png",
+        "content_type": "image/png",
+        "tags": {
+          "Name": "archie-archie-logo-png-{environment}",
+          "ManagedBy": "Archie"
+        }
+      },
+      "optional": false,
+      "dependencies": [],
+      "dependents": []
+    },
+    {
+      "id": "gcp-static-website:index-html",
+      "type": "aws:s3:BucketObject",
+      "name": "index-html",
+      "description": "Archie-branded congratulations page (index.html)",
+      "category": "Storage",
+      "smart_defaults": {
+        "key": "index.html",
+        "content_type": "text/html",
+        "tags": {
+          "Name": "archie-index-html-{environment}",
+          "ManagedBy": "Archie"
+        }
+      },
+      "optional": false,
+      "dependencies": [],
+      "dependents": []
+    },
+    {
+      "id": "gcp-static-website:styles-css",
+      "type": "aws:s3:BucketObject",
+      "name": "styles-css",
+      "description": "Styles with dark/light theme support (styles.css)",
+      "category": "Storage",
+      "smart_defaults": {
+        "key": "styles.css",
+        "content_type": "text/css",
+        "tags": {
+          "Name": "archie-styles-css-{environment}",
+          "ManagedBy": "Archie"
+        }
+      },
+      "optional": false,
+      "dependencies": [],
+      "dependents": []
+    },
+    {
+      "id": "gcp-static-website:{project_name}",
+      "type": "gcp:storage:Bucket",
+      "name": "{project_name}",
+      "description": "gcp:storage:Bucket resource",
+      "category": "Other",
+      "smart_defaults": {
+        "name": "{bucket_name}",
+        "location": "{config_location}",
+        "project": "{config_project}",
+        "website": {},
+        "uniform_bucket_level_access": true,
+        "force_destroy": true,
+        "labels": {
+          "managed-by": "archie"
+        }
+      },
+      "optional": false,
+      "dependencies": [],
+      "dependents": []
+    },
+    {
+      "id": "gcp-static-website:{project_name}-public-read",
+      "type": "gcp:storage:BucketIAMBinding",
+      "name": "{project_name}-public-read",
+      "description": "gcp:storage:BucketIAMBinding resource",
+      "category": "Other",
+      "smart_defaults": {
+        "bucket": "{config_name}",
+        "role": "roles/storage.objectViewer",
+        "members": [
+          "allUsers"
+        ]
+      },
+      "optional": false,
+      "dependencies": [],
+      "dependents": []
+    },
+    {
+      "id": "gcp-static-website:{project_name}-",
+      "type": "gcp:storage:BucketObject",
+      "name": "{project_name}-",
+      "description": "gcp:storage:BucketObject resource",
+      "category": "Other",
+      "smart_defaults": {},
+      "optional": false,
+      "dependencies": [],
+      "dependents": []
+    }
+  ],
+  "pillars": {
+    "security": {
+      "score": "good",
+      "description": "Implements security best practices for cloud infrastructure with network isolation, IAM roles, and secure access patterns.",
+      "best_practices": [
+        "Identity and access management"
+      ]
+    },
+    "reliability": {
+      "score": "fair",
+      "description": "Ensures high availability and fault tolerance.",
+      "best_practices": [
+        "Automated recovery mechanisms",
+        "Fault-tolerant architecture patterns"
+      ]
+    },
+    "performance_efficiency": {
+      "score": "fair",
+      "description": "Optimizes resource utilization and performance.",
+      "best_practices": [
+        "Scalable resource allocation",
+        "Performance monitoring capabilities"
+      ]
+    },
+    "cost_optimization": {
+      "score": "good",
+      "description": "Balances cost efficiency with reliability through appropriate resource sizing and usage-based pricing.",
+      "best_practices": [
+        "Environment-specific parameter handling",
+        "On-demand resource provisioning"
+      ]
+    },
+    "operational_excellence": {
+      "score": "excellent",
+      "description": "Enables operational best practices with infrastructure as code, monitoring, and automated management.",
+      "best_practices": [
+        "Infrastructure as Code with Pulumi for automated deployments",
+        "Comprehensive logging with CloudWatch",
+        "Version-controlled configuration"
+      ]
+    },
+    "sustainability": {
+      "score": "good",
+      "description": "Supports sustainable practices through efficient resource utilization and regional service usage.",
+      "best_practices": [
+        "Efficient resource utilization patterns",
+        "Automated scaling reducing over-provisioning"
+      ]
+    }
+  }
+}

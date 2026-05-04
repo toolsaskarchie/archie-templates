@@ -1,0 +1,37 @@
+# Azure Container Web App - Default Configuration
+# All resource configurations in one place for easy modification
+
+# =============================================================================
+# App Service Plan Configuration
+# =============================================================================
+app_service_plan:
+  sku_name: "B1"  # Basic tier
+  os_type: "Linux"
+
+# =============================================================================
+# Container Configuration
+# =============================================================================
+container:
+  image: "nginx:latest"
+  registry_url: "https://index.docker.io"
+  
+# =============================================================================
+# App Settings
+# =============================================================================
+app_settings:
+  WEBSITES_ENABLE_APP_SERVICE_STORAGE: "false"
+
+# =============================================================================
+# Networking
+# =============================================================================
+networking:
+  https_only: true
+  minimum_tls_version: "1.2"
+
+# =============================================================================
+# Tags Configuration
+# =============================================================================
+tags:
+  Environment: "nonprod"
+  ManagedBy: "Archie"
+  Purpose: "Container Web Application"

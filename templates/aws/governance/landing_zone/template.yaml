@@ -1,0 +1,446 @@
+metadata:
+  name: aws-landing-zone
+  title: Multi-Account Landing Zone
+  description: Enterprise-grade multi-account architecture based on AWS MALZ best practices. Provisions Organizations, SCPs, CloudTrail, Config, SecurityHub, GuardDuty, and IAM Identity Center.
+  category: governance
+  version: latest
+  author: InnovativeApps
+  cloud: aws
+  environment: foundation
+  base_cost: $10/month
+  tags:
+  - organizations
+  - landing-zone
+  - governance
+  - security
+  - compliance
+  features:
+  - AWS Organizations with 6-OU MALZ hierarchy
+  - Service Control Policies for guardrail enforcement
+  - Organization-wide CloudTrail with centralized logging
+  - GuardDuty threat detection across all accounts
+  - IAM Identity Center with admin and read-only permission sets
+  deployment_time: 10-15 minutes
+  complexity: advanced
+  pillars:
+  - title: Operational Excellence
+    score: excellent
+    score_color: '#10b981'
+    description: Centralized governance with automated multi-account management
+    practices:
+    - AWS Organizations provides centralized multi-account management
+    - AWS Config Aggregator for organization-wide compliance visibility
+    - Automated OU structure follows AWS MALZ best practices
+    - Infrastructure as Code for repeatable landing zone deployments
+    - Budget alerts for proactive cost governance
+  - title: Security
+    score: excellent
+    score_color: '#10b981'
+    description: Defense-in-depth with SCPs, GuardDuty, and SecurityHub
+    practices:
+    - Service Control Policies enforce guardrails across all accounts
+    - GuardDuty provides organization-wide threat detection
+    - SecurityHub with CIS and AWS Foundational benchmarks
+    - CloudTrail logs all API activity with log file validation
+    - Encryption enforcement SCP prevents unencrypted S3 and EBS
+  - title: Reliability
+    score: good
+    score_color: '#f59e0b'
+    description: Resilient governance services with centralized logging
+    practices:
+    - Multi-region CloudTrail ensures no API calls are missed
+    - S3 logging bucket with versioning for data durability
+    - Guardrail protection SCP prevents disabling security services
+    - AWS-managed services provide built-in high availability
+    - Glacier lifecycle policies ensure long-term log retention
+  - title: Performance Efficiency
+    score: good
+    score_color: '#f59e0b'
+    description: Lightweight governance layer with minimal overhead
+    practices:
+    - Organizations and SCPs add zero latency to workloads
+    - Config Aggregator efficiently collects compliance data
+    - GuardDuty uses ML-based analysis with no agent overhead
+    - IAM Identity Center provides fast SSO access to accounts
+    - Region restriction SCP reduces blast radius and simplifies management
+  - title: Cost Optimization
+    score: good
+    score_color: '#f59e0b'
+    description: Low-cost governance with built-in budget alerting
+    practices:
+    - AWS Organizations is free for multi-account management
+    - Budget alerts notify at 80% and 100% spend thresholds
+    - Glacier lifecycle transitions reduce long-term log storage costs
+    - Region restriction prevents accidental resource sprawl
+    - IAM Identity Center is included at no additional charge
+  - title: Sustainability
+    score: good
+    score_color: '#f59e0b'
+    description: Serverless governance services minimize resource consumption
+    practices:
+    - All governance services are fully managed with no idle compute
+    - Region restriction reduces unnecessary infrastructure sprawl
+    - Centralized logging eliminates duplicate log storage across accounts
+    - S3 Glacier lifecycle minimizes active storage energy usage
+    - Shared AWS infrastructure for Organizations and Identity Center
+  architecture:
+    summary: AWS Multi-Account Landing Zone (MALZ)
+  action_name: aws-landing-zone
+  tier: template
+  use_cases:
+  - Production workloads
+  - Mission-critical applications
+  - Enterprise-grade infrastructure
+resources:
+  org-{project_name}:
+    type: aws:organizations:Organization
+    name: org-{project_name}
+    always_created: true
+    description: Organization resource
+    smart_defaults:
+      feature_set: ALL
+      aws_service_access_principals:
+      - cloudtrail.amazonaws.com
+      - config-multiaccountsetup.amazonaws.com
+      - guardduty.amazonaws.com
+      - securityhub.amazonaws.com
+      - sso.amazonaws.com
+      - ram.amazonaws.com
+      - budgets.amazonaws.com
+      enabled_policy_types:
+      - SERVICE_CONTROL_POLICY
+      - TAG_POLICY
+  scp-deny-root-{project_name}:
+    type: aws:organizations:Policy
+    name: scp-deny-root-{project_name}
+    always_created: true
+    description: Policy resource
+    smart_defaults:
+      name: DenyRootAccess
+      type: SERVICE_CONTROL_POLICY
+      description: Deny all actions performed by root user in member accounts
+      content: '{json_config}'
+      tags: '{tags}'
+  scp-enforce-encryption-{project_name}:
+    type: aws:organizations:Policy
+    name: scp-enforce-encryption-{project_name}
+    always_created: true
+    description: Policy resource
+    smart_defaults:
+      name: EnforceEncryption
+      type: SERVICE_CONTROL_POLICY
+      description: Enforce encryption at rest for S3 and EBS
+      content: '{json_config}'
+      tags: '{tags}'
+  scp-region-lock-{project_name}:
+    type: aws:organizations:Policy
+    name: scp-region-lock-{project_name}
+    always_created: true
+    description: Policy resource
+    smart_defaults:
+      name: RegionRestriction
+      type: SERVICE_CONTROL_POLICY
+      description: Restrict resource creation to approved regions
+      content: '{json_config}'
+      tags: '{tags}'
+  scp-protect-guardrails-{project_name}:
+    type: aws:organizations:Policy
+    name: scp-protect-guardrails-{project_name}
+    always_created: true
+    description: Policy resource
+    smart_defaults:
+      name: ProtectGuardrails
+      type: SERVICE_CONTROL_POLICY
+      description: Prevent disabling CloudTrail, Config, GuardDuty, SecurityHub
+      content: '{json_config}'
+      tags: '{tags}'
+  s3-logging-{project_name}-{region_short}:
+    type: aws:s3:BucketV2
+    name: s3-logging-{project_name}-{region_short}
+    always_created: true
+    description: BucketV2 resource
+    smart_defaults:
+      bucket: '{bucket_name}'
+      force_destroy: false
+      tags:
+        Name: '{bucket_name}'
+        Purpose: Centralized Logging
+  s3-logging-versioning-{project_name}:
+    type: aws:s3:BucketVersioningV2
+    name: s3-logging-versioning-{project_name}
+    always_created: true
+    description: BucketVersioningV2 resource
+    smart_defaults:
+      bucket: '{config_id}'
+      versioning_configuration:
+        status: Enabled
+  s3-logging-encryption-{project_name}:
+    type: aws:s3:BucketServerSideEncryptionConfigurationV2
+    name: s3-logging-encryption-{project_name}
+    always_created: true
+    description: BucketServerSideEncryptionConfigurationV2 resource
+    smart_defaults:
+      bucket: '{config_id}'
+      rules: []
+  s3-logging-lifecycle-{project_name}:
+    type: aws:s3:BucketLifecycleConfigurationV2
+    name: s3-logging-lifecycle-{project_name}
+    always_created: true
+    description: S3 bucket lifecycle rules for automatic log retention and deletion
+    smart_defaults:
+      bucket: '{config_id}'
+      rules: []
+  s3-logging-public-access-{project_name}:
+    type: aws:s3:BucketPublicAccessBlock
+    name: s3-logging-public-access-{project_name}
+    always_created: true
+    description: BucketPublicAccessBlock resource
+    smart_defaults:
+      bucket: '{config_id}'
+      block_public_acls: true
+      block_public_policy: true
+      ignore_public_acls: true
+      restrict_public_buckets: true
+  s3-logging-policy-{project_name}:
+    type: aws:s3:BucketPolicy
+    name: s3-logging-policy-{project_name}
+    always_created: true
+    description: BucketPolicy resource
+    smart_defaults:
+      bucket: '{config_id}'
+      policy: '{computed}'
+  trail-org-{project_name}-{region_short}:
+    type: aws:cloudtrail:Trail
+    name: trail-org-{project_name}-{region_short}
+    always_created: true
+    description: Trail resource
+    smart_defaults:
+      name: '{trail_name}'
+      is_organization_trail: true
+      is_multi_region_trail: true
+      enable_log_file_validation: true
+      s3_bucket_name: '{config_bucket}'
+      s3_key_prefix: cloudtrail
+      include_global_service_events: true
+      tags:
+        Name: '{trail_name}'
+      opts: '{computed}'
+  role-config-{project_name}:
+    type: aws:iam:Role
+    name: role-config-{project_name}
+    always_created: true
+    description: Role resource
+    smart_defaults:
+      name: archie-config-{project_name}
+      assume_role_policy: '{json_config}'
+      tags: '{tags}'
+  role-config-policy-{project_name}:
+    type: aws:iam:RolePolicyAttachment
+    name: role-config-policy-{project_name}
+    always_created: true
+    description: RolePolicyAttachment resource
+    smart_defaults:
+      role: '{name}'
+      policy_arn: arn:aws:iam::aws:policy/service-role/AWS_ConfigRole
+  config-aggregator-{project_name}:
+    type: aws:cfg:ConfigurationAggregator
+    name: config-aggregator-{project_name}
+    always_created: true
+    description: ConfigurationAggregator resource
+    smart_defaults:
+      name: '{aggregator_name}'
+      organization_aggregation_source: '{computed}'
+  ou-{ou_key}-{project_name}:
+    type: aws:organizations:OrganizationalUnit
+    name: ou-{ou_key}-{project_name}
+    always_created: true
+    description: OrganizationalUnit resource
+    smart_defaults:
+      name: '{ou_name}'
+      parent_id: '{config_id}'
+      tags:
+        Name: '{ou_name}'
+  scp-attach-{scp_key}-{project_name}:
+    type: aws:organizations:PolicyAttachment
+    name: scp-attach-{scp_key}-{project_name}
+    always_created: true
+    description: PolicyAttachment resource
+    smart_defaults:
+      policy_id: '{id}'
+      target_id: '{config_id}'
+  securityhub-{project_name}:
+    type: aws:securityhub:Account
+    name: securityhub-{project_name}
+    description: Account resource
+    conditional:
+      field: enable_securityhub
+  securityhub-org-{project_name}:
+    type: aws:securityhub:OrganizationConfiguration
+    name: securityhub-org-{project_name}
+    description: OrganizationConfiguration resource
+    conditional:
+      field: enable_securityhub
+    smart_defaults:
+      auto_enable: true
+      opts: '{computed}'
+  securityhub-cis-{project_name}:
+    type: aws:securityhub:StandardsSubscription
+    name: securityhub-cis-{project_name}
+    description: StandardsSubscription resource
+    conditional:
+      field: enable_securityhub
+    smart_defaults:
+      standards_arn: arn:aws:securityhub:::ruleset/cis-aws-foundations-benchmark/v/1.4.0
+      opts: '{computed}'
+  securityhub-aws-foundational-{project_name}:
+    type: aws:securityhub:StandardsSubscription
+    name: securityhub-aws-foundational-{project_name}
+    description: StandardsSubscription resource
+    conditional:
+      field: enable_securityhub
+    smart_defaults:
+      standards_arn: arn:aws:securityhub:::standards/aws-foundational-security-best-practices/v/1.0.0
+      opts: '{computed}'
+  guardduty-detector-{project_name}:
+    type: aws:guardduty:Detector
+    name: guardduty-detector-{project_name}
+    description: Detector resource
+    conditional:
+      field: enable_guardduty
+    smart_defaults:
+      enable: true
+      finding_publishing_frequency: FIFTEEN_MINUTES
+      datasources: '{computed}'
+  guardduty-org-{project_name}:
+    type: aws:guardduty:OrganizationConfiguration
+    name: guardduty-org-{project_name}
+    description: OrganizationConfiguration resource
+    conditional:
+      field: enable_guardduty
+    smart_defaults:
+      detector_id: '{config_id}'
+      auto_enable_organization_members: ALL
+  budget-org-{project_name}:
+    type: aws:budgets:Budget
+    name: budget-org-{project_name}
+    description: Budget resource
+    conditional:
+      field: enable_budget_alerts
+    smart_defaults:
+      name: archie-budget-{project_name}
+      budget_type: COST
+      limit_amount: '{monthly_budget}'
+      limit_unit: USD
+      time_unit: MONTHLY
+      notifications: []
+  sso-admin-ps-{project_name}:
+    type: aws:ssoadmin:PermissionSet
+    name: sso-admin-ps-{project_name}
+    description: PermissionSet resource
+    conditional:
+      field: enable_sso
+    smart_defaults:
+      name: AdministratorAccess
+      description: Full administrator access for platform engineers
+      instance_arn: '{sso_instance_arn}'
+      session_duration: PT8H
+      relay_state: https://console.aws.amazon.com/
+  sso-admin-policy-{project_name}:
+    type: aws:ssoadmin:ManagedPolicyAttachment
+    name: sso-admin-policy-{project_name}
+    description: ManagedPolicyAttachment resource
+    conditional:
+      field: enable_sso
+    smart_defaults:
+      instance_arn: '{sso_instance_arn}'
+      permission_set_arn: '{arn}'
+      managed_policy_arn: arn:aws:iam::aws:policy/AdministratorAccess
+  sso-readonly-ps-{project_name}:
+    type: aws:ssoadmin:PermissionSet
+    name: sso-readonly-ps-{project_name}
+    description: PermissionSet resource
+    conditional:
+      field: enable_sso
+    smart_defaults:
+      name: ReadOnlyAccess
+      description: Read-only access for developers and auditors
+      instance_arn: '{sso_instance_arn}'
+      session_duration: PT8H
+  sso-readonly-policy-{project_name}:
+    type: aws:ssoadmin:ManagedPolicyAttachment
+    name: sso-readonly-policy-{project_name}
+    description: ManagedPolicyAttachment resource
+    conditional:
+      field: enable_sso
+    smart_defaults:
+      instance_arn: '{sso_instance_arn}'
+      permission_set_arn: '{arn}'
+      managed_policy_arn: arn:aws:iam::aws:policy/ReadOnlyAccess
+configuration:
+  properties:
+    project_name:
+      type: string
+      default: my-org
+      title: Organization Name
+      description: Name for the landing zone organization
+      order: 1
+      group: Essentials
+    region:
+      type: string
+      default: us-east-1
+      title: Primary Region
+      description: AWS region for landing zone resources
+      order: 2
+      group: Essentials
+    allowed_regions:
+      type: string
+      default: us-east-1,us-west-2,eu-west-1
+      title: Allowed Regions
+      description: Comma-separated list of regions workloads can deploy to
+      order: 10
+      group: Governance
+    enable_securityhub:
+      type: boolean
+      default: true
+      title: Enable SecurityHub
+      description: Enable AWS SecurityHub with CIS and Foundational benchmarks
+      order: 20
+      group: Security
+    enable_guardduty:
+      type: boolean
+      default: true
+      title: Enable GuardDuty
+      description: Enable GuardDuty threat detection across all accounts
+      order: 21
+      group: Security
+    enable_sso:
+      type: boolean
+      default: true
+      title: Enable IAM Identity Center
+      description: Configure SSO permission sets for admin and read-only access
+      order: 22
+      group: Security
+    enable_budget_alerts:
+      type: boolean
+      default: true
+      title: Enable Budget Alerts
+      description: Create monthly budget with 80% and 100% threshold alerts
+      order: 30
+      group: Cost Management
+    monthly_budget:
+      type: number
+      default: 10000
+      title: Monthly Budget (USD)
+      description: Monthly spending limit for budget alerts
+      order: 31
+      group: Cost Management
+    log_retention_days:
+      type: number
+      default: 365
+      title: Log Retention (Days)
+      description: Number of days to retain CloudTrail and Config logs
+      order: 40
+      group: Logging
+  required:
+  - project_name
+  - region

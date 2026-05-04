@@ -1,0 +1,1846 @@
+{
+  "metadata": {
+    "name": "aws-alb-nonprod",
+    "title": "Application Load Balancer",
+    "description": "Complete web architecture featuring a highly available ALB distributing traffic to EC2 backend instances.",
+    "category": "networking",
+    "version": "latest",
+    "author": "InnovativeApps",
+    "cloud": "aws",
+    "environment": "nonprod",
+    "base_cost": "$45/month",
+    "features": [
+      "Dedicated Multi-AZ VPC Architecture",
+      "Automated EC2 Backend fleet provisioning",
+      "Security Group isolation tiers (ALB vs App)",
+      "Integrated Health Checks & Target Management",
+      "HTTPS support with ACM integration"
+    ],
+    "tags": [
+      "alb",
+      "load-balancer",
+      "ha",
+      "networking",
+      "nonprod"
+    ],
+    "deployment_time": "12-18 minutes",
+    "complexity": "intermediate",
+    "pillars": [
+      {
+        "title": "Operational Excellence",
+        "score": "excellent",
+        "score_color": "#10b981",
+        "practices": [
+          "Infrastructure as Code with Pulumi for automated, repeatable deployments",
+          "Centralized load balancer management and traffic routing",
+          "Health check monitoring with automatic unhealthy target removal",
+          "Access logs capture all requests for debugging and analytics",
+          "CloudWatch metrics provide real-time ALB performance visibility"
+        ]
+      },
+      {
+        "title": "Security",
+        "score": "excellent",
+        "score_color": "#10b981",
+        "practices": [
+          "Security group isolation between ALB and backend instances",
+          "HTTPS listener support with ACM certificate integration",
+          "Backend instances only accept traffic from ALB security group",
+          "Multi-tier security architecture (public ALB, private backends)",
+          "VPC endpoints enable private AWS service access without internet exposure"
+        ]
+      },
+      {
+        "title": "Reliability",
+        "score": "excellent",
+        "score_color": "#10b981",
+        "practices": [
+          "Multi-AZ deployment ensures high availability across availability zones",
+          "Automated health checks remove unhealthy targets from rotation",
+          "Multiple backend instances provide redundancy and failover",
+          "ALB automatically scales to handle traffic spikes",
+          "Cross-zone load balancing distributes traffic evenly"
+        ]
+      },
+      {
+        "title": "Performance Efficiency",
+        "score": "excellent",
+        "score_color": "#10b981",
+        "practices": [
+          "Elastic Load Balancing distributes traffic efficiently across targets",
+          "Connection multiplexing reduces backend connection overhead",
+          "HTTP/2 and WebSocket support for modern application protocols",
+          "Session stickiness routes repeat requests to same backend",
+          "Target group health checks ensure only healthy instances receive traffic"
+        ]
+      },
+      {
+        "title": "Cost Optimization",
+        "score": "good",
+        "score_color": "#f59e0b",
+        "practices": [
+          "ALB pricing based on hours used and data processed (~$20-30/month base)",
+          "Shared ALB can serve multiple applications reducing infrastructure duplication",
+          "Health checks prevent wasted requests to unhealthy instances",
+          "Target-based routing enables efficient resource utilization",
+          "VPC endpoints eliminate NAT gateway costs for AWS service access"
+        ]
+      },
+      {
+        "title": "Sustainability",
+        "score": "good",
+        "score_color": "#f59e0b",
+        "practices": [
+          "AWS-managed service optimized for energy efficiency",
+          "Elastic scaling prevents over-provisioning of infrastructure",
+          "Multi-AZ design maximizes resource utilization across zones",
+          "Health checks reduce wasteful traffic to unhealthy targets",
+          "Efficient traffic distribution minimizes redundant processing"
+        ]
+      }
+    ],
+    "architecture": {
+      "summary": "AWS ALB Non-Production Template"
+    },
+    "action_name": "aws-alb-nonprod",
+    "tier": "template",
+    "use_cases": [
+      "Development and testing environments",
+      "Staging infrastructure",
+      "Non-production workloads"
+    ]
+  },
+  "configuration": {
+    "type": "object",
+    "required": [
+      "region",
+      "alb_name",
+      "project_name"
+    ],
+    "properties": {
+      "use_custom_cidr": {
+        "type": "boolean",
+        "default": false,
+        "title": "Use Custom CIDR",
+        "description": "Enable to specify a custom IPv4 CIDR block for the VPC",
+        "order": 10,
+        "group": "Network Configuration",
+        "cost_impact": "$0/month"
+      },
+      "custom_cidr_block": {
+        "type": "string",
+        "default": "10.0.0.0/16",
+        "title": "Custom CIDR Block",
+        "description": "Specify custom IPv4 CIDR block (e.g., 10.0.0.0/16, 172.16.0.0/16, 192.168.0.0/16)",
+        "order": 11,
+        "group": "Network Configuration",
+        "conditional": {
+          "field": "use_custom_cidr"
+        }
+      },
+      "enable_dns_support": {
+        "type": "boolean",
+        "title": "Enable DNS Support",
+        "description": "Allow DNS resolution",
+        "default": true,
+        "group": "Networking & Connectivity",
+        "visibleIf": {
+          "vpc_mode": "new"
+        },
+        "isEssential": true,
+        "order": 70
+      },
+      "enable_dns_hostnames": {
+        "type": "boolean",
+        "title": "Enable DNS Hostnames",
+        "description": "Assign public hostnames",
+        "default": true,
+        "group": "Networking & Connectivity",
+        "visibleIf": {
+          "vpc_mode": "new"
+        },
+        "isEssential": true,
+        "order": 71
+      },
+      "enable_ssh_access": {
+        "type": "boolean",
+        "default": false,
+        "title": "Enable SSH Security Group",
+        "description": "Traditional SSH/RDP key-based access (alternative to SSM Session Manager)",
+        "architecture_decision": true,
+        "smart_default_enabled": false,
+        "foundation": true,
+        "section": "Security & Access",
+        "order": 102,
+        "group": "Architecture Decisions",
+        "cost_impact": "+$0/month"
+      },
+      "ssh_access_ip": {
+        "type": "string",
+        "title": "Admin Access IP (SSH/RDP)",
+        "description": "IP address or CIDR block (required for advanced mode)",
+        "placeholder": "e.g. 203.0.113.25/32",
+        "group": "Security & Connectivity",
+        "visibleIf": {
+          "ssh_mode": "enabled"
+        },
+        "isEssential": true,
+        "order": 141
+      },
+      "enable_nat_gateway": {
+        "type": "boolean",
+        "title": "Provision NAT Gateway",
+        "description": "Provide internet access to private subnets",
+        "default": true,
+        "group": "Networking & Connectivity",
+        "visibleIf": {
+          "vpc_mode": "new"
+        },
+        "isEssential": true,
+        "order": 60
+      },
+      "enable_isolated_tier": {
+        "type": "boolean",
+        "default": false,
+        "title": "Enable Isolated Tier",
+        "description": "Additional database subnet tier with no internet access for maximum security",
+        "architecture_decision": true,
+        "smart_default_enabled": false,
+        "foundation": true,
+        "section": "Network Segmentation",
+        "order": 103,
+        "group": "Architecture Decisions",
+        "cost_impact": "+$0/month"
+      },
+      "enable_flow_logs": {
+        "type": "boolean",
+        "title": "Enable Flow Logs",
+        "description": "Capture IP traffic information",
+        "default": true,
+        "group": "Observability",
+        "isEssential": true,
+        "order": 201
+      },
+      "flow_log_retention": {
+        "type": "number",
+        "title": "Log Retention (Days)",
+        "description": "How long to keep flow logs",
+        "default": 7,
+        "group": "Observability",
+        "visibleIf": {
+          "enable_flow_logs": true
+        },
+        "order": 203
+      },
+      "enable_rds_endpoint": {
+        "type": "boolean",
+        "default": false,
+        "title": "Enable RDS VPC Endpoint",
+        "description": "Private interface endpoint for secure RDS API access without traversing internet",
+        "architecture_decision": true,
+        "smart_default_enabled": false,
+        "foundation": false,
+        "section": "VPC Endpoints",
+        "order": 105,
+        "group": "Architecture Decisions",
+        "cost_impact": "+$14/month"
+      },
+      "enable_ssm_endpoints": {
+        "type": "boolean",
+        "title": "Enable SSM Endpoints",
+        "description": "Interface Endpoints for secure management",
+        "default": true,
+        "help_text": "Required for secure instance access without SSH/IGW.",
+        "group": "Security & Connectivity",
+        "isEssential": true,
+        "order": 151
+      },
+      "project_name": {
+        "type": "string",
+        "title": "Project Name",
+        "description": "Project Name",
+        "help_text": "Name of your project for resource tagging and tracking",
+        "placeholder": "my-project",
+        "group": "Essentials",
+        "isEssential": true,
+        "order": 0
+      },
+      "region": {
+        "type": "string",
+        "title": "AWS Region",
+        "description": "AWS Region",
+        "default": "us-east-1",
+        "enum": [
+          "us-east-1",
+          "us-east-2",
+          "us-west-1",
+          "us-west-2",
+          "eu-west-1",
+          "eu-central-1"
+        ],
+        "group": "Essentials",
+        "isEssential": true,
+        "order": 1
+      },
+      "vpc_header": {
+        "type": "separator",
+        "title": "VPC Configuration",
+        "group": "Networking & Connectivity",
+        "isEssential": true,
+        "order": 10
+      },
+      "vpc_mode": {
+        "type": "select",
+        "title": "VPC Selection",
+        "description": "Deploy into a new or existing VPC",
+        "default": "new",
+        "options": [
+          {
+            "label": "Create New VPC",
+            "value": "new"
+          },
+          {
+            "label": "Use Existing VPC",
+            "value": "existing"
+          }
+        ],
+        "group": "Networking & Connectivity",
+        "isEssential": false,
+        "order": 11
+      },
+      "vpc_id": {
+        "type": "string",
+        "title": "Existing VPC ID",
+        "description": "ID of the existing VPC",
+        "placeholder": "vpc-xxxxxxxx",
+        "group": "Networking & Connectivity",
+        "visibleIf": {
+          "vpc_mode": "existing"
+        },
+        "isEssential": false,
+        "order": 12
+      },
+      "subnet_id": {
+        "type": "string",
+        "title": "Subnet ID",
+        "description": "Select existing Subnet",
+        "placeholder": "subnet-xxxxxxxx",
+        "group": "Networking & Connectivity",
+        "visibleIf": {
+          "vpc_mode": "existing"
+        },
+        "isEssential": false,
+        "order": 13
+      },
+      "vpc_name": {
+        "type": "string",
+        "title": "VPC Name",
+        "description": "Custom name for the new VPC",
+        "placeholder": "Auto-generated",
+        "group": "Networking & Connectivity",
+        "visibleIf": {
+          "vpc_mode": "new"
+        },
+        "isEssential": true,
+        "order": 20
+      },
+      "instance_tenancy": {
+        "type": "select",
+        "title": "VPC Tenancy",
+        "description": "The allowed tenancy of instances launched into the VPC",
+        "default": "default",
+        "options": [
+          {
+            "label": "Default",
+            "value": "default"
+          },
+          {
+            "label": "Dedicated",
+            "value": "dedicated"
+          }
+        ],
+        "group": "Networking & Connectivity",
+        "visibleIf": {
+          "vpc_mode": "new"
+        },
+        "order": 22
+      },
+      "cidr_block": {
+        "type": "string",
+        "title": "VPC CIDR Block",
+        "description": "IPv4 CIDR block for the new VPC",
+        "default": "",
+        "placeholder": "Auto-Assign",
+        "group": "Networking & Connectivity",
+        "visibleIf": {
+          "vpc_mode": "new"
+        },
+        "isEssential": true,
+        "order": 23
+      },
+      "dns_header": {
+        "type": "separator",
+        "title": "DNS Configuration",
+        "group": "Networking & Connectivity",
+        "visibleIf": {
+          "vpc_mode": "new"
+        },
+        "isEssential": true,
+        "order": 69
+      },
+      "subnet_header": {
+        "type": "separator",
+        "title": "Subnet Configuration",
+        "group": "Networking & Connectivity",
+        "visibleIf": {
+          "vpc_mode": "new"
+        },
+        "order": 29
+      },
+      "public_subnet_1_cidr": {
+        "type": "string",
+        "title": "Public Subnet 1 CIDR",
+        "placeholder": "e.g. 10.0.1.0/24",
+        "group": "Networking & Connectivity",
+        "visibleIf": {
+          "vpc_mode": "new"
+        },
+        "order": 30
+      },
+      "az_1": {
+        "type": "string",
+        "title": "Availability Zone 1",
+        "placeholder": "e.g. us-east-1a",
+        "group": "Networking & Connectivity",
+        "visibleIf": {
+          "vpc_mode": "new"
+        },
+        "order": 31
+      },
+      "private_subnet_1_cidr": {
+        "type": "string",
+        "title": "Private Subnet 1 CIDR",
+        "placeholder": "e.g. 10.0.11.0/24",
+        "group": "Networking & Connectivity",
+        "visibleIf": {
+          "vpc_mode": "new"
+        },
+        "order": 32
+      },
+      "zone_2_separator": {
+        "type": "separator",
+        "title": "Secondary Zone Configuration",
+        "group": "Networking & Connectivity",
+        "visibleIf": {
+          "vpc_mode": "new"
+        },
+        "order": 34
+      },
+      "public_subnet_2_cidr": {
+        "type": "string",
+        "title": "Public Subnet 2 CIDR",
+        "placeholder": "e.g. 10.0.2.0/24",
+        "group": "Networking & Connectivity",
+        "visibleIf": {
+          "vpc_mode": "new"
+        },
+        "order": 35
+      },
+      "az_2": {
+        "type": "string",
+        "title": "Availability Zone 2",
+        "placeholder": "e.g. us-east-1b",
+        "group": "Networking & Connectivity",
+        "visibleIf": {
+          "vpc_mode": "new"
+        },
+        "order": 36
+      },
+      "private_subnet_2_cidr": {
+        "type": "string",
+        "title": "Private Subnet 2 CIDR",
+        "placeholder": "e.g. 10.0.12.0/24",
+        "group": "Networking & Connectivity",
+        "visibleIf": {
+          "vpc_mode": "new"
+        },
+        "order": 37
+      },
+      "nat_header": {
+        "type": "separator",
+        "title": "NAT Gateway Configuration",
+        "group": "Networking & Connectivity",
+        "visibleIf": {
+          "vpc_mode": "new"
+        },
+        "isEssential": true,
+        "order": 59
+      },
+      "nat_gateway_count": {
+        "type": "number",
+        "title": "NAT Gateway Count",
+        "description": "1 for cost-optimization, 2-3 for higher availability",
+        "default": 1,
+        "options": [
+          {
+            "label": "Single (Cost Optimized)",
+            "value": 1
+          },
+          {
+            "label": "Double (High Availability)",
+            "value": 2
+          }
+        ],
+        "group": "Networking & Connectivity",
+        "visibleIf": {
+          "enable_nat_gateway": true
+        },
+        "order": 61
+      },
+      "compute_header": {
+        "type": "separator",
+        "title": "Compute Configuration",
+        "group": "Compute Selection",
+        "isEssential": true,
+        "order": 70
+      },
+      "instances": {
+        "type": "array",
+        "title": "EC2 Instances",
+        "description": "Configure multiple instances",
+        "minItems": 1,
+        "maxItems": 10,
+        "default": [
+          {}
+        ],
+        "group": "Compute Selection",
+        "addButtonLabel": "Add Instance",
+        "arrayItemTitle": "Instance {index}",
+        "isEssential": true,
+        "order": 71,
+        "items": {
+          "type": "object",
+          "properties": {
+            "instance_name": {
+              "type": "string",
+              "title": "Instance Name",
+              "description": "Unique identifier for the instance",
+              "placeholder": "Auto-Assign",
+              "group": "Compute Selection",
+              "isEssential": true,
+              "order": 1
+            },
+            "instance_type": {
+              "type": "string",
+              "title": "Instance Type",
+              "description": "Standard non-prod families",
+              "enum": [
+                "t3.micro",
+                "t3.small",
+                "t3.medium",
+                "t4g.small",
+                "t4g.medium"
+              ],
+              "enumLabels": {
+                "t3.micro": "t3.micro (Core / Cost)",
+                "t3.small": "t3.small (Standard)",
+                "t3.medium": "t3.medium (Standard plus)",
+                "t4g.small": "t4g.small (Graviton / Efficiency)",
+                "t4g.medium": "t4g.medium (Graviton plus)"
+              },
+              "default": "t3.micro",
+              "group": "Compute Selection",
+              "isEssential": true,
+              "order": 2
+            },
+            "preset_banner": {
+              "type": "info",
+              "title": "Configuration Presets",
+              "description": "Presets automatically configure security groups, ports, and installation scripts for common stacks. Select 'Custom' to manually define everything.",
+              "group": "Compute Selection",
+              "isEssential": true,
+              "order": 3
+            },
+            "cost_banner": {
+              "type": "info",
+              "title": "Cost Optimization",
+              "description": "For non-prod environments, we recommend using 't3' or 't4g' burstable instances to keep costs low while maintaining performance for bursty workloads.",
+              "group": "Compute Selection",
+              "isEssential": true,
+              "order": 4
+            },
+            "config_preset": {
+              "type": "string",
+              "title": "Platform Preset",
+              "description": "Preconfigured software stack",
+              "enum": [
+                "web-server",
+                "wordpress",
+                "mysql",
+                "nodejs",
+                "alb-backend",
+                "custom"
+              ],
+              "enumLabels": {
+                "web-server": "Web Server (PHP/HTML)",
+                "wordpress": "WordPress Stack",
+                "mysql": "MySQL Database",
+                "nodejs": "Node.js App",
+                "alb-backend": "ALB Target",
+                "custom": "Custom / Bare OS"
+              },
+              "default": "web-server",
+              "group": "Compute Selection",
+              "isEssential": true,
+              "order": 5
+            },
+            "ami_os": {
+              "type": "string",
+              "title": "Operating System",
+              "description": "Base OS image recommendation",
+              "enum": [
+                "amazon-linux-2",
+                "ubuntu-22.04",
+                "windows-2022",
+                "custom"
+              ],
+              "enumLabels": {
+                "amazon-linux-2": "Amazon Linux 2 (Recommended)",
+                "ubuntu-22.04": "Ubuntu 22.04 LTS",
+                "windows-2022": "Windows Server 2022",
+                "custom": "Custom AMI ID"
+              },
+              "default": "amazon-linux-2",
+              "group": "Compute Selection",
+              "isEssential": true,
+              "order": 6
+            },
+            "ami_id": {
+              "type": "string",
+              "title": "Custom AMI ID",
+              "description": "Specify a custom AWS AMI ID",
+              "placeholder": "ami-xxxxxxxxxxxxxxxxx",
+              "visibleIf": {
+                "ami_os": "custom"
+              },
+              "group": "Compute Selection",
+              "order": 7
+            },
+            "key_name": {
+              "type": "string",
+              "title": "SSH Key Pair",
+              "description": "Existing key pair for SSH",
+              "group": "Compute Selection",
+              "order": 8
+            },
+            "enable_ssm": {
+              "type": "boolean",
+              "title": "Enable Systems Manager",
+              "description": "Secure access without SSH",
+              "default": true,
+              "group": "Compute Selection",
+              "isEssential": true,
+              "order": 9
+            }
+          }
+        }
+      },
+      "security_header": {
+        "type": "separator",
+        "title": "Security Group Configuration",
+        "group": "Security & Connectivity",
+        "isEssential": true,
+        "order": 135
+      },
+      "ssh_mode": {
+        "type": "select",
+        "title": "Access Mode",
+        "description": "Choose between secure SSM access or emergency SSH/RDP",
+        "default": "ssm-only",
+        "options": [
+          {
+            "label": "Standard (SSM Only)",
+            "value": "ssm-only"
+          },
+          {
+            "label": "Advanced (Enable SSH/RDP)",
+            "value": "enabled"
+          }
+        ],
+        "group": "Security & Connectivity",
+        "isEssential": false,
+        "order": 140,
+        "help_text": "Standard Security Policy\nSSH and RDP ports remain closed. Secure management via AWS Systems Manager (SSM) is enabled by default.",
+        "visibleIf": {
+          "ami_os": {
+            "in": [
+              "amazon-linux-2",
+              "ubuntu-22.04",
+              "custom"
+            ]
+          }
+        }
+      },
+      "rdp_mode": {
+        "type": "select",
+        "title": "Access Mode (RDP)",
+        "description": "Choose between secure SSM access or emergency RDP",
+        "default": "ssm-only",
+        "options": [
+          {
+            "label": "Standard (SSM Only)",
+            "value": "ssm-only"
+          },
+          {
+            "label": "Advanced (Enable RDP)",
+            "value": "enabled"
+          }
+        ],
+        "visibleIf": {
+          "ami_os": "windows-2022"
+        },
+        "group": "Security & Connectivity",
+        "isEssential": false,
+        "order": 140,
+        "help_text": "Standard Security Policy\nRDP ports remain closed. Secure management via AWS Systems Manager (SSM) is enabled by default."
+      },
+      "rdp_access_ip": {
+        "type": "string",
+        "title": "RDP Access IP",
+        "description": "IP address or CIDR block (required for advanced mode)",
+        "placeholder": "e.g. 203.0.113.25/32",
+        "visibleIf": {
+          "rdp_mode": "enabled"
+        },
+        "group": "Security & Connectivity",
+        "isEssential": true,
+        "order": 141
+      },
+      "endpoint_header": {
+        "type": "separator",
+        "title": "Endpoint Configuration",
+        "group": "Security & Connectivity",
+        "isEssential": true,
+        "order": 150
+      },
+      "enable_s3_endpoint": {
+        "type": "boolean",
+        "title": "Enable S3 Endpoint",
+        "description": "Private gateway access to S3",
+        "default": true,
+        "group": "Security & Connectivity",
+        "isEssential": true,
+        "order": 152
+      },
+      "enable_dynamodb_endpoint": {
+        "type": "boolean",
+        "title": "Enable DynamoDB Endpoint",
+        "description": "Private gateway access to DynamoDB",
+        "default": true,
+        "group": "Security & Connectivity",
+        "isEssential": true,
+        "order": 153
+      },
+      "port_header": {
+        "type": "separator",
+        "title": "Custom Port Overrides",
+        "group": "Security & Connectivity",
+        "isEssential": true,
+        "order": 160
+      },
+      "web_port": {
+        "type": "number",
+        "title": "Web Traffic Port",
+        "description": "Standard port for web traffic (HTTP)",
+        "default": 80,
+        "group": "Security & Connectivity",
+        "isEssential": true,
+        "order": 161
+      },
+      "app_port": {
+        "type": "number",
+        "title": "Application Port",
+        "description": "Port for internal application services",
+        "default": 8080,
+        "group": "Security & Connectivity",
+        "isEssential": true,
+        "order": 162
+      },
+      "db_port": {
+        "type": "number",
+        "title": "Database Port",
+        "description": "Port for database connections",
+        "default": 5432,
+        "group": "Security & Connectivity",
+        "isEssential": true,
+        "order": 163
+      },
+      "flow_logs_header": {
+        "type": "separator",
+        "title": "Flow Logs Configuration",
+        "group": "Observability",
+        "isEssential": true,
+        "order": 200
+      },
+      "log_destination_type": {
+        "type": "select",
+        "title": "Flow Log Destination",
+        "description": "Where to store flow logs",
+        "default": "cloud-watch-logs",
+        "options": [
+          {
+            "label": "CloudWatch Logs",
+            "value": "cloud-watch-logs"
+          },
+          {
+            "label": "S3 Bucket",
+            "value": "s3"
+          }
+        ],
+        "group": "Observability",
+        "visibleIf": {
+          "enable_flow_logs": true
+        },
+        "order": 202
+      },
+      "alb_header": {
+        "type": "separator",
+        "title": "Load Balancer Settings",
+        "group": "Load Balancer",
+        "isEssential": true,
+        "order": 140
+      },
+      "alb_name": {
+        "type": "string",
+        "title": "ALB Name",
+        "description": "Unique name for the load balancer",
+        "placeholder": "Auto-generated",
+        "group": "Load Balancer",
+        "isEssential": true,
+        "order": 141
+      },
+      "internal": {
+        "type": "boolean",
+        "title": "Internal Load Balancer",
+        "description": "Whether the load balancer is internal-only",
+        "default": false,
+        "group": "Load Balancer",
+        "order": 142
+      },
+      "enable_https": {
+        "type": "boolean",
+        "title": "Enable HTTPS (SSL)",
+        "description": "Enable secure listener on port 443",
+        "default": false,
+        "group": "Load Balancer",
+        "isEssential": true,
+        "order": 143
+      },
+      "certificate_arn": {
+        "type": "string",
+        "title": "ACM Certificate ARN",
+        "description": "ARN of existing ACM certificate",
+        "placeholder": "arn:aws:acm:...",
+        "visibleIf": {
+          "enable_https": true
+        },
+        "group": "Load Balancer",
+        "order": 144
+      },
+      "target_port": {
+        "type": "number",
+        "title": "Backend Port",
+        "description": "Port on the EC2 instances to route traffic to",
+        "default": 80,
+        "group": "Load Balancer",
+        "order": 145
+      }
+    },
+    "smart_defaults": {}
+  },
+  "resources": [
+    {
+      "id": "aws-alb-nonprod:{project_name}-http",
+      "type": "aws:lb:Listener",
+      "name": "{project_name}-http",
+      "description": "Listener resource",
+      "category": "Other",
+      "smart_defaults": {
+        "load_balancer_arn": "{config_arn}",
+        "port": 80,
+        "protocol": "HTTP",
+        "default_actions": [
+          {
+            "type": "forward",
+            "target_group_arn": "{arn}"
+          }
+        ]
+      },
+      "optional": false,
+      "dependencies": [],
+      "dependents": []
+    },
+    {
+      "id": "aws-alb-nonprod:{project_name}-https",
+      "type": "aws:lb:Listener",
+      "name": "{project_name}-https",
+      "description": "Listener resource",
+      "category": "Other",
+      "smart_defaults": {
+        "load_balancer_arn": "{config_arn}",
+        "port": 443,
+        "protocol": "HTTPS",
+        "certificate_arn": "{config_certificate_arn}",
+        "default_actions": [
+          {
+            "type": "forward",
+            "target_group_arn": "{arn}"
+          }
+        ]
+      },
+      "optional": false,
+      "dependencies": [],
+      "dependents": []
+    },
+    {
+      "id": "aws-alb-nonprod:{project_name}",
+      "type": "aws:lb:LoadBalancer",
+      "name": "{project_name}",
+      "description": "LoadBalancer resource",
+      "category": "Other",
+      "smart_defaults": {
+        "name": "{config_name}",
+        "load_balancer_type": "application",
+        "subnets": "{public_subnet_ids}",
+        "security_groups": [
+          "{alb_sg_id}"
+        ],
+        "internal": "{config_internal}",
+        "tags": {}
+      },
+      "optional": false,
+      "dependencies": [],
+      "dependents": []
+    },
+    {
+      "id": "aws-alb-nonprod:{namer_resource}",
+      "type": "aws:lb:TargetGroup",
+      "name": "{namer_resource}",
+      "description": "TargetGroup resource",
+      "category": "Other",
+      "smart_defaults": {
+        "name": "{computed}",
+        "port": "{config_target_port}",
+        "protocol": "{config_target_protocol}",
+        "vpc_id": "{config_vpc_id}",
+        "target_type": "instance",
+        "health_check": {
+          "enabled": true,
+          "path": "/",
+          "interval": 30,
+          "timeout": 5,
+          "healthy_threshold": 2,
+          "unhealthy_threshold": 2
+        },
+        "tags": {
+          "Name": "{tg_name}"
+        }
+      },
+      "optional": false,
+      "dependencies": [],
+      "dependents": []
+    },
+    {
+      "id": "aws-alb-nonprod:{project_name}-attachment-",
+      "type": "aws:lb:TargetGroupAttachment",
+      "name": "{project_name}-attachment-",
+      "description": "TargetGroupAttachment resource - {project_name}-attachment-",
+      "category": "Other",
+      "smart_defaults": {},
+      "optional": false,
+      "dependencies": [],
+      "dependents": []
+    },
+    {
+      "id": "aws-ec2-nonprod:ec2-{preset}-{project}-{environment}-{region_short}",
+      "type": "aws:ec2:Instance",
+      "name": "ec2-{preset}-{project}-{environment}-{region_short}",
+      "description": "Instance resource",
+      "category": "Other",
+      "smart_defaults": {
+        "instance_type": "{config_instance_type}",
+        "ami": "{config_id}",
+        "subnet_id": "{config_subnet_id}",
+        "vpc_security_group_ids": "{base_security_groups}",
+        "iam_instance_profile": "{config_name}",
+        "key_name": "{config_key_name}",
+        "user_data": "{config_user_data}",
+        "tags": {
+          "Name": "{name_final}",
+          "ManagedBy": "Archie"
+        }
+      },
+      "optional": false,
+      "dependencies": [],
+      "dependents": []
+    },
+    {
+      "id": "aws-ec2-nonprod:{namer_iam_profile}",
+      "type": "aws:iam:InstanceProfile",
+      "name": "{namer_iam_profile}",
+      "description": "InstanceProfile resource",
+      "category": "Other",
+      "smart_defaults": {
+        "role": "{name}",
+        "tags": {
+          "Name": "{profile_name}"
+        }
+      },
+      "optional": false,
+      "dependencies": [],
+      "dependents": []
+    },
+    {
+      "id": "aws-ec2-nonprod:role-{service}-{project}-{environment}-{region_short}",
+      "type": "aws:iam:Role",
+      "name": "role-{service}-{project}-{environment}-{region_short}",
+      "description": "Role resource",
+      "category": "Other",
+      "smart_defaults": {
+        "assume_role_policy": "{json_config}",
+        "managed_policy_arns": [
+          "arn:aws:iam::aws:policy/AmazonSSMManagedInstanceCore"
+        ],
+        "tags": {
+          "Name": "{role_name}"
+        }
+      },
+      "optional": false,
+      "dependencies": [],
+      "dependents": []
+    },
+    {
+      "id": "aws-ec2-nonprod:{project_name}--rule-{idx}",
+      "type": "aws:ec2:SecurityGroupRule",
+      "name": "{project_name}--rule-{idx}",
+      "description": "SecurityGroupRule resource",
+      "category": "Other",
+      "smart_defaults": {
+        "type": "ingress",
+        "security_group_id": "{access_sg_id}",
+        "protocol": "tcp",
+        "from_port": "{remote_port}",
+        "to_port": "{remote_port}",
+        "cidr_blocks": [
+          "{cidr_ip}"
+        ],
+        "description": "{remote_proto} from {cidr_ip}"
+      },
+      "optional": false,
+      "dependencies": [],
+      "dependents": []
+    },
+    {
+      "id": "aws-vpc-nonprod:vpc-{project}-{environment}-{region_short}-{network_num}",
+      "type": "aws:ec2:Vpc",
+      "name": "vpc-{project}-{environment}-{region_short}-{network_num}",
+      "description": "Virtual Private Cloud with CIDR {config_custom_cidr_block}, DNS support enabled",
+      "category": "Other",
+      "smart_defaults": {
+        "cidr_block": "{config_custom_cidr_block}",
+        "enable_dns_support": "{config_enable_dns_support}",
+        "enable_dns_hostnames": "{config_enable_dns_hostnames}",
+        "instance_tenancy": "{config_instance_tenancy}",
+        "tags": {
+          "Name": "{vpc_name}"
+        }
+      },
+      "optional": false,
+      "dependencies": [],
+      "dependents": []
+    },
+    {
+      "id": "aws-vpc-nonprod:igw-main-{project}-{environment}-{region_short}",
+      "type": "aws:ec2:InternetGateway",
+      "name": "igw-main-{project}-{environment}-{region_short}",
+      "description": "Internet Gateway providing public internet connectivity for the VPC",
+      "category": "Other",
+      "smart_defaults": {
+        "vpc_id": "{config_id}",
+        "tags": {
+          "Name": "{igw_name}"
+        }
+      },
+      "optional": false,
+      "dependencies": [],
+      "dependents": []
+    },
+    {
+      "id": "aws-vpc-nonprod:isolatedsub-{project}-{environment}-{region_short}-{az_short}-{subnet_num}",
+      "type": "aws:ec2:Subnet",
+      "name": "isolatedsub-{project}-{environment}-{region_short}-{az_short}-{subnet_num}",
+      "description": "Private subnet for isolated tier workloads (CIDR: {isolated_cidr})",
+      "category": "Other",
+      "smart_defaults": {
+        "vpc_id": "{config_id}",
+        "cidr_block": "{isolated_cidr}",
+        "availability_zone": "{config_region}a",
+        "map_public_ip_on_launch": false,
+        "tags": {
+          "Name": "{isolated_subnet_name}",
+          "Tier": "isolated"
+        }
+      },
+      "optional": false,
+      "dependencies": [],
+      "dependents": []
+    },
+    {
+      "id": "aws-vpc-nonprod:privsub-{project}-{environment}-{region_short}-{az_short}-{subnet_num}",
+      "type": "aws:ec2:Subnet",
+      "name": "privsub-{project}-{environment}-{region_short}-{az_short}-{subnet_num}",
+      "description": "Private subnet for private tier workloads (CIDR: {private_cidr})",
+      "category": "Other",
+      "smart_defaults": {
+        "vpc_id": "{config_id}",
+        "cidr_block": "{private_cidr}",
+        "availability_zone": "{config_region}a",
+        "map_public_ip_on_launch": false,
+        "tags": {
+          "Name": "{private_subnet_name}",
+          "Tier": "private"
+        }
+      },
+      "optional": false,
+      "dependencies": [],
+      "dependents": []
+    },
+    {
+      "id": "aws-vpc-nonprod:pubsub-{project}-{environment}-{region_short}-{az_short}-{subnet_num}",
+      "type": "aws:ec2:Subnet",
+      "name": "pubsub-{project}-{environment}-{region_short}-{az_short}-{subnet_num}",
+      "description": "Public subnet for public tier workloads (CIDR: {public_cidr})",
+      "category": "Other",
+      "smart_defaults": {
+        "vpc_id": "{config_id}",
+        "cidr_block": "{public_cidr}",
+        "availability_zone": "{config_region}a",
+        "map_public_ip_on_launch": true,
+        "tags": {
+          "Name": "{public_subnet_name}",
+          "Tier": "public"
+        }
+      },
+      "optional": false,
+      "dependencies": [],
+      "dependents": []
+    },
+    {
+      "id": "aws-vpc-nonprod:rt-isolated-{project}-{environment}-{region_short}",
+      "type": "aws:ec2:RouteTable",
+      "name": "rt-isolated-{project}-{environment}-{region_short}",
+      "description": "Route table for isolated tier network traffic routing",
+      "category": "Other",
+      "smart_defaults": {
+        "vpc_id": "{config_id}",
+        "tags": {
+          "Name": "{isolated_rt_name}",
+          "Tier": "isolated"
+        }
+      },
+      "optional": false,
+      "dependencies": [],
+      "dependents": []
+    },
+    {
+      "id": "aws-vpc-nonprod:rt-private-{project}-{environment}-{region_short}",
+      "type": "aws:ec2:RouteTable",
+      "name": "rt-private-{project}-{environment}-{region_short}",
+      "description": "Route table for private tier network traffic routing",
+      "category": "Other",
+      "smart_defaults": {
+        "vpc_id": "{config_id}",
+        "tags": {
+          "Name": "{private_rt_name}",
+          "Tier": "private"
+        }
+      },
+      "optional": false,
+      "dependencies": [],
+      "dependents": []
+    },
+    {
+      "id": "aws-vpc-nonprod:rt-public-{project}-{environment}-{region_short}",
+      "type": "aws:ec2:RouteTable",
+      "name": "rt-public-{project}-{environment}-{region_short}",
+      "description": "Route table for public tier network traffic routing",
+      "category": "Other",
+      "smart_defaults": {
+        "vpc_id": "{config_id}",
+        "tags": {
+          "Name": "{public_rt_name}",
+          "Tier": "public"
+        }
+      },
+      "optional": false,
+      "dependencies": [],
+      "dependents": []
+    },
+    {
+      "id": "aws-vpc-nonprod:route-00000-{project}-{environment}-{region_short}-igw",
+      "type": "aws:ec2:Route",
+      "name": "route-00000-{project}-{environment}-{region_short}-igw",
+      "description": "Route directing 0.0.0.0/0 traffic to Internet Gateway",
+      "category": "Other",
+      "smart_defaults": {
+        "route_table_id": "{id}",
+        "destination_cidr_block": "0.0.0.0/0",
+        "gateway_id": "{config_id}"
+      },
+      "optional": false,
+      "dependencies": [],
+      "dependents": []
+    },
+    {
+      "id": "aws-vpc-nonprod:route-00000-{project}-{environment}-{region_short}-nat",
+      "type": "aws:ec2:Route",
+      "name": "route-00000-{project}-{environment}-{region_short}-nat",
+      "description": "Route directing 0.0.0.0/0 traffic to NAT Gateway",
+      "category": "Other",
+      "smart_defaults": {
+        "route_table_id": "{id}",
+        "destination_cidr_block": "0.0.0.0/0",
+        "nat_gateway_id": "{config_id}"
+      },
+      "optional": false,
+      "dependencies": [],
+      "dependents": [],
+      "estimated_monthly_cost": 32.4,
+      "cost_impact_description": "Shared NAT Gateway for private subnet internet access"
+    },
+    {
+      "id": "aws-vpc-nonprod:rta-isolated-{project}-{environment}-{region_short}-1",
+      "type": "aws:ec2:RouteTableAssociation",
+      "name": "rta-isolated-{project}-{environment}-{region_short}-1",
+      "description": "Associates a route table with a subnet for traffic routing",
+      "category": "Other",
+      "smart_defaults": {
+        "subnet_id": "{id}",
+        "route_table_id": "{id}"
+      },
+      "optional": false,
+      "dependencies": [],
+      "dependents": []
+    },
+    {
+      "id": "aws-vpc-nonprod:rta-private-{project}-{environment}-{region_short}-1",
+      "type": "aws:ec2:RouteTableAssociation",
+      "name": "rta-private-{project}-{environment}-{region_short}-1",
+      "description": "Associates a route table with a subnet for traffic routing",
+      "category": "Other",
+      "smart_defaults": {
+        "subnet_id": "{id}",
+        "route_table_id": "{id}"
+      },
+      "optional": false,
+      "dependencies": [],
+      "dependents": []
+    },
+    {
+      "id": "aws-vpc-nonprod:rta-public-{project}-{environment}-{region_short}-1",
+      "type": "aws:ec2:RouteTableAssociation",
+      "name": "rta-public-{project}-{environment}-{region_short}-1",
+      "description": "Associates a route table with a subnet for traffic routing",
+      "category": "Other",
+      "smart_defaults": {
+        "subnet_id": "{id}",
+        "route_table_id": "{id}"
+      },
+      "optional": false,
+      "dependencies": [],
+      "dependents": []
+    },
+    {
+      "id": "aws-vpc-nonprod:eip-{purpose}-{project}-{environment}-{region_short}-{az_short}",
+      "type": "aws:ec2:Eip",
+      "name": "eip-{purpose}-{project}-{environment}-{region_short}-{az_short}",
+      "description": "Elastic IP address for NAT Gateway attachment",
+      "category": "Other",
+      "smart_defaults": {
+        "domain": "vpc",
+        "tags": {
+          "Name": "{eip_name}"
+        }
+      },
+      "optional": false,
+      "dependencies": [],
+      "dependents": []
+    },
+    {
+      "id": "aws-vpc-nonprod:nat-gw-{project}-{environment}-{region_short}-{az_short}",
+      "type": "aws:ec2:NatGateway",
+      "name": "nat-gw-{project}-{environment}-{region_short}-{az_short}",
+      "description": "NAT Gateway providing outbound internet access for private subnets",
+      "category": "Other",
+      "smart_defaults": {
+        "subnet_id": "{id}",
+        "allocation_id": "{id}",
+        "tags": {
+          "Name": "{nat_name}"
+        }
+      },
+      "optional": false,
+      "dependencies": [],
+      "dependents": [],
+      "estimated_monthly_cost": 32.4,
+      "cost_impact_description": "Shared NAT Gateway for private subnet internet access"
+    },
+    {
+      "id": "aws-vpc-nonprod:vpce-dynamodb-{project}-{environment}-{region_short}-gw",
+      "type": "aws:ec2:VpcEndpoint",
+      "name": "vpce-dynamodb-{project}-{environment}-{region_short}-gw",
+      "description": "DYNAMODB Gateway VPC Endpoint for private DYNAMODB service access",
+      "category": "Other",
+      "smart_defaults": {
+        "vpc_id": "{config_id}",
+        "service_name": "com.amazonaws.{config_region}.dynamodb",
+        "vpc_endpoint_type": "Gateway",
+        "tags": {
+          "Name": "{dynamodb_endpoint_name}"
+        }
+      },
+      "optional": false,
+      "dependencies": [],
+      "dependents": []
+    },
+    {
+      "id": "aws-vpc-nonprod:vpce-ec2messages-{project}-{environment}-{region_short}-if",
+      "type": "aws:ec2:VpcEndpoint",
+      "name": "vpce-ec2messages-{project}-{environment}-{region_short}-if",
+      "description": "EC2MESSAGES Interface VPC Endpoint for private EC2MESSAGES service access",
+      "category": "Other",
+      "smart_defaults": {
+        "vpc_id": "{config_id}",
+        "service_name": "com.amazonaws.{config_region}.ec2messages",
+        "vpc_endpoint_type": "Interface",
+        "subnet_ids": [
+          "{id}"
+        ],
+        "private_dns_enabled": true,
+        "tags": {
+          "Name": "{ec2_messages_endpoint_name}"
+        }
+      },
+      "optional": false,
+      "dependencies": [],
+      "dependents": []
+    },
+    {
+      "id": "aws-vpc-nonprod:vpce-rds-{project}-{environment}-{region_short}-if",
+      "type": "aws:ec2:VpcEndpoint",
+      "name": "vpce-rds-{project}-{environment}-{region_short}-if",
+      "description": "RDS Interface VPC Endpoint for private RDS service access",
+      "category": "Other",
+      "smart_defaults": {
+        "vpc_id": "{config_id}",
+        "service_name": "com.amazonaws.{config_region}.rds",
+        "vpc_endpoint_type": "Interface",
+        "subnet_ids": [
+          "{id}"
+        ],
+        "security_group_ids": [
+          "{id}"
+        ],
+        "private_dns_enabled": true,
+        "tags": {
+          "Name": "{rds_endpoint_name}"
+        }
+      },
+      "optional": false,
+      "dependencies": [],
+      "dependents": []
+    },
+    {
+      "id": "aws-vpc-nonprod:vpce-s3-{project}-{environment}-{region_short}-gw",
+      "type": "aws:ec2:VpcEndpoint",
+      "name": "vpce-s3-{project}-{environment}-{region_short}-gw",
+      "description": "S3 Gateway VPC Endpoint for private S3 service access",
+      "category": "Other",
+      "smart_defaults": {
+        "vpc_id": "{config_id}",
+        "service_name": "com.amazonaws.{config_region}.s3",
+        "vpc_endpoint_type": "Gateway",
+        "tags": {
+          "Name": "{s3_endpoint_name}"
+        }
+      },
+      "optional": false,
+      "dependencies": [],
+      "dependents": []
+    },
+    {
+      "id": "aws-vpc-nonprod:vpce-ssm-{project}-{environment}-{region_short}-if",
+      "type": "aws:ec2:VpcEndpoint",
+      "name": "vpce-ssm-{project}-{environment}-{region_short}-if",
+      "description": "SSM Interface VPC Endpoint for private SSM service access",
+      "category": "Other",
+      "smart_defaults": {
+        "vpc_id": "{config_id}",
+        "service_name": "com.amazonaws.{config_region}.ssm",
+        "vpc_endpoint_type": "Interface",
+        "subnet_ids": [
+          "{id}"
+        ],
+        "private_dns_enabled": true,
+        "tags": {
+          "Name": "{ssm_endpoint_name}"
+        }
+      },
+      "optional": false,
+      "dependencies": [],
+      "dependents": []
+    },
+    {
+      "id": "aws-vpc-nonprod:vpce-ssmmessages-{project}-{environment}-{region_short}-if",
+      "type": "aws:ec2:VpcEndpoint",
+      "name": "vpce-ssmmessages-{project}-{environment}-{region_short}-if",
+      "description": "SSMMESSAGES Interface VPC Endpoint for private SSMMESSAGES service access",
+      "category": "Other",
+      "smart_defaults": {
+        "vpc_id": "{config_id}",
+        "service_name": "com.amazonaws.{config_region}.ssmmessages",
+        "vpc_endpoint_type": "Interface",
+        "subnet_ids": [
+          "{id}"
+        ],
+        "private_dns_enabled": true,
+        "tags": {
+          "Name": "{ssm_messages_endpoint_name}"
+        }
+      },
+      "optional": false,
+      "dependencies": [],
+      "dependents": []
+    },
+    {
+      "id": "aws-vpc-nonprod:fl-{scope}-{project}-{environment}-{region_short}-{traffic}",
+      "type": "aws:ec2:FlowLog",
+      "name": "fl-{scope}-{project}-{environment}-{region_short}-{traffic}",
+      "description": "VPC Flow Logs capturing ALL network traffic to S3",
+      "category": "Other",
+      "smart_defaults": {
+        "vpc_id": "{config_id}",
+        "traffic_type": "ALL",
+        "log_destination_type": "s3",
+        "log_destination": "{computed}",
+        "max_aggregation_interval": 600,
+        "tags": {
+          "Name": "{flow_log_name}"
+        }
+      },
+      "optional": false,
+      "dependencies": [],
+      "dependents": []
+    },
+    {
+      "id": "aws-alb-nonprod:secg-backend-{project}-{environment}-{region_short}",
+      "type": "aws:ec2:SecurityGroup",
+      "name": "secg-backend-{project}-{environment}-{region_short}",
+      "description": "ALB Security Group",
+      "category": "Other",
+      "smart_defaults": {
+        "vpc_id": "{config_vpc_id}",
+        "description": "ALB Security Group",
+        "ingress": [
+          {
+            "protocol": "tcp",
+            "from_port": 80,
+            "to_port": 80,
+            "cidr_blocks": "{allowed_ips}",
+            "description": "HTTP access"
+          },
+          {
+            "protocol": "tcp",
+            "from_port": 443,
+            "to_port": 443,
+            "cidr_blocks": "{allowed_ips}",
+            "description": "HTTPS access"
+          }
+        ],
+        "egress": [
+          {
+            "protocol": "-1",
+            "from_port": 0,
+            "to_port": 0,
+            "cidr_blocks": [
+              "0.0.0.0/0"
+            ]
+          }
+        ],
+        "tags": {
+          "Name": "{sg_name}"
+        }
+      },
+      "optional": false,
+      "dependencies": [],
+      "dependents": []
+    },
+    {
+      "id": "aws-alb-nonprod:secg-backend-{project}-{environment}-{region_short}",
+      "type": "aws:ec2:SecurityGroup",
+      "name": "secg-backend-{project}-{environment}-{region_short}",
+      "description": "Security group for backend instances",
+      "category": "Other",
+      "smart_defaults": {
+        "vpc_id": "{config_vpc_id}",
+        "description": "Security group for backend instances",
+        "ingress": [
+          {
+            "protocol": "tcp",
+            "from_port": "{target_port}",
+            "to_port": "{target_port}",
+            "source_security_group_id": "{alb_sg_id}",
+            "description": "Traffic from ALB"
+          }
+        ],
+        "egress": [
+          {
+            "protocol": "-1",
+            "from_port": 0,
+            "to_port": 0,
+            "cidr_blocks": [
+              "0.0.0.0/0"
+            ]
+          }
+        ],
+        "tags": {
+          "Name": "{sg_name}"
+        }
+      },
+      "optional": false,
+      "dependencies": [],
+      "dependents": []
+    },
+    {
+      "id": "aws-ec2-nonprod:secg-access-{project}-{environment}-{region_short}",
+      "type": "aws:ec2:SecurityGroup",
+      "name": "secg-access-{project}-{environment}-{region_short}",
+      "description": "Management access",
+      "category": "Other",
+      "smart_defaults": {
+        "vpc_id": "{config_vpc_id}",
+        "description": "Management access",
+        "ingress": "{access_sg_ingress}",
+        "egress": [
+          {
+            "protocol": "-1",
+            "from_port": 0,
+            "to_port": 0,
+            "cidr_blocks": [
+              "0.0.0.0/0"
+            ]
+          }
+        ],
+        "tags": {
+          "Name": "{access_sg_name}"
+        }
+      },
+      "optional": false,
+      "dependencies": [],
+      "dependents": []
+    },
+    {
+      "id": "aws-vpc-nonprod:secg-access-{project}-{environment}-{region_short}",
+      "type": "aws:ec2:SecurityGroup",
+      "name": "secg-access-{project}-{environment}-{region_short}",
+      "description": "Management access security group (SSH/RDP)",
+      "category": "Other",
+      "smart_defaults": {
+        "vpc_id": "{config_id}",
+        "description": "Management access security group (SSH/RDP)",
+        "ingress": "{access_sg_ingress}",
+        "egress": [
+          {
+            "protocol": "-1",
+            "from_port": 0,
+            "to_port": 0,
+            "cidr_blocks": [
+              "0.0.0.0/0"
+            ],
+            "description": "Allow all outbound"
+          }
+        ],
+        "tags": {
+          "Name": "{access_sg_name}",
+          "Tier": "management"
+        }
+      },
+      "optional": false,
+      "dependencies": [],
+      "dependents": []
+    },
+    {
+      "id": "aws-vpc-nonprod:secg-app-{project}-{environment}-{region_short}",
+      "type": "aws:ec2:SecurityGroup",
+      "name": "secg-app-{project}-{environment}-{region_short}",
+      "description": "Security group for application tier",
+      "category": "Other",
+      "smart_defaults": {
+        "vpc_id": "{config_id}",
+        "description": "Security group for application tier",
+        "ingress": [
+          {
+            "protocol": "tcp",
+            "from_port": 3000,
+            "to_port": 3000,
+            "security_groups": [
+              "{security_group_web}"
+            ],
+            "description": "App traffic from web tier"
+          },
+          {
+            "protocol": "tcp",
+            "from_port": 8080,
+            "to_port": 8080,
+            "security_groups": [
+              "{security_group_web}"
+            ],
+            "description": "Alt app port from web tier"
+          }
+        ],
+        "egress": [
+          {
+            "protocol": "-1",
+            "from_port": 0,
+            "to_port": 0,
+            "cidr_blocks": [
+              "0.0.0.0/0"
+            ],
+            "description": "Allow all outbound"
+          }
+        ],
+        "tags": {
+          "Name": "{app_sg_name}",
+          "Tier": "app"
+        }
+      },
+      "optional": false,
+      "dependencies": [],
+      "dependents": []
+    },
+    {
+      "id": "aws-vpc-nonprod:secg-db-{project}-{environment}-{region_short}",
+      "type": "aws:ec2:SecurityGroup",
+      "name": "secg-db-{project}-{environment}-{region_short}",
+      "description": "Security group for database tier",
+      "category": "Other",
+      "smart_defaults": {
+        "vpc_id": "{config_id}",
+        "description": "Security group for database tier",
+        "ingress": [
+          {
+            "protocol": "tcp",
+            "from_port": 3306,
+            "to_port": 3306,
+            "security_groups": [
+              "{security_group_app}"
+            ],
+            "description": "MySQL from app tier"
+          },
+          {
+            "protocol": "tcp",
+            "from_port": 5432,
+            "to_port": 5432,
+            "security_groups": [
+              "{security_group_app}"
+            ],
+            "description": "PostgreSQL from app tier"
+          },
+          {
+            "protocol": "tcp",
+            "from_port": 1433,
+            "to_port": 1433,
+            "security_groups": [
+              "{security_group_app}"
+            ],
+            "description": "SQL Server from app tier"
+          }
+        ],
+        "egress": [
+          {
+            "protocol": "-1",
+            "from_port": 0,
+            "to_port": 0,
+            "cidr_blocks": [
+              "0.0.0.0/0"
+            ],
+            "description": "Allow all outbound"
+          }
+        ]
+      },
+      "optional": false,
+      "dependencies": [],
+      "dependents": []
+    },
+    {
+      "id": "aws-vpc-nonprod:secg-web-{project}-{environment}-{region_short}",
+      "type": "aws:ec2:SecurityGroup",
+      "name": "secg-web-{project}-{environment}-{region_short}",
+      "description": "Security group for web tier (HTTP/HTTPS)",
+      "category": "Other",
+      "smart_defaults": {
+        "vpc_id": "{config_id}",
+        "description": "Security group for web tier (HTTP/HTTPS)",
+        "ingress": [
+          {
+            "protocol": "tcp",
+            "from_port": 80,
+            "to_port": 80,
+            "cidr_blocks": [
+              "0.0.0.0/0"
+            ],
+            "description": "HTTP from internet"
+          },
+          {
+            "protocol": "tcp",
+            "from_port": 443,
+            "to_port": 443,
+            "cidr_blocks": [
+              "0.0.0.0/0"
+            ],
+            "description": "HTTPS from internet"
+          }
+        ],
+        "egress": [
+          {
+            "protocol": "-1",
+            "from_port": 0,
+            "to_port": 0,
+            "cidr_blocks": [
+              "0.0.0.0/0"
+            ],
+            "description": "Allow all outbound"
+          }
+        ],
+        "tags": {
+          "Name": "{web_sg_name}",
+          "Tier": "web"
+        }
+      },
+      "optional": false,
+      "dependencies": [],
+      "dependents": []
+    },
+    {
+      "id": "aws-vpc-nonprod:s3-{purpose}-{project}-{environment}-{region_short}",
+      "type": "aws:s3:Bucket",
+      "name": "s3-{purpose}-{project}-{environment}-{region_short}",
+      "description": "S3 bucket for VPC Flow Logs storage",
+      "category": "Other",
+      "smart_defaults": {
+        "bucket": "{bucket_name}",
+        "force_destroy": true,
+        "tags": {
+          "Name": "{bucket_name}",
+          "Purpose": "VPC Flow Logs"
+        }
+      },
+      "optional": false,
+      "dependencies": [],
+      "dependents": []
+    },
+    {
+      "id": "aws-vpc-nonprod:{bucket_name}-lifecycle",
+      "type": "aws:s3:BucketLifecycleConfigurationV2",
+      "name": "{bucket_name}-lifecycle",
+      "description": "S3 bucket lifecycle rules for automatic log retention and deletion",
+      "category": "Other",
+      "smart_defaults": {
+        "bucket": "{config_id}",
+        "rules": [
+          {
+            "id": "delete-old-flow-logs",
+            "status": "Enabled"
+          }
+        ]
+      },
+      "optional": false,
+      "dependencies": [],
+      "dependents": []
+    }
+  ],
+  "pillars": [
+    {
+      "title": "Operational Excellence",
+      "score": "excellent",
+      "score_color": "#10b981",
+      "practices": [
+        "Infrastructure as Code with Pulumi for automated, repeatable deployments",
+        "Centralized load balancer management and traffic routing",
+        "Health check monitoring with automatic unhealthy target removal",
+        "Access logs capture all requests for debugging and analytics",
+        "CloudWatch metrics provide real-time ALB performance visibility"
+      ]
+    },
+    {
+      "title": "Security",
+      "score": "excellent",
+      "score_color": "#10b981",
+      "practices": [
+        "Security group isolation between ALB and backend instances",
+        "HTTPS listener support with ACM certificate integration",
+        "Backend instances only accept traffic from ALB security group",
+        "Multi-tier security architecture (public ALB, private backends)",
+        "VPC endpoints enable private AWS service access without internet exposure"
+      ]
+    },
+    {
+      "title": "Reliability",
+      "score": "excellent",
+      "score_color": "#10b981",
+      "practices": [
+        "Multi-AZ deployment ensures high availability across availability zones",
+        "Automated health checks remove unhealthy targets from rotation",
+        "Multiple backend instances provide redundancy and failover",
+        "ALB automatically scales to handle traffic spikes",
+        "Cross-zone load balancing distributes traffic evenly"
+      ]
+    },
+    {
+      "title": "Performance Efficiency",
+      "score": "excellent",
+      "score_color": "#10b981",
+      "practices": [
+        "Elastic Load Balancing distributes traffic efficiently across targets",
+        "Connection multiplexing reduces backend connection overhead",
+        "HTTP/2 and WebSocket support for modern application protocols",
+        "Session stickiness routes repeat requests to same backend",
+        "Target group health checks ensure only healthy instances receive traffic"
+      ]
+    },
+    {
+      "title": "Cost Optimization",
+      "score": "good",
+      "score_color": "#f59e0b",
+      "practices": [
+        "ALB pricing based on hours used and data processed (~$20-30/month base)",
+        "Shared ALB can serve multiple applications reducing infrastructure duplication",
+        "Health checks prevent wasted requests to unhealthy instances",
+        "Target-based routing enables efficient resource utilization",
+        "VPC endpoints eliminate NAT gateway costs for AWS service access"
+      ]
+    },
+    {
+      "title": "Sustainability",
+      "score": "good",
+      "score_color": "#f59e0b",
+      "practices": [
+        "AWS-managed service optimized for energy efficiency",
+        "Elastic scaling prevents over-provisioning of infrastructure",
+        "Multi-AZ design maximizes resource utilization across zones",
+        "Health checks reduce wasteful traffic to unhealthy targets",
+        "Efficient traffic distribution minimizes redundant processing"
+      ]
+    }
+  ]
+}

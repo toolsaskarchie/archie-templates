@@ -1,0 +1,489 @@
+{
+  "metadata": {
+    "name": "aws-redis-nonprod",
+    "title": "Distributed Cache (Redis)",
+    "description": "Rapidly deploy a managed Redis cluster for development and testing using AWS ElastiCache. Features cost-optimized t3-family nodes, automated snapshot integration, and pre-configured security group isolation. Perfect for application caching and session management.",
+    "category": "database",
+    "version": "latest",
+    "author": "InnovativeApps",
+    "supported_regions": [
+      "us-east-1",
+      "us-east-2",
+      "us-west-2"
+    ],
+    "is_listed_in_marketplace": true,
+    "marketplace_group": "aws-caching-group",
+    "tags": [
+      "redis",
+      "elasticache",
+      "database",
+      "cache",
+      "nonprod"
+    ],
+    "features": [
+      "High-Performance Managed Redis Engine",
+      "Cost-Optimized Burstable Node Types (t3 family)",
+      "Integrated Security Group with Redis Port isolation",
+      "Automated Backups & Maintenance Windows",
+      "Multi-AZ Support for testing HA failover",
+      "Intelligent Subnet Group placement for VPCs"
+    ],
+    "estimated_cost": "$12-35/month (depends on node type)",
+    "complexity": "medium",
+    "deployment_time": "5-10 minutes",
+    "action_name": "aws-redis-nonprod",
+    "environment": "nonprod",
+    "cloud": "aws",
+    "tier": "template",
+    "use_cases": [
+      "Development and testing environments",
+      "Staging infrastructure",
+      "Non-production workloads"
+    ]
+  },
+  "configuration": {
+    "type": "object",
+    "required": [
+      "project_name",
+      "cluster_name"
+    ],
+    "properties": {
+      "resource_tags": {
+        "type": "string",
+        "title": "Resource Tags",
+        "description": "Get resource tags",
+        "group": "General Settings",
+        "order": 1
+      },
+      "az_mode": {
+        "type": "string",
+        "title": "Az Mode",
+        "description": "Get AZ mode based on multi-AZ setting",
+        "group": "Network Configuration",
+        "order": 2
+      },
+      "project_name": {
+        "type": "string",
+        "title": "Project Name",
+        "description": "Project Name",
+        "help_text": "Name of your project for resource tagging and tracking",
+        "placeholder": "my-project",
+        "group": "Essentials",
+        "isEssential": true,
+        "order": 0
+      },
+      "region": {
+        "type": "string",
+        "title": "AWS Region",
+        "description": "AWS Region",
+        "default": "us-east-1",
+        "enum": [
+          "us-east-1",
+          "us-east-2",
+          "us-west-1",
+          "us-west-2",
+          "eu-west-1",
+          "eu-central-1"
+        ],
+        "group": "Essentials",
+        "isEssential": true,
+        "order": 1
+      },
+      "vpc_header": {
+        "type": "separator",
+        "title": "VPC Configuration",
+        "group": "Networking & Connectivity",
+        "isEssential": true,
+        "order": 10
+      },
+      "vpc_mode": {
+        "type": "select",
+        "title": "VPC Selection",
+        "description": "Deploy into a new or existing VPC",
+        "default": "new",
+        "options": [
+          {
+            "label": "Create New VPC",
+            "value": "new"
+          },
+          {
+            "label": "Use Existing VPC",
+            "value": "existing"
+          }
+        ],
+        "group": "Networking & Connectivity",
+        "isEssential": false,
+        "order": 11
+      },
+      "vpc_id": {
+        "type": "string",
+        "title": "Existing VPC ID",
+        "description": "ID of the existing VPC",
+        "placeholder": "vpc-xxxxxxxx",
+        "group": "Networking & Connectivity",
+        "visibleIf": {
+          "vpc_mode": "existing"
+        },
+        "isEssential": false,
+        "order": 12
+      },
+      "subnet_id": {
+        "type": "string",
+        "title": "Subnet ID",
+        "description": "Select existing Subnet",
+        "placeholder": "subnet-xxxxxxxx",
+        "group": "Networking & Connectivity",
+        "visibleIf": {
+          "vpc_mode": "existing"
+        },
+        "isEssential": false,
+        "order": 13
+      },
+      "vpc_name": {
+        "type": "string",
+        "title": "VPC Name",
+        "description": "Custom name for the new VPC",
+        "placeholder": "Auto-generated",
+        "group": "Networking & Connectivity",
+        "visibleIf": {
+          "vpc_mode": "new"
+        },
+        "isEssential": true,
+        "order": 20
+      },
+      "instance_tenancy": {
+        "type": "select",
+        "title": "VPC Tenancy",
+        "description": "The allowed tenancy of instances launched into the VPC",
+        "default": "default",
+        "options": [
+          {
+            "label": "Default",
+            "value": "default"
+          },
+          {
+            "label": "Dedicated",
+            "value": "dedicated"
+          }
+        ],
+        "group": "Networking & Connectivity",
+        "visibleIf": {
+          "vpc_mode": "new"
+        },
+        "order": 22
+      },
+      "cidr_block": {
+        "type": "string",
+        "title": "VPC CIDR Block",
+        "description": "IPv4 CIDR block for the new VPC",
+        "default": "",
+        "placeholder": "Auto-Assign",
+        "group": "Networking & Connectivity",
+        "visibleIf": {
+          "vpc_mode": "new"
+        },
+        "isEssential": true,
+        "order": 23
+      },
+      "dns_header": {
+        "type": "separator",
+        "title": "DNS Configuration",
+        "group": "Networking & Connectivity",
+        "visibleIf": {
+          "vpc_mode": "new"
+        },
+        "isEssential": true,
+        "order": 69
+      },
+      "enable_dns_support": {
+        "type": "boolean",
+        "title": "Enable DNS Support",
+        "description": "Allow DNS resolution",
+        "default": true,
+        "group": "Networking & Connectivity",
+        "visibleIf": {
+          "vpc_mode": "new"
+        },
+        "isEssential": true,
+        "order": 70
+      },
+      "enable_dns_hostnames": {
+        "type": "boolean",
+        "title": "Enable DNS Hostnames",
+        "description": "Assign public hostnames",
+        "default": true,
+        "group": "Networking & Connectivity",
+        "visibleIf": {
+          "vpc_mode": "new"
+        },
+        "isEssential": true,
+        "order": 71
+      },
+      "subnet_header": {
+        "type": "separator",
+        "title": "Subnet Configuration",
+        "group": "Networking & Connectivity",
+        "visibleIf": {
+          "vpc_mode": "new"
+        },
+        "order": 29
+      },
+      "public_subnet_1_cidr": {
+        "type": "string",
+        "title": "Public Subnet 1 CIDR",
+        "placeholder": "e.g. 10.0.1.0/24",
+        "group": "Networking & Connectivity",
+        "visibleIf": {
+          "vpc_mode": "new"
+        },
+        "order": 30
+      },
+      "az_1": {
+        "type": "string",
+        "title": "Availability Zone 1",
+        "placeholder": "e.g. us-east-1a",
+        "group": "Networking & Connectivity",
+        "visibleIf": {
+          "vpc_mode": "new"
+        },
+        "order": 31
+      },
+      "private_subnet_1_cidr": {
+        "type": "string",
+        "title": "Private Subnet 1 CIDR",
+        "placeholder": "e.g. 10.0.11.0/24",
+        "group": "Networking & Connectivity",
+        "visibleIf": {
+          "vpc_mode": "new"
+        },
+        "order": 32
+      },
+      "zone_2_separator": {
+        "type": "separator",
+        "title": "Secondary Zone Configuration",
+        "group": "Networking & Connectivity",
+        "visibleIf": {
+          "vpc_mode": "new"
+        },
+        "order": 34
+      },
+      "public_subnet_2_cidr": {
+        "type": "string",
+        "title": "Public Subnet 2 CIDR",
+        "placeholder": "e.g. 10.0.2.0/24",
+        "group": "Networking & Connectivity",
+        "visibleIf": {
+          "vpc_mode": "new"
+        },
+        "order": 35
+      },
+      "az_2": {
+        "type": "string",
+        "title": "Availability Zone 2",
+        "placeholder": "e.g. us-east-1b",
+        "group": "Networking & Connectivity",
+        "visibleIf": {
+          "vpc_mode": "new"
+        },
+        "order": 36
+      },
+      "private_subnet_2_cidr": {
+        "type": "string",
+        "title": "Private Subnet 2 CIDR",
+        "placeholder": "e.g. 10.0.12.0/24",
+        "group": "Networking & Connectivity",
+        "visibleIf": {
+          "vpc_mode": "new"
+        },
+        "order": 37
+      },
+      "nat_header": {
+        "type": "separator",
+        "title": "NAT Gateway Configuration",
+        "group": "Networking & Connectivity",
+        "visibleIf": {
+          "vpc_mode": "new"
+        },
+        "isEssential": true,
+        "order": 59
+      },
+      "enable_nat_gateway": {
+        "type": "boolean",
+        "title": "Provision NAT Gateway",
+        "description": "Provide internet access to private subnets",
+        "default": true,
+        "group": "Networking & Connectivity",
+        "visibleIf": {
+          "vpc_mode": "new"
+        },
+        "isEssential": true,
+        "order": 60
+      },
+      "nat_gateway_count": {
+        "type": "number",
+        "title": "NAT Gateway Count",
+        "description": "1 for cost-optimization, 2-3 for higher availability",
+        "default": 1,
+        "options": [
+          {
+            "label": "Single (Cost Optimized)",
+            "value": 1
+          },
+          {
+            "label": "Double (High Availability)",
+            "value": 2
+          }
+        ],
+        "group": "Networking & Connectivity",
+        "visibleIf": {
+          "enable_nat_gateway": true
+        },
+        "order": 61
+      },
+      "cluster_name": {
+        "type": "string",
+        "title": "Cluster Name",
+        "description": "Name for the Redis cluster",
+        "default": "redis-nonprod",
+        "pattern": "^[a-zA-Z][a-zA-Z0-9-]{0,39}$",
+        "group": "Redis Settings"
+      },
+      "engine_version": {
+        "type": "string",
+        "title": "Engine Version",
+        "description": "Redis version",
+        "default": "7.0",
+        "group": "Redis Settings"
+      },
+      "node_type": {
+        "type": "string",
+        "title": "Node Type",
+        "description": "Cache node instance type",
+        "default": "cache.t3.micro",
+        "group": "Redis Settings"
+      },
+      "num_cache_nodes": {
+        "type": "number",
+        "title": "Number of Nodes",
+        "description": "Number of cache nodes in the cluster",
+        "default": 1,
+        "minimum": 1,
+        "group": "Redis Settings"
+      },
+      "port": {
+        "type": "number",
+        "title": "Port",
+        "description": "Redis connection port",
+        "default": 6379,
+        "group": "Network Settings"
+      }
+    },
+    "smart_defaults": {}
+  },
+  "resources": [
+    {
+      "id": "aws-redis-nonprod:cluster",
+      "type": "aws:elasticache:Cluster",
+      "name": "cluster",
+      "description": "ElastiCache Redis cluster - cluster",
+      "category": "Compute",
+      "smart_defaults": {
+        "name": "archie-cluster",
+        "tags": {
+          "Name": "archie-cluster-{environment}",
+          "ManagedBy": "Archie"
+        }
+      },
+      "optional": false,
+      "dependencies": [],
+      "dependents": []
+    },
+    {
+      "id": "aws-redis-nonprod:subnet-group",
+      "type": "aws:elasticache:SubnetGroup",
+      "name": "subnet-group",
+      "description": "ElastiCache subnet group - subnet-group",
+      "category": "Networking",
+      "smart_defaults": {
+        "name": "archie-subnet-group",
+        "tags": {
+          "Name": "archie-subnet-group-{environment}",
+          "ManagedBy": "Archie"
+        }
+      },
+      "optional": false,
+      "dependencies": [],
+      "dependents": []
+    },
+    {
+      "id": "aws-redis-nonprod:sg",
+      "type": "aws:ec2:SecurityGroup",
+      "name": "sg",
+      "description": "Security group - sg",
+      "category": "Security",
+      "smart_defaults": {
+        "vpcId": "{vpc_id}",
+        "description": "Security group for sg",
+        "name": "archie-sg",
+        "tags": {
+          "Name": "archie-sg-{environment}",
+          "Environment": "{environment}"
+        }
+      },
+      "optional": false,
+      "dependencies": [],
+      "dependents": []
+    }
+  ],
+  "pillars": {
+    "security": {
+      "score": "good",
+      "description": "Implements security best practices for cloud infrastructure with network isolation, IAM roles, and secure access patterns.",
+      "best_practices": [
+        "Network security with security groups",
+        "Network isolation with VPC architecture"
+      ]
+    },
+    "reliability": {
+      "score": "excellent",
+      "description": "Ensures high availability and fault tolerance with multi-AZ deployment and automated recovery mechanisms.",
+      "best_practices": [
+        "Multi-AZ VPC architecture across availability zones",
+        "Load balancer distribution across subnets"
+      ]
+    },
+    "performance_efficiency": {
+      "score": "good",
+      "description": "Optimizes resource utilization and performance with scalable compute resources and efficient networking.",
+      "best_practices": [
+        "Scalable resource provisioning"
+      ]
+    },
+    "cost_optimization": {
+      "score": "good",
+      "description": "Balances cost efficiency with reliability through appropriate resource sizing and usage-based pricing.",
+      "best_practices": [
+        "Environment-specific parameter handling",
+        "Reusable infrastructure patterns reducing overhead",
+        "On-demand resource provisioning"
+      ]
+    },
+    "operational_excellence": {
+      "score": "good",
+      "description": "Enables operational best practices with infrastructure as code, monitoring, and automated management.",
+      "best_practices": [
+        "Infrastructure as Code with Pulumi for automated deployments",
+        "Version-controlled configuration"
+      ]
+    },
+    "sustainability": {
+      "score": "good",
+      "description": "Supports sustainable practices through efficient resource utilization and regional service usage.",
+      "best_practices": [
+        "Regional AWS services reducing data transfer distances",
+        "Efficient resource utilization patterns",
+        "Automated scaling reducing over-provisioning"
+      ]
+    }
+  }
+}

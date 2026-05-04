@@ -1,0 +1,48 @@
+# IAM Role - Default Configuration
+# All resource configurations in one place for easy modification
+
+# =============================================================================
+# Role Configuration
+# =============================================================================
+role:
+  description: "IAM role for Archie deployments"
+  max_session_duration: 3600  # 1 hour in seconds
+  
+# =============================================================================
+# Trust Policy (AssumeRole)
+# =============================================================================
+trust_policy:
+  principals:
+    - type: "Service"
+      identifiers: ["lambda.amazonaws.com"]
+    # Add more as needed
+
+# =============================================================================
+# Managed Policies
+# =============================================================================
+managed_policies:
+  # AWS managed policies
+  - "arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"
+  # Add more as needed
+
+# =============================================================================
+# Inline Policies
+# =============================================================================
+inline_policies: []
+# Example:
+# - name: "S3Access"
+#   policy:
+#     Version: "2012-10-17"
+#     Statement:
+#       - Effect: "Allow"
+#         Action:
+#           - "s3:GetObject"
+#           - "s3:PutObject"
+#         Resource: "arn:aws:s3:::bucket-name/*"
+
+# =============================================================================
+# Tags Configuration
+# =============================================================================
+tags:
+  ManagedBy: "Archie"
+  Purpose: "Service Execution Role"

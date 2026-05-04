@@ -1,0 +1,248 @@
+{
+  "metadata": {
+    "name": "gcp-vpc-nonprod",
+    "title": "VPC Networking",
+    "description": "Complete VPC network for GCP non-production environments with public/private subnets and Cloud NAT.",
+    "category": "networking",
+    "version": "latest",
+    "author": "InnovativeApps",
+    "cloud": "gcp",
+    "environment": "nonprod",
+    "base_cost": "~$20/month",
+    "tags": [
+      "vpc",
+      "networking",
+      "gcp",
+      "nonprod",
+      "nat"
+    ],
+    "complexity": "intermediate",
+    "deployment_time": "3-5 minutes",
+    "marketplace_group": "gcp-vpc-group",
+    "architecture": {
+      "summary": "GCP VPC Simple Non-Prod Template - Pattern B Implementation"
+    },
+    "action_name": "gcp-vpc-nonprod",
+    "tier": "template",
+    "use_cases": [
+      "Development and testing environments",
+      "Staging infrastructure",
+      "Non-production workloads"
+    ]
+  },
+  "configuration": {
+    "type": "object",
+    "required": [
+      "network_name"
+    ],
+    "properties": {
+      "project": {
+        "type": "string",
+        "title": "Project",
+        "description": "Get GCP Project ID with robust lookup.",
+        "group": "General Settings",
+        "order": 1
+      },
+      "network_name": {
+        "type": "string",
+        "title": "Network Name",
+        "default": "gcp-vpc-nonprod",
+        "order": 2
+      },
+      "routing_mode": {
+        "type": "string",
+        "title": "Routing Mode",
+        "description": "GCP Network routing mode: REGIONAL or GLOBAL.",
+        "group": "General Settings",
+        "order": 3,
+        "default": "REGIONAL"
+      },
+      "auto_create_subnetworks": {
+        "type": "boolean",
+        "title": "Auto Create Subnetworks",
+        "description": "Whether to auto-create subnetworks, defaults to False for precise control.",
+        "group": "Network Configuration",
+        "order": 4,
+        "default": false
+      },
+      "public_subnet_cidr": {
+        "type": "string",
+        "title": "Public Subnet CIDR",
+        "default": "10.0.1.0/24",
+        "order": 5
+      },
+      "private_subnet_cidr": {
+        "type": "string",
+        "title": "Private Subnet CIDR",
+        "default": "10.0.2.0/24",
+        "order": 6
+      },
+      "enable_cloud_nat": {
+        "type": "boolean",
+        "title": "Enable Cloud NAT",
+        "description": "Provide internet access to private instances",
+        "default": true,
+        "order": 7
+      },
+      "firewall_rules": {
+        "type": "string",
+        "title": "Firewall Rules",
+        "description": "GCP Firewall rules (equivalent to AWS Security Groups).",
+        "group": "General Settings",
+        "order": 8
+      }
+    },
+    "smart_defaults": {}
+  },
+  "resources": [
+    {
+      "id": "gcp-vpc-nonprod:rule_name",
+      "type": "gcp:compute:Firewall",
+      "name": "rule_name",
+      "description": "Firewall resource",
+      "category": "Other",
+      "smart_defaults": {
+        "network": "{config_id}",
+        "project": "{config_project}",
+        "allows": [],
+        "source_ranges": "{computed}",
+        "description": "Firewall rule: "
+      },
+      "optional": false,
+      "dependencies": [],
+      "dependents": []
+    },
+    {
+      "id": "gcp-vpc-nonprod:vpc_name",
+      "type": "gcp:compute:Network",
+      "name": "vpc_name",
+      "description": "Network resource",
+      "category": "Other",
+      "smart_defaults": {
+        "project": "{config_project}",
+        "auto_create_subnetworks": "{config_auto_create_subnetworks}",
+        "routing_mode": "{config_routing_mode}",
+        "description": "VPC network for {config_project_name}"
+      },
+      "optional": false,
+      "dependencies": [],
+      "dependents": []
+    },
+    {
+      "id": "gcp-vpc-nonprod:{project_name}-router",
+      "type": "gcp:compute:Router",
+      "name": "{project_name}-router",
+      "description": "Router resource",
+      "category": "Other",
+      "smart_defaults": {
+        "network": "{config_id}",
+        "region": "{config_region}",
+        "project": "{config_project}"
+      },
+      "optional": false,
+      "dependencies": [],
+      "dependents": []
+    },
+    {
+      "id": "gcp-vpc-nonprod:{project_name}-nat",
+      "type": "gcp:compute:RouterNat",
+      "name": "{project_name}-nat",
+      "description": "RouterNat resource",
+      "category": "Other",
+      "smart_defaults": {
+        "router": "{config_name}",
+        "region": "{config_region}",
+        "project": "{config_project}",
+        "nat_ip_allocate_option": "AUTO_ONLY",
+        "source_subnetwork_ip_ranges_to_nat": "ALL_SUBNETWORKS_ALL_IP_RANGES"
+      },
+      "optional": false,
+      "dependencies": [],
+      "dependents": []
+    },
+    {
+      "id": "gcp-vpc-nonprod:private_subnet_name",
+      "type": "gcp:compute:Subnetwork",
+      "name": "private_subnet_name",
+      "description": "Subnetwork resource",
+      "category": "Other",
+      "smart_defaults": {
+        "network": "{config_id}",
+        "ip_cidr_range": "{config_private_subnet_cidr}",
+        "region": "{config_region}",
+        "project": "{config_project}",
+        "private_ip_google_access": true,
+        "description": "Private subnet for internal workloads"
+      },
+      "optional": false,
+      "dependencies": [],
+      "dependents": []
+    },
+    {
+      "id": "gcp-vpc-nonprod:public_subnet_name",
+      "type": "gcp:compute:Subnetwork",
+      "name": "public_subnet_name",
+      "description": "Subnetwork resource",
+      "category": "Other",
+      "smart_defaults": {
+        "network": "{config_id}",
+        "ip_cidr_range": "{config_public_subnet_cidr}",
+        "region": "{config_region}",
+        "project": "{config_project}",
+        "description": "Public subnet for internet-facing resources"
+      },
+      "optional": false,
+      "dependencies": [],
+      "dependents": []
+    }
+  ],
+  "pillars": {
+    "security": {
+      "score": "good",
+      "description": "Implements security best practices for cloud infrastructure with network isolation, IAM roles, and secure access patterns.",
+      "best_practices": [
+        "Network isolation with VPC architecture"
+      ]
+    },
+    "reliability": {
+      "score": "excellent",
+      "description": "Ensures high availability and fault tolerance with multi-AZ deployment and automated recovery mechanisms.",
+      "best_practices": [
+        "Multi-AZ VPC architecture across availability zones",
+        "Load balancer distribution across subnets"
+      ]
+    },
+    "performance_efficiency": {
+      "score": "excellent",
+      "description": "Optimizes resource utilization and performance with scalable compute resources and efficient networking.",
+      "best_practices": [
+        "Elastic Load Balancing for traffic distribution",
+        "Optimized VPC subnet design for performance"
+      ]
+    },
+    "cost_optimization": {
+      "score": "good",
+      "description": "Balances cost efficiency with reliability through appropriate resource sizing and usage-based pricing.",
+      "best_practices": [
+        "Environment-specific parameter handling",
+        "On-demand resource provisioning"
+      ]
+    },
+    "operational_excellence": {
+      "score": "good",
+      "description": "Enables operational best practices with infrastructure as code, monitoring, and automated management.",
+      "best_practices": [
+        "Infrastructure as Code with Pulumi for automated deployments",
+        "Version-controlled configuration"
+      ]
+    },
+    "sustainability": {
+      "score": "good",
+      "description": "Supports sustainable practices through efficient resource utilization and regional service usage.",
+      "best_practices": [
+        "Efficient resource utilization patterns",
+        "Automated scaling reducing over-provisioning"
+      ]
+    }
+  }
+}

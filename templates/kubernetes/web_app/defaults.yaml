@@ -1,0 +1,5 @@
+# web_app - Default Configuration
+# All resource configurations in one place for easy modification
+
+database:
+  port: {}

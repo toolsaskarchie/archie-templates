@@ -1,0 +1,95 @@
+{
+  "_meta": {
+    "template_type": "base",
+    "template_id": "gcp-compute-nonprod",
+    "description": "Base gcp-compute-nonprod template extracted from Pulumi code",
+    "version": "1.0",
+    "generated_from": "pulumi.py",
+    "source_of_truth": "pulumi.py - This file is GENERATED. Edit pulumi.py instead."
+  },
+  "base_resources": [
+    {
+      "id": "gcp-compute-nonprod:{instance_name}-allow-http",
+      "type": "gcp:compute:Firewall",
+      "name": "{instance_name}-allow-http",
+      "description": "gcp:compute:Firewall resource",
+      "optional": false,
+      "full_defaults": {
+        "name": "{instance_name}-allow-http",
+        "network": "{config_network}",
+        "project": "{config_project}",
+        "source_ranges": "{config_allowed_http_sources}",
+        "target_tags": [
+          "http-server"
+        ],
+        "allows": [],
+        "description": "Allow HTTP access to {instance_name}"
+      },
+      "conditional": {
+        "field": "enable_http"
+      },
+      "dependencies": [],
+      "dependents": []
+    },
+    {
+      "id": "gcp-compute-nonprod:{instance_name}-allow-https",
+      "type": "gcp:compute:Firewall",
+      "name": "{instance_name}-allow-https",
+      "description": "gcp:compute:Firewall resource",
+      "optional": false,
+      "full_defaults": {
+        "name": "{instance_name}-allow-https",
+        "network": "{config_network}",
+        "project": "{config_project}",
+        "source_ranges": "{config_allowed_http_sources}",
+        "target_tags": [
+          "https-server"
+        ],
+        "allows": [],
+        "description": "Allow HTTPS access to {instance_name}"
+      },
+      "conditional": {
+        "field": "enable_https"
+      },
+      "dependencies": [],
+      "dependents": []
+    },
+    {
+      "id": "gcp-compute-nonprod:{instance_name}-allow-ssh",
+      "type": "gcp:compute:Firewall",
+      "name": "{instance_name}-allow-ssh",
+      "description": "gcp:compute:Firewall resource",
+      "optional": false,
+      "full_defaults": {
+        "name": "{instance_name}-allow-ssh",
+        "network": "{config_network}",
+        "project": "{config_project}",
+        "source_ranges": "{config_allowed_ssh_sources}",
+        "target_tags": [],
+        "allows": [],
+        "description": "Allow SSH access to {instance_name}"
+      },
+      "dependencies": [],
+      "dependents": []
+    },
+    {
+      "id": "gcp-compute-nonprod:{config_instance_name}",
+      "type": "gcp:compute:Instance",
+      "name": "{config_instance_name}",
+      "description": "gcp:compute:Instance resource",
+      "optional": false,
+      "full_defaults": {
+        "machine_type": "{config_machine_type}",
+        "zone": "{config_zone}",
+        "project": "{config_project}",
+        "boot_disk": {},
+        "network_interfaces": [],
+        "tags": "{config_computed_network_tags}",
+        "labels": "{config_resource_labels}",
+        "allow_stopping_for_update": true
+      },
+      "dependencies": [],
+      "dependents": []
+    }
+  ]
+}

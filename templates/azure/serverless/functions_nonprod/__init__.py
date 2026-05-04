@@ -1,0 +1,1 @@
+from .pulumi import AzureFunctionsNonProdTemplate

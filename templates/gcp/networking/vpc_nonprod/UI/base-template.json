@@ -1,0 +1,112 @@
+{
+  "_meta": {
+    "template_type": "base",
+    "template_id": "gcp-vpc-nonprod",
+    "description": "Base gcp-vpc-nonprod template extracted from Pulumi code",
+    "version": "1.0",
+    "generated_from": "pulumi.py",
+    "source_of_truth": "pulumi.py - This file is GENERATED. Edit pulumi.py instead."
+  },
+  "base_resources": [
+    {
+      "id": "gcp-vpc-nonprod:rule_name",
+      "type": "gcp:compute:Firewall",
+      "name": "rule_name",
+      "description": "Firewall resource",
+      "optional": false,
+      "full_defaults": {
+        "network": "{config_id}",
+        "project": "{config_project}",
+        "allows": [],
+        "source_ranges": "{computed}",
+        "description": "Firewall rule: "
+      },
+      "dependencies": [],
+      "dependents": []
+    },
+    {
+      "id": "gcp-vpc-nonprod:vpc_name",
+      "type": "gcp:compute:Network",
+      "name": "vpc_name",
+      "description": "Network resource",
+      "optional": false,
+      "full_defaults": {
+        "project": "{config_project}",
+        "auto_create_subnetworks": "{config_auto_create_subnetworks}",
+        "routing_mode": "{config_routing_mode}",
+        "description": "VPC network for {config_project_name}"
+      },
+      "dependencies": [],
+      "dependents": []
+    },
+    {
+      "id": "gcp-vpc-nonprod:{project_name}-router",
+      "type": "gcp:compute:Router",
+      "name": "{project_name}-router",
+      "description": "Router resource",
+      "optional": false,
+      "full_defaults": {
+        "network": "{config_id}",
+        "region": "{config_region}",
+        "project": "{config_project}"
+      },
+      "conditional": {
+        "field": "enable_cloud_nat"
+      },
+      "dependencies": [],
+      "dependents": []
+    },
+    {
+      "id": "gcp-vpc-nonprod:{project_name}-nat",
+      "type": "gcp:compute:RouterNat",
+      "name": "{project_name}-nat",
+      "description": "RouterNat resource",
+      "optional": false,
+      "full_defaults": {
+        "router": "{config_name}",
+        "region": "{config_region}",
+        "project": "{config_project}",
+        "nat_ip_allocate_option": "AUTO_ONLY",
+        "source_subnetwork_ip_ranges_to_nat": "ALL_SUBNETWORKS_ALL_IP_RANGES"
+      },
+      "conditional": {
+        "field": "enable_cloud_nat"
+      },
+      "dependencies": [],
+      "dependents": []
+    },
+    {
+      "id": "gcp-vpc-nonprod:private_subnet_name",
+      "type": "gcp:compute:Subnetwork",
+      "name": "private_subnet_name",
+      "description": "Subnetwork resource",
+      "optional": false,
+      "full_defaults": {
+        "network": "{config_id}",
+        "ip_cidr_range": "{config_private_subnet_cidr}",
+        "region": "{config_region}",
+        "project": "{config_project}",
+        "private_ip_google_access": true,
+        "description": "Private subnet for internal workloads"
+      },
+      "dependencies": [],
+      "dependents": []
+    },
+    {
+      "id": "gcp-vpc-nonprod:public_subnet_name",
+      "type": "gcp:compute:Subnetwork",
+      "name": "public_subnet_name",
+      "description": "Subnetwork resource",
+      "optional": false,
+      "full_defaults": {
+        "network": "{config_id}",
+        "ip_cidr_range": "{config_public_subnet_cidr}",
+        "region": "{config_region}",
+        "project": "{config_project}",
+        "description": "Public subnet for internet-facing resources"
+      },
+      "dependencies": [],
+      "dependents": []
+    }
+  ]
+}

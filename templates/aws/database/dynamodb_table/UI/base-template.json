@@ -1,0 +1,29 @@
+{
+  "_meta": {
+    "template_type": "base",
+    "template_id": "aws-dynamodb-table",
+    "description": "Base aws-dynamodb-table template extracted from Pulumi code",
+    "version": "1.0",
+    "generated_from": "pulumi.py",
+    "source_of_truth": "pulumi.py - This file is GENERATED. Edit pulumi.py instead."
+  },
+  "base_resources": [
+    {
+      "id": "aws-dynamodb-table:{project}",
+      "type": "aws:dynamodb:Table",
+      "name": "{project}",
+      "description": "DynamoDB table - {project}",
+      "category": "Other",
+      "full_defaults": {
+        "name": "archie-{project}",
+        "tags": {
+          "Name": "archie-{project}-{environment}",
+          "ManagedBy": "Archie"
+        }
+      },
+      "dependencies": [],
+      "dependents": [],
+      "optional": false
+    }
+  ]
+}

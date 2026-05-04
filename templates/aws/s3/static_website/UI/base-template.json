@@ -1,0 +1,112 @@
+{
+  "_meta": {
+    "template_type": "base",
+    "template_id": "aws-static-website",
+    "description": "Base aws-static-website template extracted from Pulumi code",
+    "version": "1.0",
+    "generated_from": "pulumi.py",
+    "source_of_truth": "pulumi.py - This file is GENERATED. Edit pulumi.py instead."
+  },
+  "base_resources": [
+    {
+      "id": "aws-static-website:archie-guest-{bucket_name}",
+      "type": "aws:s3:Bucket",
+      "name": "archie-guest-{bucket_name}",
+      "description": "aws:s3:Bucket resource",
+      "optional": false,
+      "full_defaults": {
+        "bucket": "{bucket_name}",
+        "force_destroy": true,
+        "tags": {
+          "Name": "{bucket_name}"
+        }
+      },
+      "dependencies": [],
+      "dependents": []
+    },
+    {
+      "id": "aws-static-website:archie-logo-png",
+      "type": "aws:s3:BucketObject",
+      "name": "archie-logo-png",
+      "description": "Archie brand logo (archie-logo.png)",
+      "category": "Storage",
+      "full_defaults": {
+        "key": "archie-logo.png",
+        "content_type": "image/png",
+        "tags": {
+          "Name": "archie-archie-logo-png-{environment}",
+          "ManagedBy": "Archie"
+        }
+      },
+      "dependencies": [],
+      "dependents": [],
+      "optional": false
+    },
+    {
+      "id": "aws-static-website:index-html",
+      "type": "aws:s3:BucketObject",
+      "name": "index-html",
+      "description": "Archie-branded congratulations page (index.html)",
+      "category": "Storage",
+      "full_defaults": {
+        "key": "index.html",
+        "content_type": "text/html",
+        "tags": {
+          "Name": "archie-index-html-{environment}",
+          "ManagedBy": "Archie"
+        }
+      },
+      "dependencies": [],
+      "dependents": [],
+      "optional": false
+    },
+    {
+      "id": "aws-static-website:styles-css",
+      "type": "aws:s3:BucketObject",
+      "name": "styles-css",
+      "description": "Styles with dark/light theme support (styles.css)",
+      "category": "Storage",
+      "full_defaults": {
+        "key": "styles.css",
+        "content_type": "text/css",
+        "tags": {
+          "Name": "archie-styles-css-{environment}",
+          "ManagedBy": "Archie"
+        }
+      },
+      "dependencies": [],
+      "dependents": [],
+      "optional": false
+    },
+    {
+      "id": "aws-static-website:{project_name}-",
+      "type": "aws:s3:BucketObject",
+      "name": "{project_name}-",
+      "description": "aws:s3:BucketObject resource",
+      "optional": false,
+      "full_defaults": {
+        "bucket": "{config_id}",
+        "key": "{file_key}",
+        "source": "{computed}",
+        "content_type": "{content_type}"
+      },
+      "dependencies": [],
+      "dependents": []
+    },
+    {
+      "id": "aws-static-website:{project_name}-",
+      "type": "aws:s3:BucketObject",
+      "name": "{project_name}-",
+      "description": "aws:s3:BucketObject resource",
+      "optional": false,
+      "full_defaults": {
+        "bucket": "{config_id}",
+        "key": "{file_key}",
+        "content": "{file_content}",
+        "content_type": "{content_type}"
+      },
+      "dependencies": [],
+      "dependents": []
+    }
+  ]
+}

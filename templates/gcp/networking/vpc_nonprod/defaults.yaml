@@ -1,0 +1,57 @@
+# GCP VPC Non-Prod - Default Configuration
+# All resource configurations in one place for easy modification
+
+# =============================================================================
+# VPC Configuration
+# =============================================================================
+vpc:
+  description: "Non-production VPC for development and testing"
+  auto_create_subnetworks: false
+  routing_mode: "REGIONAL"
+
+# =============================================================================
+# Subnet Configuration
+# =============================================================================
+subnets:
+  - name: "subnet-1"
+    ip_cidr_range: "10.0.1.0/24"
+    region: "us-central1"
+    private_ip_google_access: true
+    
+  - name: "subnet-2"
+    ip_cidr_range: "10.0.2.0/24"
+    region: "us-central1"
+    private_ip_google_access: true
+
+# =============================================================================
+# Firewall Rules
+# =============================================================================
+firewall_rules:
+  allow_internal:
+    description: "Allow internal traffic"
+    direction: "INGRESS"
+    priority: 1000
+    source_ranges: ["10.0.0.0/16"]
+    allowed:
+      - protocol: "tcp"
+        ports: ["0-65535"]
+      - protocol: "udp"
+        ports: ["0-65535"]
+      - protocol: "icmp"
+  
+  allow_ssh:
+    description: "Allow SSH from anywhere"
+    direction: "INGRESS"
+    priority: 1000
+    source_ranges: ["0.0.0.0/0"]
+    allowed:
+      - protocol: "tcp"
+        ports: ["22"]
+
+# =============================================================================
+# Labels (GCP equivalent of tags)
+# =============================================================================
+labels:
+  environment: "nonprod"
+  managed_by: "archie"
+  purpose: "development-testing"

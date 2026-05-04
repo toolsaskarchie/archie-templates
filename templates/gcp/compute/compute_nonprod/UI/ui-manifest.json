@@ -1,0 +1,179 @@
+{
+  "metadata": {
+    "name": "gcp-compute-nonprod",
+    "title": "Compute Engine Instance",
+    "description": "Standard virtual machine instance in Google Cloud Platform for development and testing.",
+    "category": "compute",
+    "version": "latest",
+    "author": "InnovativeApps",
+    "cloud": "gcp",
+    "environment": "nonprod",
+    "base_cost": "$30/month",
+    "tags": [
+      "gcp",
+      "compute",
+      "vm"
+    ],
+    "complexity": "low",
+    "deployment_time": "2-5 minutes",
+    "marketplace_group": "gcp-compute-group",
+    "action_name": "gcp-compute-nonprod",
+    "tier": "template",
+    "use_cases": [
+      "Development and testing environments",
+      "Staging infrastructure",
+      "Non-production workloads"
+    ]
+  },
+  "configuration": {
+    "type": "object",
+    "required": [],
+    "properties": {
+      "resource_labels": {
+        "type": "string",
+        "title": "Resource Labels",
+        "description": "Get resource labels",
+        "group": "General Settings",
+        "order": 1
+      },
+      "computed_network_tags": {
+        "type": "string",
+        "title": "Computed Network Tags",
+        "description": "Get computed network tags",
+        "group": "General Settings",
+        "order": 2
+      }
+    },
+    "smart_defaults": {}
+  },
+  "resources": [
+    {
+      "id": "gcp-compute-nonprod:{instance_name}-allow-http",
+      "type": "gcp:compute:Firewall",
+      "name": "{instance_name}-allow-http",
+      "description": "gcp:compute:Firewall resource",
+      "category": "Other",
+      "smart_defaults": {
+        "name": "{instance_name}-allow-http",
+        "network": "{config_network}",
+        "project": "{config_project}",
+        "source_ranges": "{config_allowed_http_sources}",
+        "target_tags": [
+          "http-server"
+        ],
+        "allows": [],
+        "description": "Allow HTTP access to {instance_name}"
+      },
+      "optional": false,
+      "dependencies": [],
+      "dependents": []
+    },
+    {
+      "id": "gcp-compute-nonprod:{instance_name}-allow-https",
+      "type": "gcp:compute:Firewall",
+      "name": "{instance_name}-allow-https",
+      "description": "gcp:compute:Firewall resource",
+      "category": "Other",
+      "smart_defaults": {
+        "name": "{instance_name}-allow-https",
+        "network": "{config_network}",
+        "project": "{config_project}",
+        "source_ranges": "{config_allowed_http_sources}",
+        "target_tags": [
+          "https-server"
+        ],
+        "allows": [],
+        "description": "Allow HTTPS access to {instance_name}"
+      },
+      "optional": false,
+      "dependencies": [],
+      "dependents": []
+    },
+    {
+      "id": "gcp-compute-nonprod:{instance_name}-allow-ssh",
+      "type": "gcp:compute:Firewall",
+      "name": "{instance_name}-allow-ssh",
+      "description": "gcp:compute:Firewall resource",
+      "category": "Other",
+      "smart_defaults": {
+        "name": "{instance_name}-allow-ssh",
+        "network": "{config_network}",
+        "project": "{config_project}",
+        "source_ranges": "{config_allowed_ssh_sources}",
+        "target_tags": [],
+        "allows": [],
+        "description": "Allow SSH access to {instance_name}"
+      },
+      "optional": false,
+      "dependencies": [],
+      "dependents": []
+    },
+    {
+      "id": "gcp-compute-nonprod:{config_instance_name}",
+      "type": "gcp:compute:Instance",
+      "name": "{config_instance_name}",
+      "description": "gcp:compute:Instance resource",
+      "category": "Other",
+      "smart_defaults": {
+        "machine_type": "{config_machine_type}",
+        "zone": "{config_zone}",
+        "project": "{config_project}",
+        "boot_disk": {},
+        "network_interfaces": [],
+        "tags": "{config_computed_network_tags}",
+        "labels": "{config_resource_labels}",
+        "allow_stopping_for_update": true
+      },
+      "optional": false,
+      "dependencies": [],
+      "dependents": []
+    }
+  ],
+  "pillars": {
+    "security": {
+      "score": "good",
+      "description": "Implements security best practices for cloud infrastructure with network isolation, IAM roles, and secure access patterns.",
+      "best_practices": [
+        "Network isolation with VPC architecture"
+      ]
+    },
+    "reliability": {
+      "score": "good",
+      "description": "Ensures high availability and fault tolerance with multi-AZ deployment and automated recovery mechanisms.",
+      "best_practices": [
+        "Load balancer distribution across subnets"
+      ]
+    },
+    "performance_efficiency": {
+      "score": "good",
+      "description": "Optimizes resource utilization and performance with scalable compute resources and efficient networking.",
+      "best_practices": [
+        "Elastic Load Balancing for traffic distribution"
+      ]
+    },
+    "cost_optimization": {
+      "score": "good",
+      "description": "Balances cost efficiency with reliability through appropriate resource sizing and usage-based pricing.",
+      "best_practices": [
+        "Environment-specific parameter handling",
+        "On-demand resource provisioning"
+      ]
+    },
+    "operational_excellence": {
+      "score": "good",
+      "description": "Enables operational best practices with infrastructure as code, monitoring, and automated management.",
+      "best_practices": [
+        "Infrastructure as Code with Pulumi for automated deployments",
+        "Version-controlled configuration"
+      ]
+    },
+    "sustainability": {
+      "score": "good",
+      "description": "Supports sustainable practices through efficient resource utilization and regional service usage.",
+      "best_practices": [
+        "Efficient resource utilization patterns",
+        "Automated scaling reducing over-provisioning"
+      ]
+    }
+  }
+}

@@ -1,0 +1,34 @@
+{
+  "pillars": [
+    {
+      "title": "Security",
+      "description": "Serverless API (Lambda) implements security group rules and access controls. All sensitive configurations are parameterized to enforce organizational standards."
+    },
+    {
+      "title": "Reliability",
+      "description": "Infrastructure as Code ensures consistent, repeatable deployments of Serverless API (Lambda)."
+    },
+    {
+      "title": "Cost Optimization",
+      "description": "Production configuration balances performance requirements with cost efficiency through right-sized resources."
+    },
+    {
+      "title": "Performance Efficiency",
+      "description": "Configurable instance types and resource parameters allow tuning Serverless API (Lambda) for specific workload characteristics."
+    },
+    {
+      "title": "Operational Excellence",
+      "description": "Pulumi state management tracks all infrastructure changes with full audit trail."
+    }
+  ],
+  "features": [
+    "Environment-aware configuration",
+    "Infrastructure as Code with Pulumi"
+  ],
+  "use_cases": [
+    "Event-driven API backends",
+    "Webhook processing",
+    "Scheduled automation tasks",
+    "Data transformation pipelines"
+  ]
+}
