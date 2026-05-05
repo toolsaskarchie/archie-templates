@@ -25,3 +25,11 @@ variable "subnet_count" {
     error_message = "subnet_count must be between 1 and 4."
   }
 }
+
+variable "tags" {
+  description = "Custom tags applied to every resource. Common pattern is to lock organization-required tags (Team, CostCenter, ManagedBy) at the blueprint level so they can't be removed by hand from the cloud. Drift detection flags any tag change; remediation restores the locked set."
+  type        = map(string)
+  default = {
+    ManagedBy = "archie"
+  }
+}
