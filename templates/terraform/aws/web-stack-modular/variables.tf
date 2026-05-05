@@ -1,5 +1,5 @@
 variable "project_name" {
-  description = "Tag prefix and resource name root."
+  description = "Tag prefix and name for all resources."
   type        = string
   default     = "archie-test"
 }
@@ -11,7 +11,7 @@ variable "environment" {
 }
 
 variable "vpc_cidr" {
-  description = "CIDR block for the VPC. Subnets are carved as /24 within."
+  description = "CIDR block for the VPC. Subnets are carved as /24 within this range."
   type        = string
   default     = "10.0.0.0/16"
 }
