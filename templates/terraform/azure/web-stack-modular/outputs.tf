@@ -5,30 +5,30 @@ output "resource_group_name" {
 
 output "vnet_id" {
   description = "ID of the Virtual Network."
-  value       = azurerm_virtual_network.main.id
+  value       = module.vnet.vnet_id
 }
 
 output "appgw_id" {
   description = "ID of the Application Gateway."
-  value       = azurerm_application_gateway.main.id
+  value       = module.appgw.appgw_id
 }
 
 output "appgw_public_ip" {
   description = "Public IP address of the Application Gateway."
-  value       = azurerm_public_ip.appgw.ip_address
+  value       = module.appgw.public_ip_address
 }
 
 output "appgw_public_fqdn" {
   description = "Public FQDN of the Application Gateway."
-  value       = azurerm_public_ip.appgw.fqdn
+  value       = module.appgw.public_fqdn
 }
 
 output "vm_id" {
   description = "ID of the backend VM."
-  value       = azurerm_linux_virtual_machine.vm.id
+  value       = module.vm.vm_id
 }
 
 output "vm_private_ip" {
   description = "Private IP of the backend VM."
-  value       = azurerm_network_interface.vm.private_ip_address
+  value       = module.vm.private_ip
 }
