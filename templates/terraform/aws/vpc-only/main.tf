@@ -1,9 +1,13 @@
 locals {
-  common_tags = {
-    Project     = var.project_name
-    Environment = var.environment
-    ManagedBy   = "archie"
-  }
+  # Merge built-in tags (project + environment) with user/blueprint-supplied tags.
+  # User tags WIN on key collision — locked blueprint tags can override these defaults.
+  common_tags = merge(
+    {
+      Project     = var.project_name
+      Environment = var.environment
+    },
+    var.tags,
+  )
 }
 
 data "aws_availability_zones" "available" {
