@@ -6,3 +6,8 @@ venv/
 .DS_Store
 .idea/
 .vscode/
+
+# Internal architecture doc — never publish
+CLAUDE.md
+**/CLAUDE.md
+.agent/
