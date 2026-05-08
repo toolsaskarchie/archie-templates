@@ -1,0 +1,245 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Description: >
+  Archie Instance Bootstrap. Run this ONCE in your AWS account before
+  deploying an Archie instance from app.askarchie.io. It creates:
+
+    1. A cross-account IAM role (`ArchieDeployerRole`) that the Archie
+       SaaS worker assumes to deploy CloudFormation/CDK stacks into
+       your account. Scoped to a single external ID for trust.
+    2. Seven SSM SecureString parameters with the secrets your Archie
+       instance reads at deploy time (NextAuth secret, OAuth client
+       secrets, Azure AD config). All NoEcho'd — values are never
+       printed by CloudFormation.
+
+  After this stack creates successfully:
+    - Copy the `DeployerRoleArn` and `ExternalId` outputs
+    - Send them to your Archie deployer (they'll paste them into the
+      Admin · Archie Self blueprint deploy form)
+    - Wait ~22 minutes for the 3-step deploy (Backend → Frontend → Seed)
+
+  This template lives in the public archie-templates repo:
+  https://github.com/toolsaskarchie/archie-templates/blob/main/bootstrap/archie-instance-bootstrap.cfn.yaml
+
+Parameters:
+  ArchiePrincipalArn:
+    Type: String
+    Description: >
+      The IAM principal ARN of the Archie SaaS worker that will assume
+      `ArchieDeployerRole`. Provided by Archie at onboarding —
+      typically `arn:aws:iam::416851285955:role/v2-archie-worker-role-prod-use1`.
+    Default: arn:aws:iam::416851285955:role/v2-archie-worker-role-prod-use1
+    AllowedPattern: ^arn:aws:iam::\d{12}:(role|user)/.+$
+
+  ExternalId:
+    Type: String
+    Description: >
+      A shared secret string for the AssumeRole trust. Generate something
+      random (e.g. `openssl rand -hex 16`). You'll send this to Archie
+      so they can include it on every AssumeRole call. Keep it secret;
+      anyone with this AND the role ARN can deploy into your account.
+    NoEcho: true
+    MinLength: 16
+    MaxLength: 256
+
+  GithubToken:
+    Type: String
+    Description: >
+      Your GitHub fine-grained PAT for the Archie templates repo (used
+      by Studio publish to push template versions). Scope:
+      `Contents: Read+write` on `toolsaskarchie/archie-templates`. Or
+      generate your own scoped to a private fork if you self-host
+      templates.
+    NoEcho: true
+    MinLength: 20
+
+  GithubOAuthSecret:
+    Type: String
+    Description: >
+      GitHub OAuth client secret for sign-in (NextAuth). Create a new
+      OAuth App at github.com → Settings → Developer settings → OAuth
+      Apps. Authorization callback URL: `https://<your-archie-domain>/api/auth/callback/github`.
+    NoEcho: true
+    MinLength: 20
+
+  GoogleOAuthSecret:
+    Type: String
+    Description: >
+      Google OAuth client secret for sign-in (NextAuth). Create at
+      console.cloud.google.com → APIs & Services → Credentials.
+      Authorized redirect URI: `https://<your-archie-domain>/api/auth/callback/google`.
+    NoEcho: true
+    MinLength: 20
+
+  NextAuthSecret:
+    Type: String
+    Description: >
+      Random ≥32-byte secret used by NextAuth to sign session JWTs.
+      Generate with `openssl rand -base64 44`. Rotating this invalidates
+      all active sessions.
+    NoEcho: true
+    MinLength: 32
+
+  AzureAdClientId:
+    Type: String
+    Description: >
+      Azure AD app client ID (only needed if you enable Microsoft sign-in).
+      Set to `not-configured` to disable.
+    Default: not-configured
+
+  AzureAdClientSecret:
+    Type: String
+    Description: >
+      Azure AD app client secret (only needed if you enable Microsoft sign-in).
+      Set to `not-configured` to disable.
+    NoEcho: true
+    Default: not-configured
+    MinLength: 5
+
+  AzureAdTenantId:
+    Type: String
+    Description: >
+      Azure AD tenant ID. Use `common` to allow any Microsoft account
+      (multi-tenant apps), or your specific tenant GUID for single-tenant.
+    Default: common
+
+Resources:
+  # ── Cross-account IAM role ──────────────────────────────────────────
+  ArchieDeployerRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: ArchieDeployerRole
+      Description: >
+        Role assumed by the Archie SaaS worker to deploy / destroy /
+        upgrade CloudFormation stacks in this account. Trusts the
+        ArchiePrincipalArn under the supplied ExternalId. AdministratorAccess
+        is required because deploys can provision arbitrary AWS resources;
+        scope down via SCPs or AWS Organizations service control if your
+        org needs tighter constraints.
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal:
+              AWS: !Ref ArchiePrincipalArn
+            Action: sts:AssumeRole
+            Condition:
+              StringEquals:
+                sts:ExternalId: !Ref ExternalId
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/AdministratorAccess
+      Tags:
+        - Key: ManagedBy
+          Value: Archie
+        - Key: Purpose
+          Value: ArchieInstanceDeployer
+
+  # ── SSM SecureString parameters ─────────────────────────────────────
+  # Parameter Store stores these encrypted at rest with the AWS-managed
+  # SSM KMS key. Lambda env vars are still plaintext at runtime — the
+  # Archie Lambda fetches via valueForStringParameter at deploy time.
+  GithubTokenParam:
+    Type: AWS::SSM::Parameter
+    Properties:
+      Name: /archie/github-token
+      Type: String
+      Value: !Ref GithubToken
+      Description: GitHub PAT for Archie Studio publish flow.
+      Tier: Standard
+
+  GithubOAuthSecretParam:
+    Type: AWS::SSM::Parameter
+    Properties:
+      Name: /archie/github-oauth-secret
+      Type: String
+      Value: !Ref GithubOAuthSecret
+      Description: GitHub OAuth client secret for NextAuth sign-in.
+      Tier: Standard
+
+  GoogleOAuthSecretParam:
+    Type: AWS::SSM::Parameter
+    Properties:
+      Name: /archie/google-oauth-secret
+      Type: String
+      Value: !Ref GoogleOAuthSecret
+      Description: Google OAuth client secret for NextAuth sign-in.
+      Tier: Standard
+
+  NextAuthSecretParam:
+    Type: AWS::SSM::Parameter
+    Properties:
+      Name: /archie/nextauth-secret
+      Type: String
+      Value: !Ref NextAuthSecret
+      Description: Random secret used by NextAuth to sign session JWTs.
+      Tier: Standard
+
+  AzureAdClientIdParam:
+    Type: AWS::SSM::Parameter
+    Properties:
+      Name: /archie/azure-ad-client-id
+      Type: String
+      Value: !Ref AzureAdClientId
+      Description: Azure AD app client ID for Microsoft sign-in.
+      Tier: Standard
+
+  AzureAdClientSecretParam:
+    Type: AWS::SSM::Parameter
+    Properties:
+      Name: /archie/azure-ad-client-secret
+      Type: String
+      Value: !Ref AzureAdClientSecret
+      Description: Azure AD app client secret.
+      Tier: Standard
+
+  AzureAdTenantIdParam:
+    Type: AWS::SSM::Parameter
+    Properties:
+      Name: /archie/azure-ad-tenant-id
+      Type: String
+      Value: !Ref AzureAdTenantId
+      Description: Azure AD tenant ID (or 'common' for multi-tenant).
+      Tier: Standard
+
+Outputs:
+  DeployerRoleArn:
+    Description: >
+      Paste this into the Archie Admin · Archie Self deploy form. Combined
+      with ExternalId, it lets the Archie worker AssumeRole into your
+      account to run the CDK deploy.
+    Value: !GetAtt ArchieDeployerRole.Arn
+    Export:
+      Name: ArchieDeployerRoleArn
+
+  ExternalId:
+    Description: >
+      The external ID you supplied. The Archie worker will pass this on
+      every AssumeRole call. Send it to your Archie deployer over a
+      secure channel (1Password, encrypted email).
+    Value: !Ref ExternalId
+
+  AccountId:
+    Description: AWS account ID where this Archie instance will deploy.
+    Value: !Ref AWS::AccountId
+
+  Region:
+    Description: AWS region where SSM parameters were created.
+    Value: !Ref AWS::Region
+
+  SsmParametersCreated:
+    Description: Comma-separated list of SSM parameters created by this stack.
+    Value: !Join
+      - ","
+      - - !Ref GithubTokenParam
+        - !Ref GithubOAuthSecretParam
+        - !Ref GoogleOAuthSecretParam
+        - !Ref NextAuthSecretParam
+        - !Ref AzureAdClientIdParam
+        - !Ref AzureAdClientSecretParam
+        - !Ref AzureAdTenantIdParam
+
+  NextSteps:
+    Description: What to do once this stack creates successfully.
+    Value: >
+      Send DeployerRoleArn + ExternalId to your Archie deployer (over a
+      secure channel). They'll paste both into the Admin · Archie Self
+      deploy form. ~22 minutes later, your Archie instance is live.
