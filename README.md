@@ -25,14 +25,14 @@ templates/
 
 ## How they work
 
-Each template is a Python class that extends Archie's `InfrastructureTemplate` base. At deploy time:
+Each template is a Pulumi or Terraform program that uses Archie's helpers for governance, naming, and config plumbing. At deploy time:
 
 1. Platform Engineer publishes the blueprint with locked fields and compliance rules
 2. Developer fills out the deploy form — locked fields hidden, defaults pre-filled
-3. Archie runs Pulumi preview, checks compliance, shows the plan
-4. On confirm, Pulumi applies; Archie tracks state, outputs, drift, costs
+3. Archie runs Pulumi preview / Terraform plan, checks compliance, shows the plan
+4. On confirm, the engine applies; Archie tracks state, outputs, drift, costs
 
-The framework code (`InfrastructureTemplate`, `factory`, `cfg()`, governance hooks) lives in the Archie platform itself and is not in this repo.
+The framework runs inside the Archie platform — these templates depend on it and aren't designed to run standalone outside an Archie instance.
 
 ## Why open
 
@@ -48,11 +48,11 @@ Sign up at [app.askarchie.io](https://app.askarchie.io) — these templates ship
 
 ## Use them standalone
 
-These import from Archie's framework (`provisioner.utils.aws.ResourceNamer`, `factory.create()`, etc.) and aren't runnable standalone today. To extract a runnable Pulumi program from any template, copy the resource definitions and wire them into a vanilla Pulumi project — they're regular Pulumi resource calls underneath.
+These templates use Archie's helpers and aren't runnable standalone outside an Archie instance. To extract a vanilla Pulumi or Terraform program from any template, copy the resource definitions into a fresh project — they're regular Pulumi/TF resource calls underneath the helpers.
 
 ## Contributing
 
-Contributions welcome — open a PR. Templates should follow the [7 framework rules](https://github.com/AskArchie/archie/blob/main/TEMPLATE_FRAMEWORK.md) (link will resolve once the framework is open-sourced).
+Contributions welcome — open a PR. Best place to start is forking an existing template that targets a similar service/cloud, then adapt.
 
 ## License
 
