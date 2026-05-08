@@ -19,9 +19,9 @@ variable "subnet_id" {
 }
 
 variable "vm_size" {
-  description = "Azure VM size."
+  description = "Azure VM size. Default Standard_B2s — wider availability than B1s on shared SP subscriptions."
   type        = string
-  default     = "Standard_B1s"
+  default     = "Standard_B2s"
 }
 
 variable "admin_username" {

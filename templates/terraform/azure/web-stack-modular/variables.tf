@@ -29,9 +29,9 @@ variable "vnet_cidr" {
 }
 
 variable "vm_size" {
-  description = "Size of the backend VM."
+  description = "Size of the backend VM. Default Standard_B2s — Standard_B1s is frequently capacity-constrained on shared/test SP subscriptions across multiple regions (eastus, centralus). B2s has wider availability."
   type        = string
-  default     = "Standard_B1s"
+  default     = "Standard_B2s"
 }
 
 variable "admin_username" {

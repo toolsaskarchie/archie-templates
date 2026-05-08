@@ -35,7 +35,7 @@ Plus root: `azurerm_resource_group`.
 | `location` | `eastus` | Azure region |
 | `resource_group_name` | `archie-test-rg` | Resource group name (created by this stack) |
 | `vnet_cidr` | `10.0.0.0/16` | VNet CIDR; subnets carved as /24 within |
-| `vm_size` | `Standard_B1s` | Backend VM size |
+| `vm_size` | `Standard_B2s` | Backend VM size (B1s is often capacity-constrained on shared SP subs) |
 | `admin_username` | `azureuser` | VM admin username |
 | `admin_password` | (default set, sensitive) | VM admin password — **swap to SSH keys for production** |
 | `allowed_cidrs` | `["0.0.0.0/0"]` | CIDR blocks allowed to reach the AppGW on port 80 |
