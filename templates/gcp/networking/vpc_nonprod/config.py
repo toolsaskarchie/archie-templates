@@ -68,8 +68,21 @@ class GCPVPCSimpleConfig:
 
     @property
     def auto_create_subnetworks(self) -> bool:
-        """Whether to auto-create subnetworks, defaults to False for precise control."""
-        return self.get_parameter('auto_create_subnetworks', False)
+        """Whether to auto-create subnetworks, defaults to False for precise control.
+
+        Coerced to a real Python bool — the deploy form serializes every
+        value as a string, so an unprotected get_parameter could return
+        the string "false" which Pulumi-GCP then forwards to the TF
+        backend → `recoverCtyValue failed: a bool is required` on
+        google_compute_network. Same pattern across other bool fields
+        in this template's family (see Rule #4 in TEMPLATE_FRAMEWORK).
+        """
+        v = self.get_parameter('auto_create_subnetworks', False)
+        if isinstance(v, bool):
+            return v
+        if isinstance(v, str):
+            return v.strip().lower() in ("true", "yes", "1", "on")
+        return bool(v)
 
     @property
     def public_subnet_cidr(self) -> str:
