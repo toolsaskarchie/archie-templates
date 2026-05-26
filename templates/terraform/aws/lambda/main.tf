@@ -196,6 +196,18 @@ resource "aws_lambda_function" "main" {
     }
   }
 
+  # Explicit log group binding — without this, Lambda auto-creates its own
+  # `/aws/lambda/<fn>` log group on first invocation, separate from the
+  # one TF manages. Two side effects of that without this block:
+  # 1. retention_in_days from the TF resource doesn't apply (AWS default = never expire)
+  # 2. on destroy, `tofu destroy` removes TF's log group but a subsequent
+  #    invocation immediately recreates the auto-created one → orphan logs
+  # Pointing Lambda at our log group fixes both.
+  logging_config {
+    log_format = "Text"
+    log_group  = aws_cloudwatch_log_group.lambda_logs.name
+  }
+
   dynamic "dead_letter_config" {
     for_each = var.enable_dlq ? [1] : []
     content {
