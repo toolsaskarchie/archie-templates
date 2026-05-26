@@ -1,21 +1,17 @@
 variable "project_name" {
   description = "Tag prefix and resource name root."
   type        = string
-  default     = "archie-demo"
+  default     = "myapp"
 }
 
 variable "environment" {
-  description = "Environment label for resource tagging."
+  description = "Environment label."
   type        = string
   default     = "dev"
-  validation {
-    condition     = contains(["dev", "staging", "production"], var.environment)
-    error_message = "Environment must be dev, staging, or production."
-  }
 }
 
 variable "lambda_memory" {
-  description = "Lambda memory allocation in MB (128-10240)."
+  description = "Lambda memory allocation in MB."
   type        = number
   default     = 256
   validation {
@@ -25,77 +21,63 @@ variable "lambda_memory" {
 }
 
 variable "lambda_timeout" {
-  description = "Lambda timeout in seconds (1-900)."
+  description = "Lambda timeout in seconds."
   type        = number
-  default     = 30
+  default     = 15
   validation {
     condition     = var.lambda_timeout >= 1 && var.lambda_timeout <= 900
     error_message = "Lambda timeout must be between 1 and 900 seconds."
   }
 }
 
-variable "auth_type" {
-  description = "Function URL authentication type (NONE for public access)."
-  type        = string
-  default     = "NONE"
-  validation {
-    condition     = contains(["NONE", "AWS_IAM"], var.auth_type)
-    error_message = "Auth type must be NONE or AWS_IAM."
-  }
-}
-
-variable "button_color" {
-  description = "Hex color code for the refresh button."
-  type        = string
-  default     = "#3B82F6"
-}
-
-variable "page_title" {
-  description = "Page title and subtitle text displayed on the page."
-  type        = string
-  default     = "AskArchie — Cloud Standards Platform"
-}
-
 variable "log_retention_days" {
   description = "CloudWatch log retention period in days."
   type        = number
   default     = 7
-}
-
-variable "table_name" {
-  description = "Name of the DynamoDB table."
-  type        = string
-  default     = "archie-demo-table"
-}
-
-variable "partition_key" {
-  description = "Partition key attribute name for the DynamoDB table."
-  type        = string
-  default     = "id"
-}
-
-variable "read_capacity" {
-  description = "Read capacity units for the DynamoDB table."
-  type        = number
-  default     = 5
   validation {
-    condition     = var.read_capacity >= 1
-    error_message = "Read capacity must be at least 1."
+    condition = contains([
+      1, 3, 5, 7, 14, 30, 60, 90, 120, 150, 180, 365, 400, 545, 731, 1096, 1827, 2192, 2557, 2922, 3288, 3653
+    ], var.log_retention_days)
+    error_message = "Log retention days must be a valid CloudWatch retention period."
   }
 }
 
-variable "write_capacity" {
-  description = "Write capacity units for the DynamoDB table."
+variable "enable_dlq" {
+  description = "Create SQS dead letter queue for failed invocations."
+  type        = bool
+  default     = false
+}
+
+variable "enable_xray" {
+  description = "Enable X-Ray distributed tracing."
+  type        = bool
+  default     = false
+}
+
+variable "reserved_concurrency" {
+  description = "Reserved concurrency limit, 0 = no reservation."
   type        = number
-  default     = 5
+  default     = 0
   validation {
-    condition     = var.write_capacity >= 1
-    error_message = "Write capacity must be at least 1."
+    condition     = var.reserved_concurrency >= 0
+    error_message = "Reserved concurrency must be 0 or greater."
   }
+}
+
+variable "page_title" {
+  description = "Page title and subtitle text."
+  type        = string
+  default     = "AskArchie — Cloud Standards Platform"
+}
+
+variable "button_color" {
+  description = "Hex color for the refresh button."
+  type        = string
+  default     = "#3B82F6"
 }
 
 variable "tags" {
-  description = "Additional tags to apply to all resources."
+  description = "Additional tags to merge into all resources."
   type        = map(string)
   default     = {}
 }
