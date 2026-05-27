@@ -75,7 +75,7 @@ variable "enable_monitoring" {
 }
 
 variable "log_retention_days" {
-  description = "Log Analytics workspace retention. Only used when enable_monitoring is true. Azure minimum is 30 days; values below are silently clamped to 30 so cross-cloud blueprints that inherit a CloudWatch-style default (e.g. 7) don't fail apply."
+  description = "Log Analytics workspace retention (Azure: 30–730 days). Only used when enable_monitoring is true. Typical profile values: nonprod=30, prod=90. PE locks per profile in the governance editor."
   type        = number
   default     = 30
 }
