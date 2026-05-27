@@ -148,6 +148,73 @@ data "archive_file" "app_zip" {
   depends_on  = [local_file.app_py, local_file.requirements_txt]
 }
 
+# ── Observability (conditional) ───────────────────────────────────────────
+# Application Insights needs a Log Analytics Workspace in azurerm v4 (the
+# classic "workspace_id-less" mode is deprecated). Both are gated on the
+# same toggle so the PE can lock the whole observability story on per env.
+
+resource "azurerm_log_analytics_workspace" "main" {
+  count               = var.enable_monitoring ? 1 : 0
+  name                = "${local.name_root}-logs"
+  location            = azurerm_resource_group.main.location
+  resource_group_name = azurerm_resource_group.main.name
+  sku                 = "PerGB2018"
+  retention_in_days   = var.log_retention_days
+  tags                = local.common_tags
+}
+
+resource "azurerm_application_insights" "main" {
+  count               = var.enable_monitoring ? 1 : 0
+  name                = "${local.name_root}-insights"
+  location            = azurerm_resource_group.main.location
+  resource_group_name = azurerm_resource_group.main.name
+  application_type    = "web"
+  workspace_id        = azurerm_log_analytics_workspace.main[0].id
+  tags                = local.common_tags
+}
+
+# ── Backup Storage (conditional) ──────────────────────────────────────────
+# App Service backup needs a SAS-URL'd blob container. We generate a
+# 10-year SAS so the backup runs unattended; rotate before expiry via TF
+# re-apply. azurerm_linux_web_app's `backup` block consumes the URL.
+
+resource "azurerm_storage_account" "backup" {
+  count                    = var.enable_backup ? 1 : 0
+  # Storage account names must be 3-24 chars, lowercase + digits only.
+  # Truncate + sanitize the name root so it always fits.
+  name                     = substr(replace(lower("${local.name_root}backup"), "/[^a-z0-9]/", ""), 0, 24)
+  resource_group_name      = azurerm_resource_group.main.name
+  location                 = azurerm_resource_group.main.location
+  account_tier             = "Standard"
+  account_replication_type = "LRS"
+  min_tls_version          = "TLS1_2"
+  tags                     = local.common_tags
+}
+
+resource "azurerm_storage_container" "backup" {
+  count                 = var.enable_backup ? 1 : 0
+  name                  = "appbackups"
+  storage_account_id    = azurerm_storage_account.backup[0].id
+  container_access_type = "private"
+}
+
+data "azurerm_storage_account_blob_container_sas" "backup" {
+  count             = var.enable_backup ? 1 : 0
+  connection_string = azurerm_storage_account.backup[0].primary_connection_string
+  container_name    = azurerm_storage_container.backup[0].name
+  https_only        = true
+  start             = "2026-01-01"
+  expiry            = "2036-01-01"
+  permissions {
+    read   = true
+    add    = true
+    create = true
+    write  = true
+    delete = true
+    list   = true
+  }
+}
+
 # ── Linux Web App ─────────────────────────────────────────────────────────
 
 resource "azurerm_linux_web_app" "main" {
@@ -169,14 +236,75 @@ resource "azurerm_linux_web_app" "main" {
     }
   }
 
-  app_settings = {
-    PAGE_TITLE                          = var.page_title
-    BUTTON_COLOR                        = var.button_color
-    SCM_DO_BUILD_DURING_DEPLOYMENT      = "true"
-    WEBSITES_PORT                       = "8000"
-    # Force re-deploy when archive contents change.
-    WEBSITE_RUN_FROM_PACKAGE_HASH       = data.archive_file.app_zip.output_base64sha256
+  app_settings = merge(
+    {
+      PAGE_TITLE                     = var.page_title
+      BUTTON_COLOR                   = var.button_color
+      SCM_DO_BUILD_DURING_DEPLOYMENT = "true"
+      WEBSITES_PORT                  = "8000"
+      # Force re-deploy when archive contents change.
+      WEBSITE_RUN_FROM_PACKAGE_HASH = data.archive_file.app_zip.output_base64sha256
+    },
+    # App Insights auto-instrumentation when monitoring is enabled. The
+    # connection string + agent extension activate Codeless attach so
+    # the Python app reports without any code change.
+    var.enable_monitoring ? {
+      APPLICATIONINSIGHTS_CONNECTION_STRING = azurerm_application_insights.main[0].connection_string
+      ApplicationInsightsAgent_EXTENSION_VERSION = "~3"
+      XDT_MicrosoftApplicationInsights_Mode      = "Recommended"
+    } : {},
+  )
+
+  # Nightly App Service backup, only when storage is provisioned.
+  dynamic "backup" {
+    for_each = var.enable_backup ? [1] : []
+    content {
+      name                = "${local.name_root}-nightly"
+      storage_account_url = "https://${azurerm_storage_account.backup[0].name}.blob.core.windows.net/${azurerm_storage_container.backup[0].name}${data.azurerm_storage_account_blob_container_sas.backup[0].sas}"
+      schedule {
+        frequency_interval       = 1
+        frequency_unit           = "Day"
+        keep_at_least_one_backup = true
+        retention_period_days    = 30
+      }
+    }
   }
+
+  tags = local.common_tags
+}
+
+# ── Staging Slot (conditional) ────────────────────────────────────────────
+# Blue/green deployment slot. Requires Standard tier or higher (S1+).
+# Mirrors the main app's site_config so swaps are like-for-like.
+
+resource "azurerm_linux_web_app_slot" "staging" {
+  count          = var.enable_staging_slot ? 1 : 0
+  name           = "staging"
+  app_service_id = azurerm_linux_web_app.main.id
+
+  https_only = var.https_only
+
+  site_config {
+    always_on        = var.always_on
+    app_command_line = "gunicorn --bind=0.0.0.0:8000 --timeout 600 app:app"
+
+    application_stack {
+      python_version = var.python_version
+    }
+  }
+
+  app_settings = merge(
+    {
+      PAGE_TITLE                     = var.page_title
+      BUTTON_COLOR                   = var.button_color
+      SCM_DO_BUILD_DURING_DEPLOYMENT = "true"
+      WEBSITES_PORT                  = "8000"
+    },
+    var.enable_monitoring ? {
+      APPLICATIONINSIGHTS_CONNECTION_STRING      = azurerm_application_insights.main[0].connection_string
+      ApplicationInsightsAgent_EXTENSION_VERSION = "~3"
+    } : {},
+  )
 
   tags = local.common_tags
 }

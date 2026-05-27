@@ -23,7 +23,7 @@ variable "resource_group_name" {
 }
 
 variable "sku_name" {
-  description = "App Service Plan SKU. B1 is the smallest always-on tier; F1 is free but limited to 60 CPU min/day and cold-starts hard."
+  description = "App Service Plan SKU. B1 is the smallest always-on tier; S1+ supports autoscale + staging slots; F1 is free but limited."
   type        = string
   default     = "B1"
   validation {
@@ -57,9 +57,43 @@ variable "https_only" {
 }
 
 variable "always_on" {
-  description = "Keep the app warm. F1 SKU does NOT support always_on — set false on F1."
+  description = "Keep the app warm. F1 SKU does NOT support always_on — set false on F1. Default false to fit dev / B1; PE locks true on the prod profile."
   type        = bool
-  default     = true
+  default     = false
+}
+
+# ── Conditional resources (governance toggles) ────────────────────────────
+# These mirror the AWS Lambda demo's enable_dlq / enable_xray pattern:
+# bool toggles that gate `count = var.x ? 1 : 0` resources, so a single
+# blueprint produces a thin dev stack and a fat prod stack. The PE locks
+# them per-profile in the governance editor.
+
+variable "enable_monitoring" {
+  description = "Create Application Insights + Log Analytics Workspace and wire connection string into the web app. Lock true on prod, false on dev."
+  type        = bool
+  default     = false
+}
+
+variable "log_retention_days" {
+  description = "Log Analytics workspace retention. Only used when enable_monitoring is true."
+  type        = number
+  default     = 30
+  validation {
+    condition     = var.log_retention_days >= 30 && var.log_retention_days <= 730
+    error_message = "Log Analytics retention must be between 30 and 730 days."
+  }
+}
+
+variable "enable_staging_slot" {
+  description = "Create a deployment slot for blue/green swap. Requires S1+ SKU (Basic tier does NOT support slots). Lock true on prod, false on dev."
+  type        = bool
+  default     = false
+}
+
+variable "enable_backup" {
+  description = "Create a Storage Account + container for App Service backup snapshots. Backup schedule configured nightly. Lock true on prod, false on dev."
+  type        = bool
+  default     = false
 }
 
 variable "tags" {
