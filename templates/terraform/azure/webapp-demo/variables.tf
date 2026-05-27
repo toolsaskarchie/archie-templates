@@ -75,13 +75,9 @@ variable "enable_monitoring" {
 }
 
 variable "log_retention_days" {
-  description = "Log Analytics workspace retention. Only used when enable_monitoring is true."
+  description = "Log Analytics workspace retention. Only used when enable_monitoring is true. Azure minimum is 30 days; values below are silently clamped to 30 so cross-cloud blueprints that inherit a CloudWatch-style default (e.g. 7) don't fail apply."
   type        = number
   default     = 30
-  validation {
-    condition     = var.log_retention_days >= 30 && var.log_retention_days <= 730
-    error_message = "Log Analytics retention must be between 30 and 730 days."
-  }
 }
 
 variable "enable_staging_slot" {

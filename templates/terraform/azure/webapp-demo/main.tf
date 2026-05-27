@@ -159,8 +159,10 @@ resource "azurerm_log_analytics_workspace" "main" {
   location            = azurerm_resource_group.main.location
   resource_group_name = azurerm_resource_group.main.name
   sku                 = "PerGB2018"
-  retention_in_days   = var.log_retention_days
-  tags                = local.common_tags
+  # Azure Log Analytics enforces a 30-day floor server-side. Clamp here so
+  # blueprints that inherit a CloudWatch-style default (e.g. 7) still apply.
+  retention_in_days = max(30, min(730, var.log_retention_days))
+  tags              = local.common_tags
 }
 
 resource "azurerm_application_insights" "main" {
