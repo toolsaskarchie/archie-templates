@@ -11,9 +11,9 @@ variable "environment" {
 }
 
 variable "location" {
-  description = "Azure region."
+  description = "Azure region. westus default — better residual quota on new subs than eastus. PE can lock per profile."
   type        = string
-  default     = "eastus"
+  default     = "westus"
 }
 
 variable "resource_group_name" {
@@ -23,9 +23,9 @@ variable "resource_group_name" {
 }
 
 variable "sku_name" {
-  description = "App Service Plan SKU. B1 is the smallest always-on tier; S1+ supports autoscale + staging slots; F1 is free but limited."
+  description = "App Service Plan SKU. F1 = free (shared hosting, no VM quota, no always_on, no staging slots) — default for nonprod. B1 = smallest dedicated. S1+ supports autoscale + staging slots — typical prod. PE locks per profile (nonprod=F1, prod=S1+)."
   type        = string
-  default     = "B1"
+  default     = "F1"
   validation {
     condition     = contains(["F1", "B1", "B2", "B3", "S1", "S2", "S3", "P0v3", "P1v3", "P2v3"], var.sku_name)
     error_message = "Use a supported Linux App Service SKU (F1, B1-B3, S1-S3, P0v3-P2v3)."
@@ -57,7 +57,7 @@ variable "https_only" {
 }
 
 variable "always_on" {
-  description = "Keep the app warm. F1 SKU does NOT support always_on — set false on F1. Default false to fit dev / B1; PE locks true on the prod profile."
+  description = "Keep the app warm. F1 SKU does NOT support always_on — must be false on F1. PE locks false on nonprod (F1), true on prod (S1+)."
   type        = bool
   default     = false
 }

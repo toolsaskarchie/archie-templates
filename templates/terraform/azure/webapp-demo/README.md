@@ -19,7 +19,7 @@ Same "thin dev / fat prod from one blueprint" pattern as the Lambda demo — thr
 |---|---|---|
 | `project_name` | `myapp` | Resource name root + tag prefix |
 | `environment` | `dev` | Env label |
-| `location` | `eastus` | Azure region |
+| `location` | `westus` | Azure region (westus default — better residual VM quota on new subs than eastus) |
 | `resource_group_name` | _empty_ | Override RG name (defaults to `<project>-<env>-rg`) |
 | `sku_name` | `B1` | App Service Plan SKU (F1 free, B1-B3, S1-S3, P0v3-P2v3). Use S1+ to enable staging slot. |
 | `python_version` | `3.12` | Runtime version |
@@ -39,13 +39,16 @@ Same blueprint, two locked profiles set in the governance editor:
 
 | Field | Non-prod (locked) | Prod (locked) |
 |---|---|---|
-| `sku_name` | `B1` | `S1` |
-| `always_on` | `false` | `true` |
+| `sku_name` | `F1` (free, shared hosting, no VM quota) | `S1` (dedicated, autoscale + slots) |
+| `always_on` | `false` (F1 doesn't support always_on) | `true` |
 | `enable_monitoring` | `false` | `true` |
-| `enable_staging_slot` | `false` | `true` |
+| `enable_staging_slot` | `false` (F1 doesn't support slots) | `true` |
 | `enable_backup` | `false` | `true` |
+| `log_retention_days` | `30` (Azure minimum) | `90` (incident postmortems) |
 
 Resource count: **3 in dev, 7 in prod** (RG + Plan + Web App / + App Insights + Log Analytics + Staging Slot + Storage Account). Same blueprint. One profile toggle.
+
+**Why F1 for nonprod**: free tier, no VM quota required, gets new subscriptions deploying immediately without an Azure quota request. Trade-off: 60 CPU-min/day cap, no always_on, no staging slots. Fine for dev/test, never for prod.
 
 ## Outputs
 
