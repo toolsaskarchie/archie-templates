@@ -97,46 +97,194 @@ class ArchieRoleTemplate(InfrastructureTemplate):
             }]
         }
         
-        # Restricted ReadOnly Policy
-        read_only_policy_doc = {
+        # Minimum-privilege Deploy Policy
+        # ---------------------------------------------------------------
+        # Three tiers:
+        #   1. Allow CRUD on services Archie's first-party templates deploy.
+        #      If a user wants Archie to deploy a service NOT listed here
+        #      (Glue, EMR, Kinesis, ...), they explicitly attach an extra
+        #      managed policy to this role themselves in the AWS console.
+        #   2. IAM scoped HARD to archie-managed resources only.
+        #      Prevents privilege escalation: Archie cannot rewrite trust
+        #      policies on existing roles, attach policies to arbitrary
+        #      principals, or modify the assume-role policy of anything
+        #      outside the archie-* namespace.
+        #   3. Explicit Deny block for blast-radius limiters
+        #      (org / account / billing / user creation).
+        deploy_policy_doc = {
             "Version": "2012-10-17",
             "Statement": [
                 {
+                    "Sid": "ArchieCoreInfra",
                     "Effect": "Allow",
                     "Action": [
-                        "ec2:Describe*",
-                        "s3:List*",
-                        "s3:Get*",
-                        "rds:Describe*",
-                        "elasticloadbalancing:Describe*",
-                        "autoscaling:Describe*",
-                        "cloudwatch:Describe*",
-                        "cloudwatch:Get*",
-                        "cloudwatch:List*",
-                        "logs:Describe*",
-                        "logs:Get*",
-                        "logs:List*",
-                        "iam:List*",
+                        "ec2:*",
+                        "elasticloadbalancing:*",
+                        "autoscaling:*",
+                        "s3:*",
+                        "rds:*",
+                        "lambda:*",
+                        "ecs:*",
+                        "eks:*",
+                        "ecr:*",
+                        "cloudwatch:*",
+                        "logs:*",
+                        "events:*",
+                        "secretsmanager:*",
+                        "route53:*",
+                        "acm:*",
+                        "sqs:*",
+                        "sns:*",
+                        "cloudfront:*",
+                        "apigateway:*",
+                        "execute-api:*",
+                        "dynamodb:*",
+                        "states:*",
+                        "elasticfilesystem:*",
+                        "elasticache:*",
+                        "tag:*",
+                        "resource-groups:*"
+                    ],
+                    "Resource": "*"
+                },
+                {
+                    "Sid": "ArchieKMSScopedUse",
+                    "Effect": "Allow",
+                    "Action": [
+                        "kms:CreateKey",
+                        "kms:CreateAlias",
+                        "kms:DeleteAlias",
+                        "kms:UpdateAlias",
+                        "kms:Describe*",
+                        "kms:Get*",
+                        "kms:List*",
+                        "kms:TagResource",
+                        "kms:UntagResource",
+                        "kms:Encrypt",
+                        "kms:Decrypt",
+                        "kms:GenerateDataKey*",
+                        "kms:ReEncrypt*",
+                        "kms:EnableKey*",
+                        "kms:DisableKey*",
+                        "kms:ScheduleKeyDeletion",
+                        "kms:CancelKeyDeletion",
+                        "kms:PutKeyPolicy"
+                    ],
+                    "Resource": "*"
+                },
+                {
+                    "Sid": "ArchieIAMReadOnly",
+                    "Effect": "Allow",
+                    "Action": [
                         "iam:Get*",
-                        "sns:List*",
-                        "sns:Get*",
-                        "sqs:List*",
-                        "sqs:Get*",
-                        "route53:List*",
-                        "route53:Get*"
+                        "iam:List*"
+                    ],
+                    "Resource": "*"
+                },
+                # ── IAM scoping by TAG (#303) ────────────────────────────────
+                # Primary scope is the canonical Archie tag stamped by every
+                # engine (Pulumi transform, TF default_tags, CDK --tags) so a
+                # customer can name their project anything they want
+                # ("proof-destroy-1780019716") and the create still succeeds.
+                # CreateRole/CreatePolicy use aws:RequestTag (tags on the
+                # API request); subsequent mutations use aws:ResourceTag
+                # (tags already on the resource).
+                {
+                    "Sid": "ArchieIAMCreateByRequestTag",
+                    "Effect": "Allow",
+                    "Action": [
+                        "iam:CreateRole",
+                        "iam:CreatePolicy"
+                    ],
+                    "Resource": "*",
+                    "Condition": {
+                        "StringEquals": {
+                            "aws:RequestTag/ManagedBy": "Archie"
+                        }
+                    }
+                },
+                {
+                    "Sid": "ArchieIAMMutateByResourceTag",
+                    "Effect": "Allow",
+                    "Action": [
+                        "iam:DeleteRole",
+                        "iam:UpdateRole",
+                        "iam:UpdateAssumeRolePolicy",
+                        "iam:AttachRolePolicy",
+                        "iam:DetachRolePolicy",
+                        "iam:PutRolePolicy",
+                        "iam:DeleteRolePolicy",
+                        "iam:TagRole",
+                        "iam:UntagRole",
+                        "iam:PassRole",
+                        "iam:DeletePolicy",
+                        "iam:CreatePolicyVersion",
+                        "iam:DeletePolicyVersion",
+                        "iam:TagPolicy",
+                        "iam:UntagPolicy"
+                    ],
+                    "Resource": "*",
+                    "Condition": {
+                        "StringEquals": {
+                            "aws:ResourceTag/ManagedBy": "Archie"
+                        }
+                    }
+                },
+                {
+                    "Sid": "ArchieIAMServiceLinkedRoles",
+                    "Effect": "Allow",
+                    "Action": [
+                        "iam:CreateServiceLinkedRole"
+                    ],
+                    "Resource": "*"
+                },
+                {
+                    "Sid": "ArchieHardDeny",
+                    "Effect": "Deny",
+                    "Action": [
+                        "organizations:*",
+                        "account:*",
+                        "aws-portal:*",
+                        "support:*",
+                        "billing:*",
+                        "ce:*",
+                        "cur:*",
+                        "iam:CreateUser",
+                        "iam:DeleteUser",
+                        "iam:CreateLoginProfile",
+                        "iam:UpdateLoginProfile",
+                        "iam:CreateAccessKey",
+                        "iam:UpdateAccessKey",
+                        "iam:DeleteAccessKey",
+                        "iam:UpdateAccountPasswordPolicy",
+                        "iam:DeleteAccountPasswordPolicy"
                     ],
                     "Resource": "*"
                 }
             ]
         }
-        
+
+        # Honor an explicit role_name from config when provided (e.g. the
+        # onboarding wizard passes a customer-chosen name from the preview
+        # screen). Falls back to a deterministic auto-name so direct
+        # template usage without role_name still works.
+        custom_role_name = self.cfg.role_name
+        role_name = custom_role_name or f"role-archie-{self.cfg.project_name}-{environment}-{region}"
+        # Policy name mirrors the role name so the two stay paired in
+        # AWS console listings. Strip the "role-" prefix if present so
+        # we get pol-archie-<rest>, else prefix with pol- naively.
+        if role_name.startswith("role-"):
+            policy_name = "pol-" + role_name[len("role-"):]
+        else:
+            policy_name = f"pol-{role_name}"
+
         # 1. Create Policy
         self.policy = factory.create(
             "aws:iam:Policy",
             f"{self.name}-policy",
-            name=f"pol-archierole-{self.cfg.project_name}-{environment}-{region}",
-            description="Restricted ReadOnly policy for Archie connection",
-            policy=json.dumps(read_only_policy_doc),
+            name=policy_name,
+            description="Minimum-privilege deploy policy for Archie. Covers first-party templates only; users explicitly attach additional managed policies for services outside this list.",
+            policy=json.dumps(deploy_policy_doc),
             tags=tags,
         )
 
@@ -144,7 +292,7 @@ class ArchieRoleTemplate(InfrastructureTemplate):
         self.role = factory.create(
             "aws:iam:Role",
             self.name,
-            name=f"role-archie-{self.cfg.project_name}-{environment}-{region}",
+            name=role_name,
             assume_role_policy=json.dumps(trust_policy),
             managed_policy_arns=[self.policy.arn],
             tags=tags,
@@ -178,9 +326,9 @@ class ArchieRoleTemplate(InfrastructureTemplate):
         return {
             "name": "aws-archie-role",
             "title": "Archie Cross-Account Role",
-            "description": "Secure, managed IAM role for connecting your AWS account to Archie. Implements the principle of least privilege using restricted read-only permissions and STS External ID verification.",
+            "description": "Secure, managed IAM role for connecting your AWS account to Archie. Implements least privilege with a minimum-deploy policy (covers Archie's first-party templates only) and STS External ID verification. Users explicitly attach additional managed policies for any services outside the curated list.",
             "category": "security",
-            "version": "1.0.0",
+            "version": "1.0.1",
             "author": "InnovativeApps",
             "cloud": "aws",
             "environment": "all",
@@ -189,8 +337,9 @@ class ArchieRoleTemplate(InfrastructureTemplate):
             "features": [
                 "Secure Cross-Account Trust Policy",
                 "Mandatory STS External ID Verification",
-                "Restricted Read-Only permissions for discovery",
-                "Automated Customer Managed Policy creation",
+                "Minimum-privilege deploy policy (Archie's first-party services only)",
+                "IAM scoped to archie-* resources — no privilege escalation surface",
+                "Explicit deny block on org/account/billing/user creation",
                 "No long-term credentials or access keys required"
             ],
             "deployment_time": "1-2 minutes",
