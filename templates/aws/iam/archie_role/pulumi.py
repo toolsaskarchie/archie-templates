@@ -177,7 +177,8 @@ class ArchieRoleTemplate(InfrastructureTemplate):
                     "Effect": "Allow",
                     "Action": [
                         "iam:Get*",
-                        "iam:List*"
+                        "iam:List*",
+                        "iam:SimulatePrincipalPolicy"
                     ],
                     "Resource": "*"
                 },

@@ -17,27 +17,38 @@ class GCPVPCSimpleConfig:
 
     @property
     def project(self) -> str:
-        """Get GCP Project ID with robust lookup."""
-        # 1. Check parameters with various keys
-        for key in ['project', 'projectId', 'project_id', 'gcp_project', 'projectName', 'project_name']:
+        """Get GCP Project ID with robust lookup.
+
+        IMPORTANT: `project_name` / `projectName` are the STACK identifier
+        (e.g. 'archie-life-gcppulumi-1780167232') NOT the GCP project ID.
+        Including them in this lookup caused the GCP API to reject deploys
+        with `project 'archie-life-...' not found` because Archie's stack
+        name was being passed straight through to google_compute_network.
+        Only true project-id keys belong here.
+        """
+        # Project-ID-only keys (no stack-name aliases)
+        keys = ['gcp_project_id', 'project_id', 'projectId', 'gcp_project', 'project']
+
+        # 1. Check parameters
+        for key in keys:
             val = self.get_parameter(key)
             if val:
                 return val
-        
+
         # 2. Check credentials.gcp
         creds = self.raw_config.get('credentials', {})
         gcp_creds = creds.get('gcp', {})
-        for key in ['project', 'projectId', 'project_id', 'gcp_project', 'projectName', 'project_name']:
+        for key in keys:
             val = gcp_creds.get(key)
             if val:
                 return val
-        
+
         # 3. Check top-level credentials (fallback for malformed payloads)
-        for key in ['project', 'projectId', 'project_id', 'gcp_project', 'projectName', 'project_name']:
+        for key in keys:
             val = creds.get(key)
             if val:
                 return val
-                
+
         # 4. Last resort: return None (Atomic template will raise error)
         return None
 
