@@ -194,7 +194,8 @@ class ArchieRoleTemplate(InfrastructureTemplate):
                     "Effect": "Allow",
                     "Action": [
                         "iam:CreateRole",
-                        "iam:CreatePolicy"
+                        "iam:CreatePolicy",
+                        "iam:CreateInstanceProfile"
                     ],
                     "Resource": "*",
                     "Condition": {
@@ -221,7 +222,12 @@ class ArchieRoleTemplate(InfrastructureTemplate):
                         "iam:CreatePolicyVersion",
                         "iam:DeletePolicyVersion",
                         "iam:TagPolicy",
-                        "iam:UntagPolicy"
+                        "iam:UntagPolicy",
+                        "iam:DeleteInstanceProfile",
+                        "iam:AddRoleToInstanceProfile",
+                        "iam:RemoveRoleFromInstanceProfile",
+                        "iam:TagInstanceProfile",
+                        "iam:UntagInstanceProfile"
                     ],
                     "Resource": "*",
                     "Condition": {
