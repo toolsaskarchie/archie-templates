@@ -19,6 +19,11 @@ Each blueprint here is:
 
 ## Phase 1 — Compute (this PR)
 
+Every compute blueprint serves the same rotating-message HTML landing page
+on dark background — 10 AskArchie governance/drift one-liners, a "Show me
+another" refresh button, and the `page_title` / `button_color` config
+values surfaced in the UI. Identical look across all six.
+
 | # | Path                                       | Engine | Cloud  | Status |
 |---|--------------------------------------------|--------|--------|--------|
 | 1 | aws/terraform/lambda-function              | TF     | AWS    | ready  |
@@ -26,6 +31,7 @@ Each blueprint here is:
 | 3 | azure/terraform/function-app               | TF     | Azure  | ready  |
 | 4 | azure/pulumi/function-app                  | Pulumi | Azure  | ready  |
 | 5 | gcp/pulumi/cloud-function                  | Pulumi | GCP    | ready  |
+| 6 | gcp/terraform/cloud-function               | TF     | GCP    | ready  |
 
 ## Phases 2-4 (deferred)
 

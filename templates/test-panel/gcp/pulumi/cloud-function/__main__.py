@@ -70,28 +70,82 @@ def main(request):
         "9 resources. 10 config fields. One click.",
         "The real complexity starts the day after deploy.",
         "Detection is solved. The gap is between detected and fixed.",
-        "Describe. Generate. Govern. Deploy.",
+        "Describe. Generate. Govern. Deploy."
     ]
+
     page_title = os.environ.get("PAGE_TITLE", "AskArchie")
     button_color = os.environ.get("BUTTON_COLOR", "#3B82F6")
-    msg = random.choice(messages)
-    html = f"""<!DOCTYPE html><html><head><meta charset="utf-8">
-<title>{page_title}</title><style>
-body{{margin:0;background:#0B0E14;font-family:-apple-system,sans-serif;
-display:flex;flex-direction:column;justify-content:center;align-items:center;
-min-height:100vh;text-align:center}}
-.m{{color:#F1F5F9;font-weight:bold;font-size:42px;margin-bottom:20px;max-width:80%}}
-.s{{color:#64748B;font-size:18px;margin-bottom:40px}}
-.b{{background:{button_color};color:white;border:0;padding:12px 24px;
-font-size:18px;border-radius:8px;cursor:pointer}}
-.f{{color:#64748B;font-size:14px;margin-top:20px}}
-</style></head><body>
-<div class="m">{msg}</div><div class="s">{page_title}</div>
-<button class="b" onclick="window.location.reload()">Show me another</button>
-<div class="f">askarchie.io</div>
-</body></html>"""
-    return (html, 200, {"Content-Type": "text/html; charset=utf-8",
-                        "Cache-Control": "no-cache, no-store, must-revalidate"})
+    random_message = random.choice(messages)
+
+    html_content = f"""<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>{page_title}</title>
+    <style>
+        body {{
+            margin: 0;
+            padding: 0;
+            background-color: #0B0E14;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            text-align: center;
+        }}
+        .message {{
+            color: #F1F5F9;
+            font-weight: bold;
+            font-size: 42px;
+            margin-bottom: 20px;
+            max-width: 80%;
+            line-height: 1.2;
+        }}
+        .subtitle {{
+            color: #64748B;
+            font-size: 18px;
+            margin-bottom: 40px;
+        }}
+        .button {{
+            background-color: {button_color};
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            font-size: 18px;
+            border-radius: 8px;
+            cursor: pointer;
+            margin-bottom: 20px;
+        }}
+        .button:hover {{
+            opacity: 0.9;
+        }}
+        .footer {{
+            color: #64748B;
+            font-size: 14px;
+        }}
+    </style>
+</head>
+<body>
+    <div class="message">{random_message}</div>
+    <div class="subtitle">{page_title}</div>
+    <button class="button" onclick="window.location.reload()">Show me another</button>
+    <div class="footer">askarchie.io</div>
+</body>
+</html>"""
+
+    return (
+        html_content,
+        200,
+        {
+            "Content-Type": "text/html; charset=utf-8",
+            "Cache-Control": "no-cache, no-store, must-revalidate",
+            "Pragma": "no-cache",
+            "Expires": "0",
+        },
+    )
 '''
 
 REQUIREMENTS_SRC = "functions-framework==3.*\n"
