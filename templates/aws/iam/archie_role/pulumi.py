@@ -218,7 +218,6 @@ class ArchieRoleTemplate(InfrastructureTemplate):
                         "iam:DeleteRolePolicy",
                         "iam:TagRole",
                         "iam:UntagRole",
-                        "iam:PassRole",
                         "iam:DeletePolicy",
                         "iam:CreatePolicyVersion",
                         "iam:DeletePolicyVersion",
@@ -244,6 +243,34 @@ class ArchieRoleTemplate(InfrastructureTemplate):
                         "iam:CreateServiceLinkedRole"
                     ],
                     "Resource": "*"
+                },
+                # iam:PassRole — scoped by the SERVICE the role is being
+                # passed to, not by tag. The tag scope was breaking
+                # legitimate single-apply TF flows where the IAM role and
+                # the resource consuming it are created in the same plan:
+                # at PassRole time the role's `ManagedBy=Archie` tag isn't
+                # yet visible to the policy evaluator, so the call fails
+                # (#356 follow-up: 2026-06-01 prod sunrise Lambda).
+                # Service allowlist keeps this safe — Archie can pass roles
+                # only to the runtimes we actually deploy to. Add services
+                # as new blueprint patterns surface (e.g. Step Functions,
+                # EventBridge) — never broaden to PassedToService: "*".
+                {
+                    "Sid": "ArchiePassRoleByService",
+                    "Effect": "Allow",
+                    "Action": "iam:PassRole",
+                    "Resource": "*",
+                    "Condition": {
+                        "StringEquals": {
+                            "iam:PassedToService": [
+                                "lambda.amazonaws.com",
+                                "ec2.amazonaws.com",
+                                "ecs-tasks.amazonaws.com",
+                                "ecs.amazonaws.com",
+                                "apigateway.amazonaws.com"
+                            ]
+                        }
+                    }
                 },
                 {
                     "Sid": "ArchieHardDeny",
