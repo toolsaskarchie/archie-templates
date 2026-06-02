@@ -1,0 +1,6 @@
+name: test-panel-azure-function-pulumi
+description: Azure Function App Consumption — rotating HTML landing page (Pulumi mirror of #3)
+runtime:
+  name: python
+  options:
+    virtualenv: venv

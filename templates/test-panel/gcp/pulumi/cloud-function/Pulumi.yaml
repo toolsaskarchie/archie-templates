@@ -1,0 +1,6 @@
+name: test-panel-gcp-cloud-function
+description: GCP Cloud Function HTTP (Gen 2) — rotating HTML landing page
+runtime:
+  name: python
+  options:
+    virtualenv: venv

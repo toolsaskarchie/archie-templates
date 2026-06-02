@@ -1,0 +1,6 @@
+name: test-panel-aws-lambda-pulumi
+description: Lambda + Function URL — rotating HTML landing page (Pulumi mirror of #1)
+runtime:
+  name: python
+  options:
+    virtualenv: venv
