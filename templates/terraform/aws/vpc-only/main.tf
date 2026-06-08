@@ -1,6 +1,6 @@
 locals {
   # Merge built-in tags (project + environment) with user/blueprint-supplied tags.
-  # User tags WIN on key collision — locked blueprint tags can override these defaults.
+  # User tags WIN on key collision - locked blueprint tags can override these defaults.
   common_tags = merge(
     {
       Project     = var.project_name

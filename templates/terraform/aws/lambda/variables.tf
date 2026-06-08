@@ -67,7 +67,7 @@ variable "reserved_concurrency" {
 variable "page_title" {
   description = "Page title and subtitle text."
   type        = string
-  default     = "AskArchie — Cloud Standards Platform"
+  default     = "AskArchie - Cloud Standards Platform"
 }
 
 variable "button_color" {

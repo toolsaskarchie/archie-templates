@@ -2,7 +2,7 @@
 
 resource "aws_security_group" "alb" {
   name_prefix = "${var.project_name}-alb-"
-  description = "ALB security group — inbound HTTP/HTTPS from allowed CIDRs."
+  description = "ALB security group - inbound HTTP/HTTPS from allowed CIDRs."
   vpc_id      = var.vpc_id
 
   ingress {
@@ -45,7 +45,7 @@ resource "aws_security_group" "alb" {
 
 resource "aws_security_group" "backend" {
   name_prefix = "${var.project_name}-backend-"
-  description = "Backend security group — only accepts traffic from the ALB SG."
+  description = "Backend security group - only accepts traffic from the ALB SG."
   vpc_id      = var.vpc_id
 
   ingress {

@@ -196,7 +196,7 @@ resource "aws_lambda_function" "main" {
     }
   }
 
-  # Explicit log group binding — without this, Lambda auto-creates its own
+  # Explicit log group binding - without this, Lambda auto-creates its own
   # `/aws/lambda/<fn>` log group on first invocation, separate from the
   # one TF manages. Two side effects of that without this block:
   # 1. retention_in_days from the TF resource doesn't apply (AWS default = never expire)

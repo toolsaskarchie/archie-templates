@@ -8,8 +8,8 @@ data "aws_ami" "amazon_linux" {
   }
 }
 
-# Backend instance(s) — one per element of subnet_ids, round-robin if count > len(subnet_ids).
-# user_data uses python3 (pre-installed on AL2023) so no internet egress required at boot —
+# Backend instance(s) - one per element of subnet_ids, round-robin if count > len(subnet_ids).
+# user_data uses python3 (pre-installed on AL2023) so no internet egress required at boot -
 # works in restricted-egress accounts (CloudGuru labs, isolated VPCs without NAT, etc.).
 
 resource "aws_instance" "web" {

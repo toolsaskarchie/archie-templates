@@ -26,7 +26,7 @@ variable "target_port" {
 }
 
 variable "internal" {
-  description = "If true, the ALB has no public DNS — reachable only from inside the VPC."
+  description = "If true, the ALB has no public DNS - reachable only from inside the VPC."
   type        = bool
   default     = false
 }

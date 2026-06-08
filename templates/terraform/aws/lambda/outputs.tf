@@ -15,7 +15,7 @@ output "log_group_name" {
 
 # ─── Governance-visible outputs ──────────────────────────────────────────────
 # These echo the EFFECTIVE config the Lambda was deployed with. Surfaces
-# profile differences in the stack drawer — non-prod vs production show
+# profile differences in the stack drawer - non-prod vs production show
 # different values here when the PE locked different defaults per profile.
 
 output "project_name" {
@@ -29,7 +29,7 @@ output "environment" {
 }
 
 output "memory_size_mb" {
-  description = "Lambda memory (MB). Profile lever — non-prod 256, prod 512+."
+  description = "Lambda memory (MB). Profile lever - non-prod 256, prod 512+."
   value       = aws_lambda_function.main.memory_size
 }
 
@@ -44,7 +44,7 @@ output "runtime" {
 }
 
 output "log_retention_days" {
-  description = "CloudWatch log retention (days). Profile lever — non-prod 7, prod 90+."
+  description = "CloudWatch log retention (days). Profile lever - non-prod 7, prod 90+."
   value       = aws_cloudwatch_log_group.lambda_logs.retention_in_days
 }
 

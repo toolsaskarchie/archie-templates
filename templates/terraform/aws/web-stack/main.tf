@@ -76,7 +76,7 @@ resource "aws_route_table_association" "public" {
 
 resource "aws_security_group" "alb" {
   name_prefix = "${var.project_name}-alb-"
-  description = "ALB security group — inbound HTTP/HTTPS from allowed CIDRs."
+  description = "ALB security group - inbound HTTP/HTTPS from allowed CIDRs."
   vpc_id      = aws_vpc.main.id
 
   ingress {
@@ -119,7 +119,7 @@ resource "aws_security_group" "alb" {
 
 resource "aws_security_group" "backend" {
   name_prefix = "${var.project_name}-backend-"
-  description = "Backend security group — only accepts traffic from the ALB SG."
+  description = "Backend security group - only accepts traffic from the ALB SG."
   vpc_id      = aws_vpc.main.id
 
   ingress {
@@ -210,7 +210,7 @@ resource "aws_lb_listener" "https" {
 
 # ── EC2 backend(s) ─────────────────────────────────────────────────────────
 # user_data uses python3 (pre-installed on AL2023) so the backend boots
-# with zero internet egress — works in restricted-egress accounts.
+# with zero internet egress - works in restricted-egress accounts.
 
 resource "aws_instance" "web" {
   count                  = var.ec2_instance_count
