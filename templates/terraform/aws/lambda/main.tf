@@ -241,15 +241,12 @@ resource "aws_lambda_function_url" "main" {
   }
 }
 
-# Lambda permissions for Function URL (both required — see README)
-resource "aws_lambda_permission" "function_url" {
-  statement_id           = "FunctionURLAllowPublicAccess"
-  action                 = "lambda:InvokeFunctionUrl"
-  function_name          = aws_lambda_function.main.function_name
-  principal              = "*"
-  function_url_auth_type = "NONE"
-}
-
+# Lambda permission for direct InvokeFunction. The InvokeFunctionUrl
+# permission with statement_id "FunctionURLAllowPublicAccess" is
+# auto-created by aws_lambda_function_url when authorization_type = "NONE"
+# (terraform-aws-provider v5+). Re-declaring it explicitly causes a 409
+# "statement_id already exists" on apply. Keep only the InvokeFunction
+# permission, which the provider does NOT auto-add.
 resource "aws_lambda_permission" "function_invoke" {
   statement_id  = "AllowFunctionUrlInvoke"
   action        = "lambda:InvokeFunction"
