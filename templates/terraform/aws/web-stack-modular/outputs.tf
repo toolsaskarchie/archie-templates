@@ -13,12 +13,32 @@ output "alb_dns" {
   value       = module.alb.alb_dns
 }
 
+output "alb_url" {
+  description = "Full http(s) URL to reach the ALB."
+  value       = module.alb.alb_url
+}
+
 output "alb_arn" {
   description = "ARN of the Application Load Balancer."
   value       = module.alb.alb_arn
 }
 
-output "instance_id" {
-  description = "ID of the backend EC2 instance."
-  value       = module.ec2.instance_id
+output "target_group_arn" {
+  description = "ARN of the target group attached to the ALB listener."
+  value       = module.alb.target_group_arn
+}
+
+output "alb_security_group_id" {
+  description = "ID of the ALB-facing security group (port 80/443 from allowed_cidrs)."
+  value       = module.alb.alb_security_group_id
+}
+
+output "backend_security_group_id" {
+  description = "ID of the backend security group (target_port from ALB SG only)."
+  value       = module.alb.backend_security_group_id
+}
+
+output "instance_ids" {
+  description = "IDs of the backend EC2 instances."
+  value       = module.ec2.instance_ids
 }

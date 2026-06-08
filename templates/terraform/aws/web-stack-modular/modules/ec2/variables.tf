@@ -1,5 +1,5 @@
 variable "project_name" {
-  description = "Tag prefix for the EC2 instance."
+  description = "Tag prefix for EC2 instances."
   type        = string
 }
 
@@ -9,19 +9,31 @@ variable "instance_type" {
   default     = "t3.micro"
 }
 
-variable "subnet_id" {
-  description = "Subnet to launch the instance in."
-  type        = string
+variable "instance_count" {
+  description = "Number of backend EC2 instances to launch. Spread across subnet_ids round-robin."
+  type        = number
+  default     = 2
 }
 
-variable "security_group_id" {
-  description = "Security group to attach to the instance (typically shared with the ALB)."
+variable "subnet_ids" {
+  description = "Subnet IDs to spread backend instances across."
+  type        = list(string)
+}
+
+variable "backend_security_group_id" {
+  description = "Backend security group ID (created by the alb module, accepts target_port from ALB SG only)."
   type        = string
 }
 
 variable "target_group_arn" {
-  description = "Target group to register the instance with."
+  description = "Target group to register the instances with."
   type        = string
+}
+
+variable "target_port" {
+  description = "Port the backend listens on (used for the target group attachment)."
+  type        = number
+  default     = 80
 }
 
 variable "tags" {

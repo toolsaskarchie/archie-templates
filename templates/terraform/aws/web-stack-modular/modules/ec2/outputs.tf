@@ -1,14 +1,14 @@
-output "instance_id" {
-  description = "ID of the EC2 instance."
-  value       = aws_instance.web.id
+output "instance_ids" {
+  description = "IDs of the backend EC2 instances."
+  value       = aws_instance.web[*].id
 }
 
-output "instance_arn" {
-  description = "ARN of the EC2 instance."
-  value       = aws_instance.web.arn
+output "instance_arns" {
+  description = "ARNs of the backend EC2 instances."
+  value       = aws_instance.web[*].arn
 }
 
-output "private_ip" {
-  description = "Private IP of the EC2 instance."
-  value       = aws_instance.web.private_ip
+output "private_ips" {
+  description = "Private IPs of the backend EC2 instances."
+  value       = aws_instance.web[*].private_ip
 }

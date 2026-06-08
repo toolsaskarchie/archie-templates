@@ -18,20 +18,26 @@ module "vpc" {
 module "alb" {
   source = "./modules/alb"
 
-  project_name  = var.project_name
-  vpc_id        = module.vpc.vpc_id
-  subnet_ids    = module.vpc.public_subnet_ids
-  allowed_cidrs = var.allowed_cidrs
-  tags          = local.common_tags
+  project_name     = var.project_name
+  vpc_id           = module.vpc.vpc_id
+  subnet_ids       = module.vpc.public_subnet_ids
+  allowed_cidrs    = var.allowed_cidrs
+  target_port      = var.target_port
+  internal         = var.internal
+  enable_https     = var.enable_https
+  certificate_arn  = var.certificate_arn
+  tags             = local.common_tags
 }
 
 module "ec2" {
   source = "./modules/ec2"
 
-  project_name      = var.project_name
-  instance_type     = var.instance_type
-  subnet_id         = module.vpc.public_subnet_ids[0]
-  security_group_id = module.alb.web_security_group_id
-  target_group_arn  = module.alb.target_group_arn
-  tags              = local.common_tags
+  project_name              = var.project_name
+  instance_type             = var.instance_type
+  instance_count            = var.ec2_instance_count
+  subnet_ids                = module.vpc.public_subnet_ids
+  backend_security_group_id = module.alb.backend_security_group_id
+  target_group_arn          = module.alb.target_group_arn
+  target_port               = var.target_port
+  tags                      = local.common_tags
 }
