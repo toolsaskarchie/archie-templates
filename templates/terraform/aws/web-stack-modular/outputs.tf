@@ -13,6 +13,11 @@ output "alb_dns" {
   value       = module.alb.alb_dns
 }
 
+output "alb_dns_name" {
+  description = "Public DNS name of the Application Load Balancer (Pulumi-aliased name)."
+  value       = module.alb.alb_dns
+}
+
 output "alb_url" {
   description = "Full http(s) URL to reach the ALB."
   value       = module.alb.alb_url
@@ -41,4 +46,39 @@ output "backend_security_group_id" {
 output "instance_ids" {
   description = "IDs of the backend EC2 instances."
   value       = module.ec2.instance_ids
+}
+
+output "instance_type" {
+  description = "EC2 instance size (same for every backend instance)."
+  value       = var.instance_type
+}
+
+output "instance_count" {
+  description = "Number of backend EC2 instances launched."
+  value       = var.ec2_instance_count
+}
+
+output "instance_types" {
+  description = "Per-instance EC2 sizes."
+  value       = module.ec2.instance_types
+}
+
+output "instance_private_ips" {
+  description = "Private IPs of each backend EC2 instance."
+  value       = module.ec2.private_ips
+}
+
+output "instance_availability_zones" {
+  description = "AZ each backend instance landed in."
+  value       = module.ec2.availability_zones
+}
+
+output "instance_amis" {
+  description = "AMI ID each backend instance booted from."
+  value       = module.ec2.amis
+}
+
+output "vpc_cidr" {
+  description = "CIDR block of the created VPC."
+  value       = var.vpc_cidr
 }
