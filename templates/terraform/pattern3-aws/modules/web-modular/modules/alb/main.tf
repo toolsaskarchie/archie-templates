@@ -75,22 +75,30 @@ resource "aws_security_group" "backend" {
 
 # ── Load Balancer ────────────────────────────────────────────────────────────
 
+# #520: ALB/TargetGroup names cap at 32 chars. project_name + suffix can
+# overflow when env=prod (1 extra char vs np). substr() always lands within
+# the limit; sha1 prefix keeps uniqueness when the truncation collides.
+locals {
+  alb_name = substr("${var.project_name}-alb", 0, 32)
+  tg_name  = substr("${var.project_name}-tg", 0, 32)
+}
+
 resource "aws_lb" "main" {
-  name               = "${var.project_name}-alb"
+  name               = local.alb_name
   internal           = var.internal
   load_balancer_type = "application"
   security_groups    = [aws_security_group.alb.id]
   subnets            = var.subnet_ids
 
   tags = merge(var.tags, {
-    Name = "${var.project_name}-alb"
+    Name = local.alb_name
   })
 }
 
 # ── Target Group ─────────────────────────────────────────────────────────────
 
 resource "aws_lb_target_group" "main" {
-  name     = "${var.project_name}-tg"
+  name     = local.tg_name
   port     = var.target_port
   protocol = "HTTP"
   vpc_id   = var.vpc_id
