@@ -2,6 +2,8 @@
 
 Two **demo-ready, version-pinned** Terraform apps for showing Archie govern existing TF end to end: **import → govern (lock fields per env) → deploy → drift → remediate**.
 
+> **Both engines, both via Studio.** Terraform enters by **Import** (these folders). The Pulumi equivalent enters by **Generate** — see `prompts/pulumi-serverless-prod-demo.md` (lambda) and `prompts/pulumi-web-alb-prod-demo.md` (web/ALB), which produce the same governable lever set and the same govern→drift→remediate arc on the Pulumi engine.
+
 Both are thin "app" roots that consume the reusable `pattern3-aws` modules **pinned to an immutable commit** (so a live demo is deterministic — the module can't change under you mid-demo).
 
 ## Which to use
