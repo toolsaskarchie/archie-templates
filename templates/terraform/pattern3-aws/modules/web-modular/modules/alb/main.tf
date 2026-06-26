@@ -75,12 +75,16 @@ resource "aws_security_group" "backend" {
 
 # ── Load Balancer ────────────────────────────────────────────────────────────
 
-# #520: ALB/TargetGroup names cap at 32 chars. project_name + suffix can
-# overflow when env=prod (1 extra char vs np). substr() always lands within
-# the limit; sha1 prefix keeps uniqueness when the truncation collides.
+# #519/#520: ALB / Target Group names cap at 32 chars. Valid short names pass
+# through UNCHANGED (existing stacks keep their name → no destructive ALB
+# replacement on re-apply); long names truncate to 25 + a 6-char sha1 prefix so
+# collisions between similar long project_names stay distinct. (The old code
+# claimed a sha1 prefix in the comment but only did substr — now it actually does.)
 locals {
-  alb_name = substr("${var.project_name}-alb", 0, 32)
-  tg_name  = substr("${var.project_name}-tg", 0, 32)
+  _alb_raw = "${var.project_name}-alb"
+  _tg_raw  = "${var.project_name}-tg"
+  alb_name = length(local._alb_raw) <= 32 ? local._alb_raw : "${substr(local._alb_raw, 0, 25)}-${substr(sha1(local._alb_raw), 0, 6)}"
+  tg_name  = length(local._tg_raw) <= 32 ? local._tg_raw : "${substr(local._tg_raw, 0, 25)}-${substr(sha1(local._tg_raw), 0, 6)}"
 }
 
 resource "aws_lb" "main" {
