@@ -24,7 +24,8 @@ class EKSNonProdConfig:
 
         # Cluster Settings
         self.cluster_name = self.get_parameter('cluster_name', self.get_parameter('clusterName', 'eks-nonprod'))
-        self.kubernetes_version = self.get_parameter('kubernetes_version', self.get_parameter('kubernetesVersion', '1.28'))
+        # 1.28 is stale + EKS Auto Mode (provider default) requires >=1.29; default to a current supported version.
+        self.kubernetes_version = self.get_parameter('kubernetes_version', self.get_parameter('kubernetesVersion', '1.31'))
         
         # Node Settings
         self.node_mode = self.get_parameter('node_mode', self.get_parameter('nodeMode', 'managed'))
@@ -35,7 +36,9 @@ class EKSNonProdConfig:
         
         # Networking & Connectivity
         self.vpc_mode = self.get_parameter('vpc_mode', self.get_parameter('vpcMode', 'new'))
-        self.vpc_id = self.get_parameter('vpc_id', self.get_parameter('vpcId'))
+        self.vpc_id = self.get_parameter('vpc_id', self.get_parameter('vpcId')) or self.get_parameter('existing_vpc_id')
+        if self.vpc_id and self.vpc_mode == 'new':
+            self.vpc_mode = 'existing'
         self.vpc_cidr = self.get_parameter('vpc_cidr', self.get_parameter('vpcCidr', '10.0.0.0/16'))
         self.private_subnet_ids = self.get_parameter('private_subnet_ids', self.get_parameter('privateSubnetIds', []))
         
@@ -102,8 +105,8 @@ class EKSNonProdConfig:
                     "type": "string",
                     "title": "Kubernetes Version",
                     "description": "Kubernetes control plane version",
-                    "default": "1.28",
-                    "enum": ["1.27", "1.28", "1.29", "1.30"],
+                    "default": "1.31",
+                    "enum": ["1.29", "1.30", "1.31", "1.32"],
                     "group": "Cluster",
                     "isEssential": True,
                     "order": 11
@@ -270,14 +273,6 @@ class EKSNonProdConfig:
                     "visibleIf": {"vpc_mode": "new"},
                     "group": "VPC Configuration",
                     "order": 60
-                },
-                "team_name": {
-                    "type": "string",
-                    "default": "",
-                    "title": "Team Name",
-                    "description": "Team that owns this resource",
-                    "order": 70,
-                    "group": "Tags",
                 },
             },
             "required": ["project_name", "cluster_name"]

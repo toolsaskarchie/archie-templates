@@ -20,7 +20,6 @@ from provisioner.templates.template_config import TemplateConfig
 from provisioner.utils.aws import ResourceNamer, get_standard_tags
 from provisioner.templates.templates.aws.compute.eks_nonprod.config import EKSNonProdConfig
 from provisioner.templates.templates.aws.networking.vpc_prod.pulumi import VPCProdTemplate
-from provisioner.templates.templates.aws.compute.ec2_nonprod.pulumi import EC2NonProdTemplate
 
 
 @template_registry("aws-eks-nonprod")
@@ -44,7 +43,7 @@ class EKSNonProdTemplate(InfrastructureTemplate):
         
         # Sub-templates
         self.vpc_template: Optional[VPCProdTemplate] = None
-        self.ec2_templates: List[EC2NonProdTemplate] = []
+        self.node_group = None
         
         # Resources (Pattern B)
         self.cluster = None
@@ -167,38 +166,28 @@ class EKSNonProdTemplate(InfrastructureTemplate):
         )
 
         # ========================================
-        # STEP 4: COMPUTE (MANAGED NODES)
+        # STEP 4: EKS MANAGED NODE GROUP
         # ========================================
+        # Real worker nodes: a managed node group in the cluster's own
+        # private subnets. (Previously composed EC2NonProdTemplate per node,
+        # which spun up a redundant second VPC + web-server per "node" that
+        # never joined the cluster.)
         if self.cfg.node_mode == 'managed':
-            # Create user data for bootstrapping nodes
-            user_data = pulumi.Output.all(
-                self.cluster.name,
-                self.cluster.endpoint,
-                self.cluster.certificate_authority
-            ).apply(lambda args: f"""#!/bin/bash
-set -ex
-/etc/eks/bootstrap.sh {args[0]} --apiserver-endpoint {args[1]} --b64-cluster-ca {args[2]['data']}
-""")
-
-            for i in range(self.cfg.desired_capacity):
-                subnet_id = private_subnet_ids[i % len(private_subnet_ids)] if private_subnet_ids else None
-                node_name = f"{self.cfg.cluster_name}-node-{i+1}"
-                
-                ec2_config = {
-                    "project_name": node_name,
-                    "environment": self.cfg.environment,
-                    "vpc_id": vpc_id,
-                    "subnet_id": subnet_id,
-                    "vpc_mode": "existing",
-                    "instance_type": self.cfg.node_instance_type,
-                    "iam_instance_profile": self.instance_profile.name,
-                    "user_data": user_data,
-                    "ssh_access_ip": self.cfg.ssh_access_ip or ''
-                }
-                
-                ec2_template = EC2NonProdTemplate(name=node_name, config=ec2_config)
-                ec2_template.create_infrastructure()
-                self.ec2_templates.append(ec2_template)
+            self.node_group = factory.create(
+                "aws:eks:NodeGroup",
+                f"{self.cfg.cluster_name}-nodes",
+                cluster_name=self.cluster.name,
+                node_role_arn=self.node_role.arn,
+                subnet_ids=private_subnet_ids,
+                scaling_config={
+                    "desired_size": self.cfg.desired_capacity,
+                    "min_size": self.cfg.min_size,
+                    "max_size": self.cfg.max_size,
+                },
+                instance_types=[self.cfg.node_instance_type],
+                capacity_type="ON_DEMAND",
+                tags={**tags, "Name": f"{self.cfg.cluster_name}-nodes"},
+            )
 
         # Generate kubeconfig
         kubeconfig = pulumi.Output.all(
@@ -267,13 +256,6 @@ set -ex
             "tags": ["eks", "kubernetes", "containers", "compute", "nonprod"],
             "deployment_time": "15-20 minutes",
             "complexity": "advanced",
-            "use_cases": [
-                "Microservices development and testing",
-                "Container-based CI/CD pipelines",
-                "Pre-production Kubernetes validation",
-                "Developer inner-loop Kubernetes testing",
-                "Multi-service application staging",
-            ],
             "pillars": [
                 {
                     "title": "Operational Excellence",
