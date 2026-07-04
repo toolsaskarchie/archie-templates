@@ -506,13 +506,13 @@
       },
       "ami_os": {
         "type": "string",
-        "default": "amazon-linux-2",
+        "default": "amazon-linux-2023",
         "title": "Operating System",
         "description": "Operating system for the EC2 instance",
         "order": 12,
         "group": "Compute Configuration",
         "enum": [
-          "amazon-linux-2",
+          "amazon-linux-2023",
           "ubuntu-22.04",
           "windows-2022"
         ],

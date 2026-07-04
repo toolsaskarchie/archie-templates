@@ -85,11 +85,14 @@ class EC2ProdTemplate(InfrastructureTemplate):
             ami_id = ami_id.split('(')[0].strip()
         
         if not ami_id or ami_id.startswith('resolve-ssm:'):
+            # Resolve AL2023 via ec2:DescribeImages (get_ami name filter) — covered by archie_role ec2:*.
+            # No SSM dependency (archie_role has no ssm:GetParameter). Mirrors ec2_nonprod. #567
             ami = aws.ec2.get_ami(
                 most_recent=True,
-                owners=["amazon"],
+                owners=["amazon"],  # 137112412989
                 filters=[
-                    aws.ec2.GetAmiFilterArgs(name="name", values=["amzn2-ami-hvm-*-x86_64-gp2"]),
+                    aws.ec2.GetAmiFilterArgs(name="name", values=["al2023-ami-2023.*-x86_64"]),  # AL2023 (AL2 EOS 2026-06-30)
+                    aws.ec2.GetAmiFilterArgs(name="virtualization-type", values=["hvm"]),
                     aws.ec2.GetAmiFilterArgs(name="state", values=["available"])
                 ]
             )
@@ -429,9 +432,9 @@ class EC2ProdTemplate(InfrastructureTemplate):
             },
             "ami_id": {
                 "type": "string",
-                "default": "resolve-ssm:/aws/service/ami-amazon-linux-latest/amzn2-ami-hvm-x86_64-gp2",
+                "default": "",
                 "title": "AMI ID",
-                "description": "AWS AMI ID for the instance",
+                "description": "AWS AMI ID for the instance (leave blank to auto-resolve latest AL2023 via image lookup, or override with an explicit ami-xxxx)",
                 "order": 12,
                 "group": "Compute Settings"
             },

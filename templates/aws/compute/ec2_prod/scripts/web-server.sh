@@ -8,7 +8,7 @@ echo "=== Starting Web Server Setup ==="
 echo "Waiting for network connectivity..."
 timeout=60
 counter=0
-while ! curl -s --connect-timeout 5 https://amazonlinux-2-repos-us-east-1.s3.dualstack.us-east-1.amazonaws.com/ > /dev/null; do
+while ! curl -s --connect-timeout 5 https://al2023-repos-us-east-1-de612dc2.s3.dualstack.us-east-1.amazonaws.com/ > /dev/null; do  # AL2023 repo mirror (AL2 EOS 2026-06-30)
     if [ $counter -ge $timeout ]; then
         echo "Network timeout reached, continuing anyway..."
         break
@@ -23,7 +23,7 @@ echo "Installing Nginx..."
 max_retries=3
 retry_count=0
 while [ $retry_count -lt $max_retries ]; do
-    if yum update -y && amazon-linux-extras install nginx1 -y; then
+    if dnf update -y && dnf install -y nginx; then  # AL2023: dnf + first-class nginx pkg (no amazon-linux-extras)
         echo "✓ Nginx installed successfully"
         break
     else

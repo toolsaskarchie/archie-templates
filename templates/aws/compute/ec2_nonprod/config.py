@@ -355,20 +355,20 @@ class EC2NonProdConfig:
 
     @property
     def ami_os(self) -> str:
-        """Get AMI OS selection, defaults to 'amazon-linux-2'."""
-        return self.get_parameter('ami_os', 'amazon-linux-2')
+        """Get AMI OS selection, defaults to 'amazon-linux-2023'."""
+        return self.get_parameter('ami_os', 'amazon-linux-2023')
 
     @property
     def ami_id(self) -> str:
         """Get AMI ID, resolved from OS or custom value."""
         os_paths = {
-            'amazon-linux-2': 'resolve-ssm:/aws/service/ami-amazon-linux-latest/amzn2-ami-hvm-x86_64-gp2',
+            'amazon-linux-2023': 'resolve-ssm:/aws/service/ami-amazon-linux-latest/al2023-ami-kernel-default-x86_64',  # AL2023 (AL2 EOS 2026-06-30)
             'ubuntu-22.04': 'resolve-ssm:/aws/service/canonical/ubuntu/server/22.04-LTS/amd64/server/stable/current',
             'windows-2022': 'resolve-ssm:/aws/service/ami-windows-latest/Windows_Server-2022-English-Full-Base'
         }
         if self.ami_os in os_paths:
             return os_paths[self.ami_os]
-        return self.get_parameter('ami_id') or os_paths['amazon-linux-2']
+        return self.get_parameter('ami_id') or os_paths['amazon-linux-2023']
 
     @property
     def preset_ports(self) -> List[int]:
@@ -524,8 +524,8 @@ class EC2NonProdConfig:
                     "type": "string",
                     "title": "Operating System",
                     "description": "AMI operating system",
-                    "default": "amazon-linux-2",
-                    "enum": ["amazon-linux-2", "ubuntu-22.04", "windows-2022"],
+                    "default": "amazon-linux-2023",
+                    "enum": ["amazon-linux-2023", "ubuntu-22.04", "windows-2022"],
                     "group": "Compute",
                     "isEssential": True,
                     "order": 12

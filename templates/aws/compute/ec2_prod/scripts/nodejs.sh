@@ -1,8 +1,9 @@
 #!/bin/bash
 # Install Node.js and PM2
-yum update -y
+dnf update -y
+# AL2023: dnf (no amazon-linux-extras; AL2 EOS 2026-06-30). nodesource registers a dnf-compatible repo. LIVE-TEST nodesource on AL2023.
 curl -fsSL https://rpm.nodesource.com/setup_18.x | bash -
-yum install nodejs -y
+dnf install -y nodejs
 npm install -g pm2
 
 # Create sample app

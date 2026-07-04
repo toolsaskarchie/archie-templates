@@ -14,7 +14,7 @@ class EC2ProdConfig:
         self.use_random_vpc_cidr = params.get('use_random_vpc_cidr', True)
         self.subnet_id = params.get('subnet_id')
         self.instance_name = params.get('instance_name', 'ec2-prod')
-        self.ami_id = params.get('ami_id', 'resolve-ssm:/aws/service/ami-amazon-linux-latest/amzn2-ami-hvm-x86_64-gp2')
+        self.ami_id = params.get('ami_id', '')  # empty -> resolved via aws.ec2.get_ami name filter (AL2023, no SSM dependency; AL2 EOS 2026-06-30)
         self.instance_type = params.get('instance_type', 't3.small')
         self.enable_ssm = params.get('enable_ssm', True)
         self.key_name = params.get('key_name', '')

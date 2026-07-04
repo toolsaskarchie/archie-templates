@@ -641,9 +641,9 @@ configuration:
       type: string
       title: Operating System
       description: AMI operating system
-      default: amazon-linux-2
+      default: amazon-linux-2023
       enum:
-      - amazon-linux-2
+      - amazon-linux-2023
       - ubuntu-22.04
       - windows-2022
       group: Compute

@@ -93,9 +93,9 @@ class EC2NonProdTemplate(InfrastructureTemplate):
             filters = []
             owners = []
             
-            if ami_os == 'amazon-linux-2':
+            if ami_os == 'amazon-linux-2023':
                 owners = ["amazon"]
-                filters = [aws.ec2.GetAmiFilterArgs(name="name", values=["amzn2-ami-hvm-*-x86_64-gp2"])]
+                filters = [aws.ec2.GetAmiFilterArgs(name="name", values=["al2023-ami-2023.*-x86_64"])]  # AL2023 (AL2 EOS 2026-06-30)
             elif ami_os == 'ubuntu-22.04':
                 owners = ["099720109477"]  # Canonical
                 filters = [aws.ec2.GetAmiFilterArgs(name="name", values=["ubuntu/images/hvm-ssd/ubuntu-jammy-22.04-amd64-server-*"])]

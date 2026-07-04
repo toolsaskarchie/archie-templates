@@ -89,9 +89,9 @@ class EC2NonProdTemplate(InfrastructureTemplate):
         if ami_id.startswith('resolve-ssm:'):
             owners = []
             filters = []
-            if ami_os == 'amazon-linux-2':
+            if ami_os == 'amazon-linux-2023':
                 owners = ["amazon"]
-                filters = [aws.ec2.GetAmiFilterArgs(name="name", values=["amzn2-ami-hvm-*-x86_64-gp2"])]
+                filters = [aws.ec2.GetAmiFilterArgs(name="name", values=["al2023-ami-2023.*-x86_64"])]  # AL2023 (AL2 EOS 2026-06-30)
             elif ami_os == 'ubuntu-22.04':
                 owners = ["099720109477"]  # Canonical
                 filters = [aws.ec2.GetAmiFilterArgs(name="name", values=["ubuntu/images/hvm-ssd/ubuntu-jammy-22.04-amd64-server-*"])]
@@ -372,12 +372,12 @@ class EC2NonProdTemplate(InfrastructureTemplate):
             },
             "ami_os": {
                 "type": "string",
-                "default": "amazon-linux-2",
+                "default": "amazon-linux-2023",
                 "title": "Operating System",
                 "description": "Operating system for the EC2 instance",
                 "order": 12,
                 "group": "Compute Configuration",
-                "enum": ["amazon-linux-2", "ubuntu-22.04", "windows-2022"],
+                "enum": ["amazon-linux-2023", "ubuntu-22.04", "windows-2022"],
                 "cost_impact": "$0/month (OS choice, actual cost in instance type)"
             },
             "instance_count": {

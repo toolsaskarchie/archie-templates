@@ -797,9 +797,9 @@ configuration:
       group: Network Settings
     ami_id:
       type: string
-      default: resolve-ssm:/aws/service/ami-amazon-linux-latest/amzn2-ami-hvm-x86_64-gp2
+      default: ''
       title: AMI ID
-      description: AWS AMI ID for the instance
+      description: AWS AMI ID for the instance (leave blank to auto-resolve latest AL2023 via image lookup, or override with an explicit ami-xxxx)
       order: 12
       group: Compute Settings
     security_group_ids:

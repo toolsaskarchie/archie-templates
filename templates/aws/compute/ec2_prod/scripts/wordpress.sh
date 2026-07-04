@@ -1,8 +1,9 @@
 #!/bin/bash
 # Install LAMP stack and WordPress
-yum update -y
-amazon-linux-extras install php7.4 mariadb10.5 -y
-yum install httpd -y
+dnf update -y
+# AL2023: php + mariadb105 are first-class dnf packages (no amazon-linux-extras; AL2 EOS 2026-06-30)
+dnf install -y php php-mysqlnd mariadb105 mariadb105-server
+dnf install -y httpd
 
 # Install WordPress
 cd /var/www/html
