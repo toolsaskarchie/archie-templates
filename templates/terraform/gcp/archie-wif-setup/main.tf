@@ -42,9 +42,16 @@ resource "google_iam_workload_identity_pool_provider" "aws" {
   workload_identity_pool_id          = google_iam_workload_identity_pool.archie.workload_identity_pool_id
   workload_identity_pool_provider_id = var.provider_id
   display_name                       = "Archie AWS worker"
+  # attribute.aws_role MUST normalize the assumed-role ARN — the raw
+  # `assertion.arn` for a Fargate/Lambda task is
+  # `arn:aws:sts::ACCT:assumed-role/ROLE/<per-task-session>`, and the
+  # per-task session suffix would never match the session-less principalSet
+  # binding below → impersonation 403. This CEL strips the session so the
+  # mapped value is `arn:aws:sts::ACCT:assumed-role/ROLE` (Google's canonical
+  # AWS-provider normalization).
   attribute_mapping = {
     "google.subject"     = "assertion.arn"
-    "attribute.aws_role" = "assertion.arn"
+    "attribute.aws_role" = "assertion.arn.contains('assumed-role') ? assertion.arn.extract('{account_arn}assumed-role/') + 'assumed-role/' + assertion.arn.extract('assumed-role/{role_name}/') : assertion.arn"
   }
   aws {
     account_id = var.archie_aws_account
