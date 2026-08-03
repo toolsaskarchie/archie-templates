@@ -18,3 +18,8 @@ output "ecr_repository_urls" {
   description = "ECR repository URLs per service"
   value       = { for name, repo in aws_ecr_repository.services : name => repo.repository_url }
 }
+output "kubeconfig" {
+  description = "Self-contained kubeconfig (archie-deployer SA token) to register as a Kubernetes cloud account"
+  value       = local.kubeconfig
+  sensitive   = true
+}
