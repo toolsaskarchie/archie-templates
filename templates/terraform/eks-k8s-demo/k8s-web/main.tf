@@ -138,6 +138,42 @@ resource "kubernetes_service" "web" {
       target_port = 80
     }
 
-    type = "LoadBalancer"
+    # ClusterIP: the public entry point is the ALB Ingress below, not the Service.
+    type = "ClusterIP"
+  }
+}
+
+# Internet-facing Application Load Balancer, provisioned by the AWS Load Balancer
+# Controller from this Ingress (ingressClassName "alb").
+resource "kubernetes_ingress_v1" "web" {
+  metadata {
+    name      = var.app_name
+    namespace = kubernetes_namespace.demo.metadata[0].name
+    annotations = {
+      "alb.ingress.kubernetes.io/scheme"       = "internet-facing"
+      "alb.ingress.kubernetes.io/target-type"  = "ip"
+      "alb.ingress.kubernetes.io/listen-ports" = "[{\"HTTP\":80}]"
+    }
+  }
+
+  spec {
+    ingress_class_name = "alb"
+
+    rule {
+      http {
+        path {
+          path      = "/"
+          path_type = "Prefix"
+          backend {
+            service {
+              name = kubernetes_service.web.metadata[0].name
+              port {
+                number = 80
+              }
+            }
+          }
+        }
+      }
+    }
   }
 }
