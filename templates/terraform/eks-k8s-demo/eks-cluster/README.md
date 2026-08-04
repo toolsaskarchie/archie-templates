@@ -1,15 +1,14 @@
 # EKS Cluster — Terraform (AWS)
 
-Provisions an EKS cluster (control plane + managed node group + its own VPC) via the upstream `terraform-aws-modules/eks` and `terraform-aws-modules/vpc` registry modules, then bootstraps everything Archie needs to govern workloads on it: per-service ECR repositories, an `archie-deployer` Kubernetes service account with a cluster-admin binding, and a self-contained `kubeconfig` output you register as a Kubernetes cloud account.
+Provisions an EKS cluster (control plane + managed node group + its own VPC) via the upstream `terraform-aws-modules/eks` and `terraform-aws-modules/vpc` registry modules, plus the per-service ECR repositories Archie needs. Workloads reach the cluster through Archie's own federated IAM identity (short-lived `aws eks get-token`, ~15-min STS token) — **no stored kubeconfig and no long-lived service-account token**.
 
-This is the **cluster half** of the EKS + Kubernetes demo. Deploy it first, register its `kubeconfig`, then deploy the paired [`k8s-web`](../k8s-web) workload into it.
+This is the **cluster half** of the EKS + Kubernetes demo. Deploy it first, then deploy the paired [`k8s-web`](../k8s-web) workload into it — Archie binds the workload to this cluster at deploy time via its federated identity (an Archie-created cluster is auto-admin; a client's existing cluster is enrolled once from the fleet).
 
 ## Resources (~5 direct + EKS/VPC modules)
 
 - EKS cluster + managed node group (via `module.eks`)
 - VPC with public/private subnets (via `module.vpc`)
 - ECR repositories per service, each with a lifecycle policy
-- `archie-deployer` service account + cluster-role binding + long-lived token secret
 
 ## Variables
 
@@ -37,7 +36,6 @@ This is the **cluster half** of the EKS + Kubernetes demo. Deploy it first, regi
 | `cluster_certificate_authority_data` | Base64 cluster CA certificate |
 | `vpc_id` | VPC id |
 | `ecr_repository_urls` | ECR repository URL per service |
-| `kubeconfig` | Self-contained kubeconfig (archie-deployer SA token) to register as a Kubernetes cloud account (sensitive) |
 
 ## Importing into Archie
 
@@ -46,4 +44,4 @@ This is the **cluster half** of the EKS + Kubernetes demo. Deploy it first, regi
 3. Path: `templates/terraform/eks-k8s-demo/eks-cluster`
 4. Studio parses `variables.tf`, infers the config schema, creates a draft blueprint
 5. Lock fields (region, cluster version, node sizes), set per-env defaults, publish → governed
-6. Deploy via UI or agent, then register the `kubeconfig` output as a Kubernetes cloud account
+6. Deploy via UI or agent — the paired workload binds to this cluster via Archie's federated identity (an Archie-created cluster needs no enrollment; enroll a client's existing cluster once from the fleet)
