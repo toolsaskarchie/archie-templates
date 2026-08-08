@@ -1,3 +1,18 @@
+locals {
+  # The Archie demo page — same asset the Kubernetes workload serves, so every
+  # web-facing entrypoint in this platform lands on one branded page instead of
+  # a stock nginx splash. Base64'd into the container command because ECS has no
+  # ConfigMap equivalent and shell-quoting HTML in a task definition is a trap.
+  demo_page = templatefile("${path.module}/../../shared/demo-page.html.tftpl", {
+    page_title   = "${var.project} · ${var.environment}"
+    button_color = "#3B82F6"
+    message      = "Describe. Generate. Govern. Deploy."
+    cloud        = "AWS"
+    environment  = var.environment
+    served_by    = "ALB → ECS Fargate"
+  })
+}
+
 resource "aws_security_group" "alb" {
   name        = "${var.project}-${var.environment}-alb"
   description = "Public ingress for ${var.project}"
@@ -38,7 +53,10 @@ resource "aws_lb_target_group" "main" {
   protocol    = "HTTP"
   target_type = "ip"
   vpc_id      = var.vpc_id
-  health_check { path = "/healthz" matcher = "200" }
+  health_check {
+    path    = "/healthz"
+    matcher = "200"
+  }
   tags = var.tags
 }
 
@@ -48,7 +66,10 @@ resource "aws_lb_listener" "https" {
   protocol          = "HTTPS"
   ssl_policy        = "ELBSecurityPolicy-TLS13-1-2-2021-06"
   certificate_arn   = var.certificate_arn
-  default_action { type = "forward" target_group_arn = aws_lb_target_group.main.arn }
+  default_action {
+    type             = "forward"
+    target_group_arn = aws_lb_target_group.main.arn
+  }
   tags = var.tags
 }
 
@@ -61,7 +82,10 @@ resource "aws_cloudwatch_log_group" "service" {
 
 resource "aws_ecs_cluster" "main" {
   name = "${var.project}-${var.environment}"
-  setting { name = "containerInsights" value = "enabled" }
+  setting {
+    name  = "containerInsights"
+    value = "enabled"
+  }
   tags = var.tags
 }
 
@@ -92,12 +116,18 @@ resource "aws_ecs_task_definition" "main" {
   memory                   = 1024
   execution_role_arn       = aws_iam_role.execution.arn
   container_definitions = jsonencode([{
-    name  = var.project
-    image = "public.ecr.aws/nginx/nginx:stable"
+    name       = var.project
+    image      = "public.ecr.aws/nginx/nginx:stable"
+    entryPoint = ["/bin/sh", "-c"]
+    command = [join(" && ", [
+      "echo ${base64encode(local.demo_page)} | base64 -d > /usr/share/nginx/html/index.html",
+      "sed -i 's/listen       80;/listen 8080;/' /etc/nginx/conf.d/default.conf",
+      "nginx -g 'daemon off;'",
+    ])]
     portMappings = [{ containerPort = 8080 }]
     logConfiguration = {
       logDriver = "awslogs"
-      options = { awslogs-group = aws_cloudwatch_log_group.service.name, awslogs-region = "us-east-1", awslogs-stream-prefix = "ecs" }
+      options   = { awslogs-group = aws_cloudwatch_log_group.service.name, awslogs-region = "us-east-1", awslogs-stream-prefix = "ecs" }
     }
   }])
   tags = var.tags

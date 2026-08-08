@@ -1,0 +1,6 @@
+# Local provider downloads and state — never committed.
+.terraform/
+.terraform.lock.hcl
+*.tfstate
+*.tfstate.*
+crash.log

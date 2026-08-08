@@ -1,6 +1,11 @@
 terraform {
   required_version = ">= 1.6"
-  required_providers { aws = { source = "hashicorp/aws" version = "~> 5.0" } }
+  required_providers {
+    aws = {
+      source  = "hashicorp/aws"
+      version = "~> 5.0"
+    }
+  }
   backend "s3" {
     bucket       = "acme-tfstate-prod"
     key          = "platform/prod/terraform.tfstate"
@@ -30,19 +35,19 @@ locals {
 data "aws_kms_key" "platform" { key_id = "alias/acme-platform-prod" }
 
 module "network" {
-  source = "../../../modules/aws/network"
-  project                = local.project
-  environment            = "prod"
-  region                 = "eu-west-1"
-  vpc_cidr               = "10.30.0.0/16"
-  az_count               = 3
+  source                  = "../../../modules/aws/network"
+  project                 = local.project
+  environment             = "prod"
+  region                  = "eu-west-1"
+  vpc_cidr                = "10.30.0.0/16"
+  az_count                = 3
   flow_log_retention_days = 30
-  kms_key_arn            = data.aws_kms_key.platform.arn
-  tags                   = local.common_tags
+  kms_key_arn             = data.aws_kms_key.platform.arn
+  tags                    = local.common_tags
 }
 
 module "data" {
-  source = "../../../modules/aws/data"
+  source                     = "../../../modules/aws/data"
   project                    = local.project
   environment                = "prod"
   vpc_id                     = module.network.vpc_id
@@ -57,7 +62,7 @@ module "data" {
 }
 
 module "cache" {
-  source = "../../../modules/aws/cache"
+  source                     = "../../../modules/aws/cache"
   project                    = local.project
   environment                = "prod"
   vpc_id                     = module.network.vpc_id
@@ -72,7 +77,7 @@ module "cache" {
 }
 
 module "compute" {
-  source = "../../../modules/aws/compute"
+  source             = "../../../modules/aws/compute"
   project            = local.project
   environment        = "prod"
   vpc_id             = module.network.vpc_id
@@ -80,31 +85,40 @@ module "compute" {
   public_subnet_ids  = module.network.public_subnet_ids
   instance_type      = "m5.xlarge"
   desired_count      = 3
-  ingress_cidrs      = ["10.0.0.0/8","192.168.0.0/16"]
+  ingress_cidrs      = ["10.0.0.0/8", "192.168.0.0/16"]
   certificate_arn    = var.certificate_arn
   kms_key_arn        = data.aws_kms_key.platform.arn
   log_retention_days = 30
   tags               = local.common_tags
 }
 
-variable "certificate_arn" { description = "ACM certificate for the public listener." type = string }
+variable "certificate_arn" {
+  description = "ACM certificate for the public listener."
+  type        = string
+}
 
-output "alb_dns_name" { description = "Public entrypoint." value = module.compute.alb_dns_name }
-output "vpc_id"       { description = "Platform VPC."      value = module.network.vpc_id }
+output "alb_dns_name" {
+  description = "Public entrypoint."
+  value       = module.compute.alb_dns_name
+}
+output "vpc_id" {
+  description = "Platform VPC."
+  value       = module.network.vpc_id
+}
 
 module "eks" {
-  source             = "../../../modules/aws/eks"
-  project            = local.project
-  environment        = "prod"
-  vpc_id             = module.network.vpc_id
-  subnet_ids         = module.network.private_subnet_ids
-  cluster_version    = "1.30"
-  node_instance_type = "m5.2xlarge"
-  node_min_size      = 3
-  node_max_size      = 12
-  kms_key_arn        = data.aws_kms_key.platform.arn
+  source              = "../../../modules/aws/eks"
+  project             = local.project
+  environment         = "prod"
+  vpc_id              = module.network.vpc_id
+  subnet_ids          = module.network.private_subnet_ids
+  cluster_version     = "1.30"
+  node_instance_type  = "m5.2xlarge"
+  node_min_size       = 3
+  node_max_size       = 12
+  kms_key_arn         = data.aws_kms_key.platform.arn
   public_access_cidrs = ["10.0.0.0/8"]
-  tags               = local.common_tags
+  tags                = local.common_tags
 }
 
 provider "kubernetes" {
@@ -122,14 +136,14 @@ module "workload" {
   project         = local.project
   environment     = "prod"
   namespace       = "${local.project}-prod"
-  image           = "public.ecr.aws/acme/checkout:1.14.2"
+  image           = "public.ecr.aws/nginx/nginx:stable"
   replicas        = 6
   cpu_request     = "1"
   memory_request  = "2Gi"
   cpu_limit       = "4"
   memory_limit    = "8Gi"
   ingress_enabled = true
-  ingress_host    = "checkout.acme.com"
+  ingress_host    = ""
   labels = {
     project             = local.project
     environment         = "prod"
@@ -139,5 +153,11 @@ module "workload" {
   }
 }
 
-output "eks_cluster_name" { description = "EKS cluster." value = module.eks.cluster_name }
-output "workload_namespace" { description = "App namespace." value = module.workload.namespace }
+output "eks_cluster_name" {
+  description = "EKS cluster."
+  value       = module.eks.cluster_name
+}
+output "workload_namespace" {
+  description = "App namespace."
+  value       = module.workload.namespace
+}

@@ -1,6 +1,11 @@
 terraform {
   required_version = ">= 1.6"
-  required_providers { azurerm = { source = "hashicorp/azurerm" version = "~> 3.0" } }
+  required_providers {
+    azurerm = {
+      source  = "hashicorp/azurerm"
+      version = "~> 3.0"
+    }
+  }
   backend "azurerm" {
     resource_group_name  = "acme-tfstate"
     storage_account_name = "acmetfstatedev"
@@ -9,7 +14,9 @@ terraform {
   }
 }
 
-provider "azurerm" { features {} }
+provider "azurerm" {
+  features {}
+}
 
 locals {
   project = "acme-platform"

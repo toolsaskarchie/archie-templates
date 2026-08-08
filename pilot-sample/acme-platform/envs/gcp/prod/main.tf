@@ -1,6 +1,11 @@
 terraform {
   required_version = ">= 1.6"
-  required_providers { google = { source = "hashicorp/google" version = "~> 5.0" } }
+  required_providers {
+    google = {
+      source  = "hashicorp/google"
+      version = "~> 5.0"
+    }
+  }
   backend "gcs" {
     bucket = "acme-tfstate-prod"
     prefix = "platform/gcp/prod"
@@ -12,7 +17,10 @@ provider "google" {
   region  = "europe-west1"
 }
 
-variable "project_id" { description = "GCP project id for this environment." type = string }
+variable "project_id" {
+  description = "GCP project id for this environment."
+  type        = string
+}
 
 locals {
   project = "acme-platform"

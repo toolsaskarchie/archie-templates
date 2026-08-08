@@ -61,7 +61,7 @@ resource "aws_flow_log" "main" {
 resource "aws_iam_role" "flow" {
   name = "${var.project}-${var.environment}-flowlogs"
   assume_role_policy = jsonencode({
-    Version = "2012-10-17"
+    Version   = "2012-10-17"
     Statement = [{ Effect = "Allow", Principal = { Service = "vpc-flow-logs.amazonaws.com" }, Action = "sts:AssumeRole" }]
   })
   tags = var.tags

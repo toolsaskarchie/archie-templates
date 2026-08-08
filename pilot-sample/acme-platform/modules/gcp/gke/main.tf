@@ -14,9 +14,11 @@ resource "google_container_cluster" "main" {
     master_ipv4_cidr_block  = "172.16.0.0/28"
   }
 
-  workload_identity_config { workload_pool = "${var.project_id}.svc.id.goog" }
-  database_encryption      { state = "ENCRYPTED" }
-  release_channel          { channel = "REGULAR" }
+  workload_identity_config {
+    workload_pool = "${var.project_id}.svc.id.goog"
+  }
+  database_encryption { state = "ENCRYPTED" }
+  release_channel { channel = "REGULAR" }
 
   resource_labels = var.labels
 }
@@ -33,12 +35,15 @@ resource "google_container_node_pool" "main" {
   }
 
   node_config {
-    machine_type    = var.machine_type
-    disk_type       = "pd-balanced"
+    machine_type = var.machine_type
+    disk_type    = "pd-balanced"
     shielded_instance_config { enable_secure_boot = true }
     workload_metadata_config { mode = "GKE_METADATA" }
-    labels          = var.labels
+    labels = var.labels
   }
 
-  management { auto_repair = true auto_upgrade = true }
+  management {
+    auto_repair  = true
+    auto_upgrade = true
+  }
 }

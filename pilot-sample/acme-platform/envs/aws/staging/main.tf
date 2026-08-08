@@ -1,6 +1,11 @@
 terraform {
   required_version = ">= 1.6"
-  required_providers { aws = { source = "hashicorp/aws" version = "~> 5.0" } }
+  required_providers {
+    aws = {
+      source  = "hashicorp/aws"
+      version = "~> 5.0"
+    }
+  }
   backend "s3" {
     bucket       = "acme-tfstate-staging"
     key          = "platform/staging/terraform.tfstate"
@@ -30,19 +35,19 @@ locals {
 data "aws_kms_key" "platform" { key_id = "alias/acme-platform-staging" }
 
 module "network" {
-  source = "../../../modules/aws/network"
-  project                = local.project
-  environment            = "staging"
-  region                 = "us-east-1"
-  vpc_cidr               = "10.20.0.0/16"
-  az_count               = 2
+  source                  = "../../../modules/aws/network"
+  project                 = local.project
+  environment             = "staging"
+  region                  = "us-east-1"
+  vpc_cidr                = "10.20.0.0/16"
+  az_count                = 2
   flow_log_retention_days = 14
-  kms_key_arn            = data.aws_kms_key.platform.arn
-  tags                   = local.common_tags
+  kms_key_arn             = data.aws_kms_key.platform.arn
+  tags                    = local.common_tags
 }
 
 module "data" {
-  source = "../../../modules/aws/data"
+  source                     = "../../../modules/aws/data"
   project                    = local.project
   environment                = "staging"
   vpc_id                     = module.network.vpc_id
@@ -57,7 +62,7 @@ module "data" {
 }
 
 module "cache" {
-  source = "../../../modules/aws/cache"
+  source                     = "../../../modules/aws/cache"
   project                    = local.project
   environment                = "staging"
   vpc_id                     = module.network.vpc_id
@@ -72,7 +77,7 @@ module "cache" {
 }
 
 module "compute" {
-  source = "../../../modules/aws/compute"
+  source             = "../../../modules/aws/compute"
   project            = local.project
   environment        = "staging"
   vpc_id             = module.network.vpc_id
@@ -87,24 +92,33 @@ module "compute" {
   tags               = local.common_tags
 }
 
-variable "certificate_arn" { description = "ACM certificate for the public listener." type = string }
+variable "certificate_arn" {
+  description = "ACM certificate for the public listener."
+  type        = string
+}
 
-output "alb_dns_name" { description = "Public entrypoint." value = module.compute.alb_dns_name }
-output "vpc_id"       { description = "Platform VPC."      value = module.network.vpc_id }
+output "alb_dns_name" {
+  description = "Public entrypoint."
+  value       = module.compute.alb_dns_name
+}
+output "vpc_id" {
+  description = "Platform VPC."
+  value       = module.network.vpc_id
+}
 
 module "eks" {
-  source             = "../../../modules/aws/eks"
-  project            = local.project
-  environment        = "staging"
-  vpc_id             = module.network.vpc_id
-  subnet_ids         = module.network.private_subnet_ids
-  cluster_version    = "1.30"
-  node_instance_type = "m5.large"
-  node_min_size      = 2
-  node_max_size      = 6
-  kms_key_arn        = data.aws_kms_key.platform.arn
+  source              = "../../../modules/aws/eks"
+  project             = local.project
+  environment         = "staging"
+  vpc_id              = module.network.vpc_id
+  subnet_ids          = module.network.private_subnet_ids
+  cluster_version     = "1.30"
+  node_instance_type  = "m5.large"
+  node_min_size       = 2
+  node_max_size       = 6
+  kms_key_arn         = data.aws_kms_key.platform.arn
   public_access_cidrs = ["10.0.0.0/8"]
-  tags               = local.common_tags
+  tags                = local.common_tags
 }
 
 provider "kubernetes" {
@@ -122,14 +136,14 @@ module "workload" {
   project         = local.project
   environment     = "staging"
   namespace       = "${local.project}-staging"
-  image           = "public.ecr.aws/acme/checkout:1.14.2"
+  image           = "public.ecr.aws/nginx/nginx:stable"
   replicas        = 3
   cpu_request     = "500m"
   memory_request  = "1Gi"
   cpu_limit       = "2"
   memory_limit    = "2Gi"
   ingress_enabled = true
-  ingress_host    = "checkout.stg.acme.internal"
+  ingress_host    = ""
   labels = {
     project             = local.project
     environment         = "staging"
@@ -139,5 +153,11 @@ module "workload" {
   }
 }
 
-output "eks_cluster_name" { description = "EKS cluster." value = module.eks.cluster_name }
-output "workload_namespace" { description = "App namespace." value = module.workload.namespace }
+output "eks_cluster_name" {
+  description = "EKS cluster."
+  value       = module.eks.cluster_name
+}
+output "workload_namespace" {
+  description = "App namespace."
+  value       = module.workload.namespace
+}
