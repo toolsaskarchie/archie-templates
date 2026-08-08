@@ -16,7 +16,7 @@ terraform {
 }
 
 provider "aws" {
-  region = "eu-west-1"
+  region = var.region
   default_tags { tags = local.common_tags }
 }
 
@@ -90,6 +90,12 @@ module "compute" {
   kms_key_arn        = data.aws_kms_key.platform.arn
   log_retention_days = 30
   tags               = local.common_tags
+}
+
+variable "region" {
+  description = "AWS region for this environment."
+  type        = string
+  default     = "eu-west-1"
 }
 
 variable "certificate_arn" {

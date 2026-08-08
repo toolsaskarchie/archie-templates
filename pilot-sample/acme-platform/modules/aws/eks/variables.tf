@@ -17,6 +17,7 @@ variable "subnet_ids" {
 variable "cluster_version" {
   description = "Kubernetes minor version."
   type        = string
+  default     = "1.30"
 }
 variable "node_instance_type" {
   description = "EC2 type for the managed node group."
@@ -25,10 +26,12 @@ variable "node_instance_type" {
 variable "node_min_size" {
   description = "Minimum nodes."
   type        = number
+  default     = 2
 }
 variable "node_max_size" {
   description = "Maximum nodes."
   type        = number
+  default     = 6
 }
 variable "kms_key_arn" {
   description = "CMK for envelope-encrypting secrets."
@@ -41,4 +44,10 @@ variable "public_access_cidrs" {
 variable "tags" {
   description = "Mandatory org tags."
   type        = map(string)
+}
+
+variable "log_retention_days" {
+  description = "Control-plane log retention. A knob, not a literal — governance can only lock what the module exposes."
+  type        = number
+  default     = 30
 }

@@ -1,3 +1,5 @@
+data "aws_region" "current" {}
+
 locals {
   # The Archie demo page — same asset the Kubernetes workload serves, so every
   # web-facing entrypoint in this platform lands on one branded page instead of
@@ -127,7 +129,7 @@ resource "aws_ecs_task_definition" "main" {
     portMappings = [{ containerPort = 8080 }]
     logConfiguration = {
       logDriver = "awslogs"
-      options   = { awslogs-group = aws_cloudwatch_log_group.service.name, awslogs-region = "us-east-1", awslogs-stream-prefix = "ecs" }
+      options   = { awslogs-group = aws_cloudwatch_log_group.service.name, awslogs-region = data.aws_region.current.name, awslogs-stream-prefix = "ecs" }
     }
   }])
   tags = var.tags
