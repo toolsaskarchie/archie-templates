@@ -30,7 +30,7 @@ locals {
 data "aws_kms_key" "platform" { key_id = "alias/acme-platform-dev" }
 
 module "network" {
-  source                 = "../../modules/network"
+  source = "../../../modules/aws/network"
   project                = local.project
   environment            = "dev"
   region                 = "us-east-1"
@@ -42,7 +42,7 @@ module "network" {
 }
 
 module "data" {
-  source                     = "../../modules/data"
+  source = "../../../modules/aws/data"
   project                    = local.project
   environment                = "dev"
   vpc_id                     = module.network.vpc_id
@@ -57,7 +57,7 @@ module "data" {
 }
 
 module "cache" {
-  source                     = "../../modules/cache"
+  source = "../../../modules/aws/cache"
   project                    = local.project
   environment                = "dev"
   vpc_id                     = module.network.vpc_id
@@ -72,7 +72,7 @@ module "cache" {
 }
 
 module "compute" {
-  source             = "../../modules/compute"
+  source = "../../../modules/aws/compute"
   project            = local.project
   environment        = "dev"
   vpc_id             = module.network.vpc_id
@@ -91,3 +91,53 @@ variable "certificate_arn" { description = "ACM certificate for the public liste
 
 output "alb_dns_name" { description = "Public entrypoint." value = module.compute.alb_dns_name }
 output "vpc_id"       { description = "Platform VPC."      value = module.network.vpc_id }
+
+module "eks" {
+  source             = "../../../modules/aws/eks"
+  project            = local.project
+  environment        = "dev"
+  vpc_id             = module.network.vpc_id
+  subnet_ids         = module.network.private_subnet_ids
+  cluster_version    = "1.30"
+  node_instance_type = "t3.large"
+  node_min_size      = 1
+  node_max_size      = 3
+  kms_key_arn        = data.aws_kms_key.platform.arn
+  public_access_cidrs = ["10.0.0.0/8"]
+  tags               = local.common_tags
+}
+
+provider "kubernetes" {
+  host                   = module.eks.cluster_endpoint
+  cluster_ca_certificate = base64decode(module.eks.cluster_ca)
+  exec {
+    api_version = "client.authentication.k8s.io/v1beta1"
+    command     = "aws"
+    args        = ["eks", "get-token", "--cluster-name", module.eks.cluster_name]
+  }
+}
+
+module "workload" {
+  source          = "../../../modules/kubernetes/workload"
+  project         = local.project
+  environment     = "dev"
+  namespace       = "${local.project}-dev"
+  image           = "public.ecr.aws/acme/checkout:1.14.2"
+  replicas        = 2
+  cpu_request     = "250m"
+  memory_request  = "512Mi"
+  cpu_limit       = "1"
+  memory_limit    = "1Gi"
+  ingress_enabled = true
+  ingress_host    = "checkout.dev.acme.internal"
+  labels = {
+    project             = local.project
+    environment         = "dev"
+    owner               = "platform-engineering"
+    managed_by          = "terraform"
+    data_classification = "internal"
+  }
+}
+
+output "eks_cluster_name" { description = "EKS cluster." value = module.eks.cluster_name }
+output "workload_namespace" { description = "App namespace." value = module.workload.namespace }

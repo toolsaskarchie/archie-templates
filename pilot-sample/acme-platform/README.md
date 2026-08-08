@@ -1,30 +1,35 @@
 # acme-platform
 
-Platform infrastructure for the Acme customer-facing product. Standard layout:
-reusable modules under `modules/`, one root per environment under `envs/`.
+Multi-cloud platform infrastructure for the Acme customer-facing product.
+Standard enterprise layout: reusable modules per cloud, one root per environment.
 
-    modules/network   VPC, public/private subnets, NAT, flow logs
-    modules/data      RDS Postgres (encrypted, IAM auth, private)
-    modules/cache     ElastiCache Redis (encrypted at rest + in transit)
-    modules/compute   ALB + ECS Fargate service
+    modules/aws/{network,data,cache,compute,eks}   VPC, RDS Postgres, ElastiCache, ALB+ECS, EKS
+    modules/azure/{network,aks,data,cache}          VNet, AKS, Flexible Server, Redis
+    modules/gcp/{network,gke,data,cache}            VPC, GKE, Cloud SQL, Memorystore
+    modules/kubernetes/workload                     Namespace, Deployment, Service, NetworkPolicy, Ingress
 
-    envs/dev          us-east-1   10.10.0.0/16
-    envs/staging      us-east-1   10.20.0.0/16
-    envs/prod         eu-west-1   10.30.0.0/16
+    envs/aws/{dev,staging,prod}                     us-east-1 / us-east-1 / eu-west-1
+    envs/azure/{dev,prod}                           eastus / westeurope
+    envs/gcp/{dev,prod}                             us-central1 / europe-west1
 
 ## Conventions
 
-Every resource carries `Project`, `Environment`, `Owner`, `CostCenter`,
-`ManagedBy`, `DataClassification` via provider `default_tags` plus explicit
-module tags. Naming is `{project}-{environment}-{resource}`.
+Six governance keys on every resource — `Project`, `Environment`, `Owner`,
+`CostCenter`, `ManagedBy`, `DataClassification` — as tags on AWS/Azure and as
+labels (lowercase, per GCP rules) on GCP and Kubernetes. Naming is
+`{project}-{environment}-{resource}` throughout.
 
-All data at rest uses the per-environment CMK `alias/acme-platform-{env}`.
-Remote state is S3 with `encrypt = true` and native lockfiles.
+Data at rest is encrypted everywhere: AWS via per-environment CMK
+`alias/acme-platform-{env}`, GCP via `database_encryption` + `ssl_mode`,
+Azure via `minimum_tls_version` and private-only networking. Remote state is
+encrypted per cloud (S3 lockfiles, GCS, Azure blob).
 
-Sizing and durability step up by tier — see each env root. Nothing is
-internet-open: ALB ingress is restricted to corporate CIDRs and every data
-service is private with security-group-referenced ingress only.
+Sizing and durability step up by tier. Nothing is internet-facing: ALB ingress is
+restricted to corporate CIDRs, EKS/AKS/GKE run private nodes, every data service
+is private, and the Kubernetes workload ships a default-deny NetworkPolicy with
+non-root, read-only-rootfs containers.
 
 ## Running
 
-    cd envs/dev && terraform init && terraform plan -var certificate_arn=...
+    cd envs/aws/prod && terraform init && terraform plan -var certificate_arn=...
+    cd envs/gcp/prod && terraform init && terraform plan -var project_id=...
