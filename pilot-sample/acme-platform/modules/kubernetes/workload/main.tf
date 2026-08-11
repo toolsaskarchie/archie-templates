@@ -1,14 +1,52 @@
 locals {
+  # The page is INLINE, not read from a file, because this module has to survive
+  # being imported on its own. Archie snapshots a module DIRECTORY — the worker
+  # log for this very failure reads "Materialized 3 file(s)" — so
+  #
+  #   templatefile("${path.module}/../../shared/demo-page.html.tftpl", ...)
+  #
+  # pointed two levels above anything that existed at apply time: path.module is
+  # "." and the file was never copied. Moving the template into this directory
+  # would not have helped either, since the importer fetches only .tf/.hcl
+  # (_TF_LIST_EXTS) and would have skipped a .tftpl wherever it sat.
+  #
   # Same Archie page the ECS/ALB path serves — one branded landing for every
   # web-facing entrypoint, whichever cloud or runtime it lands on.
-  demo_page = templatefile("${path.module}/../../shared/demo-page.html.tftpl", {
-    page_title   = "${var.project} · ${var.environment}"
-    button_color = "#3B82F6"
-    message      = "9 resources. 10 config fields. One click."
-    cloud        = var.cloud
-    environment  = var.environment
-    served_by    = "Kubernetes Ingress → Deployment"
-  })
+  demo_page = <<-HTML
+    <!DOCTYPE html>
+    <html lang="en">
+    <head>
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width, initial-scale=1">
+      <title>${var.project} · ${var.environment}</title>
+      <style>
+        body { margin:0; padding:0; background-color:#0B0E14;
+               font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;
+               display:flex; flex-direction:column; justify-content:center; align-items:center;
+               min-height:100vh; text-align:center; }
+        .message  { color:#F1F5F9; font-weight:bold; font-size:42px; margin-bottom:20px;
+                    max-width:80%; line-height:1.2; }
+        .subtitle { color:#64748B; font-size:18px; margin-bottom:28px; }
+        .meta     { color:#94A3B8; font-size:14px; line-height:1.9; margin-bottom:32px; }
+        .meta b   { color:#F1F5F9; font-weight:600; }
+        .button   { background-color:#3B82F6; color:white; border:none; padding:12px 24px;
+                    font-size:18px; border-radius:8px; cursor:pointer; margin-bottom:20px; }
+        .button:hover { opacity:0.9; }
+        .footer   { color:#64748B; font-size:14px; }
+      </style>
+    </head>
+    <body>
+      <div class="message">9 resources. 10 config fields. One click.</div>
+      <div class="subtitle">${var.project} · ${var.environment}</div>
+      <div class="meta">
+        <div>cloud <b>${var.cloud}</b> &nbsp;·&nbsp; environment <b>${var.environment}</b></div>
+        <div>served by <b>Kubernetes ${var.service_type} Service</b></div>
+      </div>
+      <button class="button" onclick="window.location.reload()">Show me another</button>
+      <div class="footer">askarchie.io</div>
+    </body>
+    </html>
+  HTML
 }
 
 resource "kubernetes_namespace_v1" "main" {
