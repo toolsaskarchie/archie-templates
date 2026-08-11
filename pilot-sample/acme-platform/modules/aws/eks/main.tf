@@ -1,4 +1,31 @@
+# EKS does not grant itself anything. Without AmazonEKSClusterPolicy the create
+# call fails outright, and without the three node policies the group comes up
+# but no node ever joins — this module declared both roles and attached nothing
+# to either, so it could not have produced a working cluster.
+#
+# depends_on is not decoration either: the policy must be attached BEFORE the
+# cluster is created, and Terraform cannot infer that from an ARN it never reads.
+resource "aws_iam_role_policy_attachment" "cluster" {
+  for_each   = toset(["arn:aws:iam::aws:policy/AmazonEKSClusterPolicy"])
+  role       = aws_iam_role.cluster.name
+  policy_arn = each.value
+}
+
+resource "aws_iam_role_policy_attachment" "node" {
+  for_each = toset([
+    "arn:aws:iam::aws:policy/AmazonEKSWorkerNodePolicy",
+    # The VPC CNI runs with the NODE's identity and assigns pod ENIs; without it
+    # every pod stays stuck in ContainerCreating.
+    "arn:aws:iam::aws:policy/AmazonEKS_CNI_Policy",
+    "arn:aws:iam::aws:policy/AmazonEC2ContainerRegistryReadOnly",
+  ])
+  role       = aws_iam_role.node.name
+  policy_arn = each.value
+}
+
 resource "aws_eks_cluster" "main" {
+  depends_on = [aws_iam_role_policy_attachment.cluster]
+
   name     = "${var.project}-${var.environment}"
   role_arn = aws_iam_role.cluster.arn
   version  = var.cluster_version
@@ -20,6 +47,8 @@ resource "aws_eks_cluster" "main" {
 }
 
 resource "aws_eks_node_group" "main" {
+  depends_on = [aws_iam_role_policy_attachment.node]
+
   cluster_name    = aws_eks_cluster.main.name
   node_group_name = "${var.project}-${var.environment}-ng"
   node_role_arn   = aws_iam_role.node.arn

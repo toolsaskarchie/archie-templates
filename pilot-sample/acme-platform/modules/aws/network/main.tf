@@ -12,7 +12,15 @@ resource "aws_subnet" "private" {
   vpc_id            = aws_vpc.main.id
   cidr_block        = cidrsubnet(var.vpc_cidr, 4, count.index)
   availability_zone = data.aws_availability_zones.available.names[count.index]
-  tags              = merge(var.tags, { Name = "${var.project}-${var.environment}-private-${count.index}", Tier = "private" })
+  # kubernetes.io/role/internal-elb is how Kubernetes DISCOVERS which subnets an
+  # internal load balancer may use. It is a lookup key, not decoration: without
+  # it a LoadBalancer Service fails with "could not find any suitable subnets for
+  # creating the ELB" and the page never gets an address.
+  tags = merge(var.tags, {
+    Name                              = "${var.project}-${var.environment}-private-${count.index}"
+    Tier                              = "private"
+    "kubernetes.io/role/internal-elb" = "1"
+  })
 }
 
 resource "aws_subnet" "public" {
@@ -21,7 +29,13 @@ resource "aws_subnet" "public" {
   cidr_block              = cidrsubnet(var.vpc_cidr, 4, count.index + 8)
   availability_zone       = data.aws_availability_zones.available.names[count.index]
   map_public_ip_on_launch = false
-  tags                    = merge(var.tags, { Name = "${var.project}-${var.environment}-public-${count.index}", Tier = "public" })
+  # ...and kubernetes.io/role/elb for the internet-facing one. The cluster runs
+  # its nodes in the PRIVATE subnets, so these are found by tag or not at all.
+  tags = merge(var.tags, {
+    Name                     = "${var.project}-${var.environment}-public-${count.index}"
+    Tier                     = "public"
+    "kubernetes.io/role/elb" = "1"
+  })
 }
 
 resource "aws_internet_gateway" "main" {
