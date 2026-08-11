@@ -56,6 +56,55 @@ resource "aws_nat_gateway" "main" {
   tags          = merge(var.tags, { Name = "${var.project}-${var.environment}-nat-${count.index}" })
 }
 
+# ROUTES. Without these the gateways above are decoration: this module created an
+# internet gateway and a NAT gateway that nothing routed to, so every subnet fell
+# back to the VPC's main route table — local traffic only, no path out.
+#
+# It cost a 30-minute Terraform timeout to find. EKS nodes launch into the
+# private subnets and must reach ECR for the CNI and kube-proxy images and the
+# cluster endpoint to register; with no default route they simply never join, and
+# the node group reports "Still creating" until the apply gives up. No error is
+# raised anywhere, because nothing failed — the packets had nowhere to go.
+
+resource "aws_route_table" "public" {
+  vpc_id = aws_vpc.main.id
+  route {
+    cidr_block = "0.0.0.0/0"
+    gateway_id = aws_internet_gateway.main.id
+  }
+  tags = merge(var.tags, { Name = "${var.project}-${var.environment}-public-rt" })
+}
+
+resource "aws_route_table_association" "public" {
+  count          = var.az_count
+  subnet_id      = aws_subnet.public[count.index].id
+  route_table_id = aws_route_table.public.id
+}
+
+# One private table PER AZ, because there is one NAT gateway per AZ: a shared
+# table would send every AZ's egress through a single NAT, which is both a
+# cross-AZ data charge and a single point of failure for the others.
+resource "aws_route_table" "private" {
+  count  = var.az_count
+  vpc_id = aws_vpc.main.id
+
+  dynamic "route" {
+    for_each = var.enable_nat_gateway ? [1] : []
+    content {
+      cidr_block     = "0.0.0.0/0"
+      nat_gateway_id = aws_nat_gateway.main[count.index].id
+    }
+  }
+
+  tags = merge(var.tags, { Name = "${var.project}-${var.environment}-private-rt-${count.index}" })
+}
+
+resource "aws_route_table_association" "private" {
+  count          = var.az_count
+  subnet_id      = aws_subnet.private[count.index].id
+  route_table_id = aws_route_table.private[count.index].id
+}
+
 resource "aws_cloudwatch_log_group" "flow" {
   name              = "/aws/vpc/${var.project}-${var.environment}"
   retention_in_days = var.flow_log_retention_days
