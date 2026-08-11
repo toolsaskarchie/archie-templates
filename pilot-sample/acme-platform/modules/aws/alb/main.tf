@@ -14,9 +14,9 @@ resource "aws_security_group" "alb" {
 }
 
 resource "aws_vpc_security_group_ingress_rule" "listener" {
-  count             = length(var.ingress_cidrs)
+  count             = length(var.allowed_source_cidrs)
   security_group_id = aws_security_group.alb.id
-  cidr_ipv4         = var.ingress_cidrs[count.index]
+  cidr_ipv4         = var.allowed_source_cidrs[count.index]
   from_port         = var.listener_port
   to_port           = var.listener_port
   ip_protocol       = "tcp"

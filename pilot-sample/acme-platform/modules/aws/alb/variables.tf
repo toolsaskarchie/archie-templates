@@ -26,8 +26,8 @@ variable "public_subnet_ids" {
   description = "Public subnets to place the load balancer in — at least two AZs."
   type        = list(string)
 }
-variable "ingress_cidrs" {
-  description = "CIDRs allowed to reach the listener. Set by org policy, not by the requester."
+variable "allowed_source_cidrs" {
+  description = "CIDRs allowed to reach the listener. Named to match the org standard of the same name, so policy fills it and the requester is never asked."
   type        = list(string)
 }
 variable "tags" {
