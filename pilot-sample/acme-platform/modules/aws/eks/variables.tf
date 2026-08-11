@@ -19,6 +19,22 @@ variable "cluster_version" {
   type        = string
   default     = "1.30"
 }
+
+variable "node_ami_type" {
+  description = "EKS-optimised AMI family for the node group."
+  type        = string
+  # AL2023, stated rather than defaulted-into. Leaving ami_type unset means
+  # AL2_x86_64 — Amazon Linux 2 — which AWS has retired for 1.30 and up, so the
+  # cluster came up and the node group was rejected outright:
+  #
+  #   CreateNodegroup: InvalidParameterException:
+  #   Requested AMI for this version 1.30 is not supported
+  #
+  # A default that AWS deprecates is a silent expiry date on the module, and it
+  # fails AFTER the ~10-minute cluster create, which is the most expensive place
+  # to discover it.
+  default = "AL2023_x86_64_STANDARD"
+}
 variable "node_instance_type" {
   description = "EC2 type for the managed node group."
   type        = string
