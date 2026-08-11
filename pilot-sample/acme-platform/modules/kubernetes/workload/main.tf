@@ -158,7 +158,7 @@ resource "kubernetes_service_v1" "main" {
       port        = 80
       target_port = var.container_port
     }
-    type = "ClusterIP"
+    type = var.service_type
   }
 }
 
@@ -170,13 +170,25 @@ resource "kubernetes_network_policy_v1" "default_deny" {
   spec {
     pod_selector {}
     policy_types = ["Ingress"]
+
+    # Deny everything EXCEPT the port this app serves on. A bare deny-all with no
+    # rule blocks the load balancer too, so the page this module exists to
+    # publish would be unreachable the moment NetworkPolicy is actually enforced
+    # — silently, because EKS's VPC CNI ignores policy unless enabled, so it
+    # would work until the day someone turned enforcement on.
+    ingress {
+      ports {
+        port     = var.container_port
+        protocol = "TCP"
+      }
+    }
   }
 }
 
-# Internet-facing Application Load Balancer, provisioned by the AWS Load Balancer
-# Controller from this Ingress (ingressClassName "alb") — the same pattern the
-# eks-k8s-demo uses, so the pilot's Kubernetes entrypoint is a real ALB with a
-# resolvable hostname rather than a cluster-internal Service.
+# OPTIONAL ALB Ingress, off by default. The claim that this matched the
+# eks-k8s-demo was wrong: that demo exposes a LoadBalancer Service and reads its
+# ELB hostname. This path needs the AWS Load Balancer Controller, which nothing
+# here installs, so it is gated behind ingress_enabled rather than assumed.
 resource "kubernetes_ingress_v1" "main" {
   count = var.ingress_enabled ? 1 : 0
   metadata {

@@ -54,13 +54,26 @@ variable "container_port" {
   type        = number
   default     = 8080
 }
+variable "service_type" {
+  description = "How the Service is exposed: LoadBalancer (public) or ClusterIP."
+  type        = string
+  # LoadBalancer, because this is the path that has actually WORKED. The
+  # eks-k8s-demo that produced a reachable page used exactly this and read its
+  # URL off the Service's ELB hostname; EKS's in-tree AWS cloud provider creates
+  # that load balancer with nothing else installed.
+  default = "LoadBalancer"
+}
+
 variable "ingress_enabled" {
-  description = "Expose via an Ingress."
+  description = "Expose via an ALB Ingress. Requires the AWS Load Balancer Controller."
   type        = bool
-  # An Ingress is the point — this module exists to put a real ALB in front of
-  # the workload rather than a cluster-internal Service. All three environments
-  # set it true; none has ever set it false.
-  default = true
+  # FALSE, and this is a correction. The comment below the Ingress claimed it
+  # matched the eks-k8s-demo; the demo uses a LoadBalancer Service. NOTHING in
+  # this organisation installs the AWS Load Balancer Controller — not this
+  # module, not the eks module, not the demo — so an `ingressClassName: alb`
+  # object is created, never reconciled, and sits without an address forever
+  # while Terraform reports success. Turn this on once the controller exists.
+  default = false
 }
 variable "ingress_host" {
   description = "Hostname for the Ingress."
