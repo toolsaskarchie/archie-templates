@@ -36,14 +36,48 @@ locals {
       </style>
     </head>
     <body>
-      <div class="message">9 resources. 10 config fields. One click.</div>
+      <div class="message" id="msg">9 resources. 10 config fields. One click.</div>
       <div class="subtitle">${var.project} · ${var.environment}</div>
       <div class="meta">
         <div>cloud <b>${var.cloud}</b> &nbsp;·&nbsp; environment <b>${var.environment}</b></div>
         <div>served by <b>Kubernetes ${var.service_type} Service</b></div>
       </div>
-      <button class="button" onclick="window.location.reload()">Show me another</button>
+      <button class="button" id="another">Show me another</button>
       <div class="footer">askarchie.io</div>
+      <script>
+        // THE BUTTON HAS TO DO WHAT IT SAYS. It used to call
+        // window.location.reload() over a STATIC page, so "Show me another"
+        // re-served the identical sentence — the Lambda demo rotates ten
+        // messages per request and this one looked broken beside it.
+        //
+        // nginx serves a file, so there is no server-side random.choice to
+        // borrow: the list ships with the page and the pick happens here. Same
+        // ten lines as the Lambda starter, so the two demos say the same thing.
+        var MESSAGES = [
+          "Governance in the deploy path, not around it",
+          "5 fields instead of 50",
+          "Drift detected. One click to fix.",
+          "The developer deploys. The PE defines the rules.",
+          "Your Terraform stays. We govern on top.",
+          "Deploy blocked: unresolved drift. Remediate first.",
+          "9 resources. 10 config fields. One click.",
+          "The real complexity starts the day after deploy.",
+          "Detection is solved. The gap is between detected and fixed.",
+          "Describe. Generate. Govern. Deploy."
+        ];
+        var el = document.getElementById("msg");
+        var last = -1;
+        function pick() {
+          // Never the same one twice running. A random pick that repeats reads
+          // as a broken button, which is the bug this is fixing.
+          var i = Math.floor(Math.random() * MESSAGES.length);
+          if (i === last) { i = (i + 1) % MESSAGES.length; }
+          last = i;
+          el.textContent = MESSAGES[i];
+        }
+        document.getElementById("another").addEventListener("click", pick);
+        pick();
+      </script>
     </body>
     </html>
   HTML
