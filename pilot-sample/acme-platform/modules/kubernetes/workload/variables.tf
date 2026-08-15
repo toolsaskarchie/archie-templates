@@ -103,3 +103,19 @@ variable "ingress_scheme" {
   type        = string
   default     = "internet-facing"
 }
+
+variable "create_namespace" {
+  description = <<-EOT
+    Create the namespace, or deploy into one that already exists.
+
+    Defaults to true because most workloads want their own. Set it false to
+    deploy alongside something already living there — two services sharing a
+    team namespace is ordinary, and the second one must not try to create what
+    the first already made.
+
+    Ignored for Kubernetes' built-in namespaces, which every cluster ships with
+    and no workload may claim.
+  EOT
+  type        = bool
+  default     = true
+}

@@ -83,7 +83,31 @@ locals {
   HTML
 }
 
+locals {
+  # NEVER CLAIM A NAMESPACE YOU DID NOT MAKE. This module created its namespace
+  # unconditionally, which failed on `default` with
+  #
+  #     Error: namespaces "default" already exists
+  #
+  # and would have failed the same way on any namespace another team's workload
+  # had already made. The failure is the mild half. Terraform destroys what it
+  # creates, so had the apply succeeded, tearing this one app down would have
+  # taken the namespace with it — and everything else running inside it. On
+  # `default` that is most of the cluster.
+  #
+  # So: create it when it is ours to create, and otherwise just deploy into it.
+  _builtin_namespaces = ["default", "kube-system", "kube-public", "kube-node-lease"]
+  create_namespace    = var.create_namespace && !contains(local._builtin_namespaces, var.namespace)
+
+  # Every resource below reads the namespace from HERE, not from the resource.
+  # When we create it this carries the dependency; when we do not, there is
+  # nothing to depend on because the namespace already exists.
+  namespace = local.create_namespace ? kubernetes_namespace_v1.main[0].metadata[0].name : var.namespace
+}
+
 resource "kubernetes_namespace_v1" "main" {
+  count = local.create_namespace ? 1 : 0
+
   metadata {
     name   = var.namespace
     labels = var.labels
@@ -93,7 +117,7 @@ resource "kubernetes_namespace_v1" "main" {
 resource "kubernetes_config_map_v1" "page" {
   metadata {
     name      = "${var.project}-page"
-    namespace = kubernetes_namespace_v1.main.metadata[0].name
+    namespace = local.namespace
     labels    = var.labels
   }
   data = { "index.html" = local.demo_page }
@@ -102,7 +126,7 @@ resource "kubernetes_config_map_v1" "page" {
 resource "kubernetes_deployment_v1" "main" {
   metadata {
     name      = var.project
-    namespace = kubernetes_namespace_v1.main.metadata[0].name
+    namespace = local.namespace
     labels    = var.labels
   }
   spec {
@@ -204,7 +228,7 @@ resource "kubernetes_deployment_v1" "main" {
 resource "kubernetes_config_map_v1" "nginx_conf" {
   metadata {
     name      = "${var.project}-nginx-conf"
-    namespace = kubernetes_namespace_v1.main.metadata[0].name
+    namespace = local.namespace
     labels    = var.labels
   }
   # Unprivileged container cannot bind :80, so serve on the app port directly.
@@ -221,7 +245,7 @@ resource "kubernetes_config_map_v1" "nginx_conf" {
 resource "kubernetes_service_v1" "main" {
   metadata {
     name      = var.project
-    namespace = kubernetes_namespace_v1.main.metadata[0].name
+    namespace = local.namespace
     labels    = var.labels
   }
   spec {
@@ -237,7 +261,7 @@ resource "kubernetes_service_v1" "main" {
 resource "kubernetes_network_policy_v1" "default_deny" {
   metadata {
     name      = "${var.project}-default-deny"
-    namespace = kubernetes_namespace_v1.main.metadata[0].name
+    namespace = local.namespace
   }
   spec {
     pod_selector {}
@@ -265,7 +289,7 @@ resource "kubernetes_ingress_v1" "main" {
   count = var.ingress_enabled ? 1 : 0
   metadata {
     name      = var.project
-    namespace = kubernetes_namespace_v1.main.metadata[0].name
+    namespace = local.namespace
     labels    = var.labels
     annotations = {
       "alb.ingress.kubernetes.io/scheme"           = var.ingress_scheme

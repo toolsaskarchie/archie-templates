@@ -1,6 +1,6 @@
 output "namespace" {
-  description = "Namespace created."
-  value       = kubernetes_namespace_v1.main.metadata[0].name
+  description = "Namespace the workload runs in (created here, or pre-existing)."
+  value       = local.namespace
 }
 output "service_name" {
   description = "Service name."
