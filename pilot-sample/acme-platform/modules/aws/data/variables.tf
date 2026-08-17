@@ -47,3 +47,12 @@ variable "tags" {
   description = "Mandatory org tags."
   type        = map(string)
 }
+
+# The master user's NAME only. Its password is generated and rotated by AWS
+# (manage_master_user_password in main.tf), so there is no secret to declare
+# here, hand to Archie, or leave in state.
+variable "master_username" {
+  description = "Master username for the Postgres instance."
+  type        = string
+  default     = "archie_admin"
+}
