@@ -49,7 +49,7 @@ Config fields (these become the govern schema — keep names and types exact):
 - reserved_concurrency (number, default 0, description "Reserved concurrent executions, 0 = unreserved. Profile lever.")
 - enable_xray (bool, default false, description "X-Ray tracing. Profile lever — locked on in prod.")
 - enable_dlq (bool, default false, description "Dead-letter queue. Profile lever — locked on in prod.")
-- page_title (text, default "AskArchie — Agentic Developer Platform", description "Subtitle text on the page.")
+- page_title (text, default "AskArchie — The Agentic Development Platform", description "Subtitle text on the page.")
 
 Exports (so the stack drawer shows the effective governed config): function_url, function_name, log_group_name, memory_size_mb, timeout_seconds, reserved_concurrency, tracing_enabled, dlq_enabled, dlq_url (null when disabled)
 

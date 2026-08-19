@@ -1,6 +1,6 @@
 # Archie Templates
 
-Open infrastructure-as-code templates that ship with [AskArchie](https://askarchie.io) — the Agentic Developer Platform.
+Open infrastructure-as-code templates that ship with [AskArchie](https://askarchie.io) — the Agentic Development Platform.
 
 These are the actual blueprints Archie uses to deploy infrastructure across AWS, Azure, GCP, and Kubernetes. Each one is governed at deploy time (locked fields, compliance checks, drift detection) and managed across its lifecycle (preview → deploy → drift → remediate → upgrade → destroy).
 
