@@ -5,7 +5,7 @@ locals {
   # web-facing entrypoint in this platform lands on one branded page instead of
   # a stock nginx splash. Base64'd into the container command because ECS has no
   # ConfigMap equivalent and shell-quoting HTML in a task definition is a trap.
-  demo_page = templatefile("${path.module}/../../shared/demo-page.html.tftpl", {
+  demo_page = templatefile("${path.module}/demo-page.html.tftpl", {
     page_title   = "${var.project} · ${var.environment}"
     button_color = "#3B82F6"
     message      = "Describe. Generate. Govern. Deploy."
