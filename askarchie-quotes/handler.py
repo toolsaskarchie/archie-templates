@@ -32,24 +32,175 @@ def _page(quote: str) -> str:
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>AskArchie — a quote</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
   <style>
-    :root {{ color-scheme: light dark; }}
-    body {{
-      margin: 0; min-height: 100vh; display: grid; place-items: center;
-      font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
-      background: #0b0d12; color: #e8eaf0;
+    *, *::before, *::after {{ box-sizing: border-box; }}
+
+    :root {{
+      --bg:        #0b0d18;
+      --surface:   #12152a;
+      --border:    #1e2340;
+      --accent:    #5c5af6;
+      --accent-glow: rgba(92, 90, 246, 0.25);
+      --text:      #e8eaf0;
+      --muted:     #8b8fa8;
+      --radius:    1rem;
     }}
-    figure {{ max-width: 40rem; padding: 2rem; text-align: center; }}
-    blockquote {{ font-size: clamp(1.4rem, 4vw, 2.2rem); line-height: 1.3; margin: 0 0 1rem; }}
-    figcaption {{ opacity: .6; letter-spacing: .08em; text-transform: uppercase; font-size: .8rem; }}
-    a {{ color: inherit; }}
+
+    html, body {{
+      margin: 0; padding: 0;
+      min-height: 100vh;
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'Inter', ui-sans-serif, system-ui, -apple-system, sans-serif;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+    }}
+
+    /* Radial glow behind card */
+    body::before {{
+      content: '';
+      position: fixed;
+      top: 20%;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 600px;
+      height: 400px;
+      background: radial-gradient(ellipse at center, var(--accent-glow) 0%, transparent 70%);
+      pointer-events: none;
+    }}
+
+    .card {{
+      position: relative;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 3rem 2.5rem 2.5rem;
+      max-width: 42rem;
+      width: calc(100% - 2rem);
+      text-align: center;
+      box-shadow: 0 0 0 1px rgba(92,90,246,0.08), 0 24px 48px rgba(0,0,0,0.4);
+    }}
+
+    /* Top accent line */
+    .card::before {{
+      content: '';
+      position: absolute;
+      top: 0; left: 2rem; right: 2rem;
+      height: 2px;
+      background: linear-gradient(90deg, transparent, var(--accent), transparent);
+      border-radius: 0 0 2px 2px;
+    }}
+
+    .brand {{
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.55rem;
+      margin-bottom: 2.5rem;
+    }}
+
+    .brand img {{
+      width: 28px;
+      height: 28px;
+      border-radius: 6px;
+    }}
+
+    .brand-name {{
+      font-size: 1rem;
+      font-weight: 600;
+      letter-spacing: -0.01em;
+      color: var(--text);
+    }}
+
+    .divider {{
+      width: 2rem;
+      height: 2px;
+      background: var(--accent);
+      border-radius: 2px;
+      margin: 0 auto 2rem;
+      opacity: 0.7;
+    }}
+
+    blockquote {{
+      margin: 0 0 2rem;
+      font-size: clamp(1.25rem, 3.5vw, 1.9rem);
+      font-weight: 300;
+      line-height: 1.45;
+      letter-spacing: -0.02em;
+      color: var(--text);
+    }}
+
+    blockquote .open-quote {{
+      color: var(--accent);
+      font-style: normal;
+    }}
+
+    .caption {{
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.5rem;
+      font-size: 0.72rem;
+      font-weight: 500;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--muted);
+    }}
+
+    .caption .dot {{
+      display: inline-block;
+      width: 3px;
+      height: 3px;
+      border-radius: 50%;
+      background: var(--accent);
+      opacity: 0.6;
+    }}
+
+    .refresh-hint {{
+      margin-top: 2.5rem;
+      font-size: 0.7rem;
+      color: var(--muted);
+      opacity: 0.5;
+      letter-spacing: 0.06em;
+    }}
+
+    .refresh-hint a {{
+      color: var(--accent);
+      text-decoration: none;
+      opacity: 0.8;
+    }}
+    .refresh-hint a:hover {{ opacity: 1; }}
+
+    /* Fade-in animation */
+    @keyframes fadeUp {{
+      from {{ opacity: 0; transform: translateY(12px); }}
+      to   {{ opacity: 1; transform: translateY(0); }}
+    }}
+    .card {{ animation: fadeUp 0.5s ease both; }}
   </style>
 </head>
 <body>
-  <figure>
-    <blockquote>&ldquo;{quote}&rdquo;</blockquote>
-    <figcaption>AskArchie &middot; refresh for another</figcaption>
-  </figure>
+  <div class="card">
+    <div class="brand">
+      <img src="https://askarchie.io/logos/archie-tile-on-dark.png" alt="AskArchie logo">
+      <span class="brand-name">AskArchie</span>
+    </div>
+    <div class="divider"></div>
+    <blockquote>
+      <span class="open-quote">&ldquo;</span>{quote}&rdquo;
+    </blockquote>
+    <div class="caption">
+      <span class="dot"></span>
+      The Agentic Development Platform
+      <span class="dot"></span>
+    </div>
+    <p class="refresh-hint"><a href="">Refresh</a> for another quote</p>
+  </div>
 </body>
 </html>"""
 
