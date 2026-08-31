@@ -11,8 +11,13 @@ ENV PYTHONUNBUFFERED=1 \
     PYTHONDONTWRITEBYTECODE=1 \
     PORT=8080
 
+# Built from the APP root, not from here:  docker build -f container/Dockerfile .
+# The Dockerfile lives in a subdirectory on purpose — a Dockerfile at the app
+# root is a declaration that the app IS a container, and this one is a second
+# way to run something that is a Lambda handler first.
 WORKDIR /app
-COPY handler.py server.py ./
+COPY handler.py ./
+COPY container/server.py ./
 
 # Nothing to install — requirements.txt is empty on purpose, and keeping it that
 # way is what makes this image build in seconds with no network at build time.

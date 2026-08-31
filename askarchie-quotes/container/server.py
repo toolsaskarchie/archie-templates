@@ -13,9 +13,15 @@ so the image builds from `python:3.12-slim` with nothing fetched at build time.
 """
 
 import os
+import sys
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 
-from handler import QUOTES, _page
+# handler.py is the app; this directory is one way of running it. Adding the
+# parent to the path rather than copying the page keeps ONE definition of what
+# the site says.
+sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), ".."))
+
+from handler import QUOTES, _page  # noqa: E402
 
 import random
 
