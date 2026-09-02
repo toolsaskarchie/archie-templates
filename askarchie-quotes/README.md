@@ -5,6 +5,11 @@ The little page that shows a different AskArchie quote every time you reload it.
 Rodrigo put this together for Marketing to look at before launch. It's the real
 copy, the real fonts, the real layout — just small.
 
+![The quotes page, running](screenshot.png)
+
+That's what it should look like. If yours doesn't, something is wrong with the
+setup rather than with the page — the layout is all in `handler.py`.
+
 ## Running it on your machine
 
 ```bash
