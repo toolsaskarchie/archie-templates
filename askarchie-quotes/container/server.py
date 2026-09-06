@@ -21,8 +21,7 @@ from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 # the site says.
 sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), ".."))
 
-from handler import (MAX_QUOTE_CHARS, add_quote, all_quotes,  # noqa: E402
-                     record_visit, STATE, _page)
+from handler import QUOTES, _page  # noqa: E402
 
 import random
 
@@ -41,33 +40,10 @@ class Quotes(BaseHTTPRequestHandler):
     def do_GET(self):  # noqa: N802 — BaseHTTPRequestHandler's spelling
         path = self.path.split("?", 1)[0]
         if path in HEALTH_PATHS:
-            # NOT counted as a view. A target group health-checks every few
-            # seconds, and letting that drive the number Marketing is watching
-            # would make the counter a measure of the load balancer.
             self._send(b"ok", "text/plain; charset=utf-8")
             return
-        views = record_visit()
-        submitted = list(STATE["submitted"])
-        self._send(_page(random.choice(all_quotes()), views, submitted).encode("utf-8"),
+        self._send(_page(random.choice(QUOTES)).encode("utf-8"),
                    "text/html; charset=utf-8")
-
-    def do_POST(self):  # noqa: N802
-        """A visitor adding a quote — the same act the Lambda handles.
-
-        Answers 303 rather than rendering, so a refresh after adding does not
-        submit it a second time.
-        """
-        try:
-            length = int(self.headers.get("Content-Length") or 0)
-        except ValueError:
-            length = 0
-        raw = self.rfile.read(min(length, 4096)).decode("utf-8", "replace") if length else ""
-        from urllib.parse import parse_qs
-        add_quote((parse_qs(raw).get("quote") or [""])[0])
-        self.send_response(303)
-        self.send_header("Location", "/")
-        self.send_header("Content-Length", "0")
-        self.end_headers()
 
     def _send(self, body: bytes, content_type: str) -> None:
         self.send_response(200)
