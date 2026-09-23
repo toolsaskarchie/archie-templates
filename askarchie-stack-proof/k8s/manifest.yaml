@@ -1,0 +1,140 @@
+# AskArchie quotes on EKS (scenario 6). Replace IMAGE with the image Archie pushed.
+# Hops this proves: Service → Pod, ConfigMap → Pod (mounted file), Pod → K8s API (service account + RBAC).
+# The KMS hop (secrets envelope encryption) is proven outside the pod: tools/prove.py eks --cluster ... --kms-key-arn ...
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: archie-quotes
+  labels: {app: askarchie-stack-proof}
+data:
+  # Packed at deploy time from common/quotes.json:
+  #   kubectl create configmap archie-quotes --from-file=quotes.json=common/quotes.json --dry-run=client -o yaml
+  quotes.json: |
+    [
+      {
+        "id": "q01",
+        "text": "Agents provision. Archie governs. You ship."
+      },
+      {
+        "id": "q02",
+        "text": "A whole platform team's output — from one person who owns the rules."
+      },
+      {
+        "id": "q03",
+        "text": "You don't author infrastructure by hand. You ask."
+      },
+      {
+        "id": "q04",
+        "text": "No Terraform. No fifty-variable forms. No ten-tool stack to assemble."
+      },
+      {
+        "id": "q05",
+        "text": "A request goes in; a governed golden path comes out."
+      },
+      {
+        "id": "q06",
+        "text": "One person owns the rules — Archie is the platform team you didn't have to hire."
+      },
+      {
+        "id": "q07",
+        "text": "Archie reuses what you already have before it writes anything new."
+      },
+      {
+        "id": "q08",
+        "text": "The golden path is the only route to your cloud."
+      },
+      {
+        "id": "q09",
+        "text": "Your cloud keys live in Archie, never in a session."
+      },
+      {
+        "id": "q10",
+        "text": "A platform engineer composes a golden path once; developers consume it forever."
+      },
+      {
+        "id": "q11",
+        "text": "Deploy, drift, remediate, upgrade, roll back, destroy — one loop, with a receipt."
+      },
+      {
+        "id": "q12",
+        "text": "Checked before anything is built."
+      },
+      {
+        "id": "q13",
+        "text": "Governance fires on what the modules create, not on what someone remembered."
+      }
+    ]
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: askarchie-stack-proof
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: askarchie-read-quotes
+rules:
+  - apiGroups: [""]
+    resources: ["configmaps"]
+    resourceNames: ["archie-quotes"]
+    verbs: ["get"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: askarchie-read-quotes
+subjects:
+  - kind: ServiceAccount
+    name: askarchie-stack-proof
+roleRef:
+  kind: Role
+  name: askarchie-read-quotes
+  apiGroup: rbac.authorization.k8s.io
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: askarchie-stack-proof
+  labels: {app: askarchie-stack-proof}
+spec:
+  replicas: 2
+  selector:
+    matchLabels: {app: askarchie-stack-proof}
+  template:
+    metadata:
+      labels: {app: askarchie-stack-proof}
+    spec:
+      serviceAccountName: askarchie-stack-proof
+      securityContext: {runAsNonRoot: true, runAsUser: 10001}
+      containers:
+        - name: app
+          image: IMAGE
+          ports: [{containerPort: 8080}]
+          env:
+            - {name: ARCHIE_STACK, value: "eks+configmap"}
+            - {name: QUOTES_FILE, value: /etc/archie/quotes.json}
+            - name: POD_NAME
+              valueFrom: {fieldRef: {fieldPath: metadata.name}}
+            - name: NODE_NAME
+              valueFrom: {fieldRef: {fieldPath: spec.nodeName}}
+          volumeMounts:
+            - {name: quotes, mountPath: /etc/archie, readOnly: true}
+          readinessProbe:
+            httpGet: {path: /healthz, port: 8080}
+          resources:
+            requests: {cpu: 50m, memory: 64Mi}
+            limits: {memory: 128Mi}
+      volumes:
+        - name: quotes
+          configMap: {name: archie-quotes}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: askarchie-stack-proof
+spec:
+  type: LoadBalancer   # or ClusterIP + `kubectl port-forward svc/askarchie-stack-proof 8080:80` for the demo
+  selector: {app: askarchie-stack-proof}
+  ports:
+    - {port: 80, targetPort: 8080}

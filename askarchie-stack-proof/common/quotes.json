@@ -1,0 +1,54 @@
+[
+  {
+    "id": "q01",
+    "text": "Agents provision. Archie governs. You ship."
+  },
+  {
+    "id": "q02",
+    "text": "A whole platform team's output \u2014 from one person who owns the rules."
+  },
+  {
+    "id": "q03",
+    "text": "You don't author infrastructure by hand. You ask."
+  },
+  {
+    "id": "q04",
+    "text": "No Terraform. No fifty-variable forms. No ten-tool stack to assemble."
+  },
+  {
+    "id": "q05",
+    "text": "A request goes in; a governed golden path comes out."
+  },
+  {
+    "id": "q06",
+    "text": "One person owns the rules \u2014 Archie is the platform team you didn't have to hire."
+  },
+  {
+    "id": "q07",
+    "text": "Archie reuses what you already have before it writes anything new."
+  },
+  {
+    "id": "q08",
+    "text": "The golden path is the only route to your cloud."
+  },
+  {
+    "id": "q09",
+    "text": "Your cloud keys live in Archie, never in a session."
+  },
+  {
+    "id": "q10",
+    "text": "A platform engineer composes a golden path once; developers consume it forever."
+  },
+  {
+    "id": "q11",
+    "text": "Deploy, drift, remediate, upgrade, roll back, destroy \u2014 one loop, with a receipt."
+  },
+  {
+    "id": "q12",
+    "text": "Checked before anything is built."
+  },
+  {
+    "id": "q13",
+    "text": "Governance fires on what the modules create, not on what someone remembered."
+  }
+]
