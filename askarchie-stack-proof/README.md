@@ -63,7 +63,7 @@ The CLI uses the normal AWS credential chain. Never pass keys as arguments.
 
 ## Build
 
-- Lambda: `sh lambda/build.sh` → `lambda/dist/package/` (the unpacked package, for a delivery that zips a folder) and `lambda/dist/askarchie-stack-proof-lambda.zip`. No dependencies (boto3 is in the runtime). Handlers are `handler.api`, `handler.consumer` and `handler.schedule`.
+- Lambda: `sh lambda/build.sh` → `lambda/dist/askarchie-stack-proof-lambda.zip`. No dependencies (boto3 is in the runtime). Handlers are `handler.api`, `handler.consumer` and `handler.schedule`.
 - Container: `docker build -f container/Dockerfile -t askarchie-stack-proof .` from this folder. Adds `pg8000` (pure Python) and the RDS CA bundle so the TLS hop is verified. Health checks at `/health`, `/healthz` and `/ping` stay shallow, so the target stays healthy while you look at the red hop. The deep check is `?format=json`.
 - Static: upload `static/` to the bucket, with `index.html` as the default root object.
 
