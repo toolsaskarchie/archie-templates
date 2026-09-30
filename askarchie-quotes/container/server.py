@@ -6,8 +6,8 @@ serve both demos. Rather than a second copy of the page (which would drift the
 moment somebody edits one), this imports `QUOTES` and `_page` from the handler
 and is the only file that knows about sockets.
 
-No dependencies, deliberately: `requirements.txt` is empty and stays that way,
-so the image builds from `python:3.12-slim` with nothing fetched at build time.
+Runs with nothing installed on a laptop. The one dependency (`boto3`) is only
+imported when `QUOTES_TABLE` names somewhere durable to keep things.
 
     python3 server.py          # then open http://localhost:8080
 """
@@ -21,8 +21,8 @@ from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 # the site says.
 sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), ".."))
 
-from handler import (MAX_QUOTE_CHARS, add_quote, all_quotes,  # noqa: E402
-                     record_visit, STATE, _page)
+from handler import (MAX_QUOTE_CHARS, QUOTES, add_quote,  # noqa: E402
+                     record_visit, submitted_quotes, _page)
 
 import random
 
@@ -47,8 +47,8 @@ class Quotes(BaseHTTPRequestHandler):
             self._send(b"ok", "text/plain; charset=utf-8")
             return
         views = record_visit()
-        submitted = list(STATE["submitted"])
-        self._send(_page(random.choice(all_quotes()), views, submitted).encode("utf-8"),
+        submitted = submitted_quotes()
+        self._send(_page(random.choice(submitted + QUOTES), views, submitted).encode("utf-8"),
                    "text/html; charset=utf-8")
 
     def do_POST(self):  # noqa: N802

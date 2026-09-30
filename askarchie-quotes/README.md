@@ -21,6 +21,23 @@ Then open <http://localhost:8080> and refresh a few times.
 That's genuinely all of it. Nothing to install first — no `pip install`, no
 database, no config file. If Python opens, this runs.
 
+## Keeping what people send
+
+On your machine the counter and the submitted quotes live in memory, so they
+start again every time it restarts. That's fine on a laptop and not fine for a
+campaign.
+
+Give it a DynamoDB table and it keeps them there instead:
+
+| Setting | What it is |
+|---|---|
+| `QUOTES_TABLE` | the table's ARN (or its name, plus `AWS_REGION`) |
+
+Any key design works — the page reads the table's keys itself. Whatever runs it
+needs permission for `dynamodb:DescribeTable`, `GetItem` and `UpdateItem` on
+that table. If the table can't be reached the page still loads, and the counter
+says it isn't being kept.
+
 ## What's in here
 
 | | |

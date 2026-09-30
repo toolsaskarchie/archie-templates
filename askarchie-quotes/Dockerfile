@@ -19,20 +19,21 @@ ENV PYTHONUNBUFFERED=1 \
     PORT=8080
 
 WORKDIR /app
+COPY requirements.txt ./
+# boto3, and only because the page can now be given somewhere durable to keep
+# what visitors send (QUOTES_TABLE — see handler.py). Without it set, nothing
+# imports it.
+RUN pip install --no-cache-dir -r requirements.txt
 COPY handler.py ./
 COPY container/server.py ./
-
-# Nothing to install — requirements.txt is empty on purpose, and keeping it that
-# way is what makes this image build in seconds with no network at build time.
 
 # Not root. A demo is still somebody's account.
 RUN useradd --create-home --uid 10001 app
 USER app
 
-# WHAT IS IN HERE DOES NOT SURVIVE THIS CONTAINER. The counter and the
-# submissions live in the process (see the note at the top of handler.py), so
-# every restart, scale-out and redeploy starts them again from zero. Somewhere
-# durable has to hold them; this image cannot, and says so rather than looking
-# like it can.
+# WHAT IS IN HERE DOES NOT SURVIVE THIS CONTAINER — unless QUOTES_TABLE names a
+# DynamoDB table. Without it the counter and the submissions live in the
+# process and every restart, scale-out and redeploy starts them from zero; the
+# page says so ("views served by this instance") rather than looking durable.
 EXPOSE 8080
 CMD ["python", "server.py"]

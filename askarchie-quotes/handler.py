@@ -1,39 +1,156 @@
 """AskArchie quotes page.
 
 Returns a different quote on every request, counts the visits it has served,
-and lets a visitor add a quote of their own. No dependencies, so no Lambda
-layer is needed and the container image builds with nothing fetched.
+and lets a visitor add a quote of their own.
 
-STATE LIVES IN THE PROCESS, DELIBERATELY. There is no database here: the
-counter and the submissions are module-level, which means they belong to ONE
-running instance and start again when it restarts. That is the honest shape of
-this app — and it is exactly why a page that now holds state is a different
-question from the one that only ever rendered a random line.
+WHERE THE STATE LIVES IS NOT THIS FILE'S DECISION. Left alone, the counter and
+the submissions are module-level: they belong to ONE running instance and start
+again when it restarts, scales out or is redeployed. That is the honest shape of
+a page nobody has given anywhere to keep things.
+
+Give it somewhere and it keeps them there:
+
+    QUOTES_TABLE   a DynamoDB table — its name, or better its ARN (the region
+                   is read from the ARN). Any key schema: the page reads the
+                   table's own keys and writes two items, the counter and the
+                   list of submissions. It needs dynamodb:DescribeTable,
+                   GetItem and UpdateItem on that table, nothing else.
+
+If the table cannot be reached the page still renders and says so, rather than
+pretending it kept what it did not.
 """
 
 import html
 import json
+import os
 import random
+import sys
 import threading
+import zlib
 
 # ONE LOCK, because a threaded server answers several requests at once and a
 # read-modify-write on a counter is the textbook place that goes wrong.
 _LOCK = threading.Lock()
 
-# Everything this instance is holding. `views` is what Marketing asked to see;
-# `submitted` is what visitors have added, newest first, capped so a page that
-# is left open overnight cannot grow without bound.
+# What this instance holds when nothing durable has been given to it. `views` is
+# what Marketing asked to see; `submitted` is what visitors have added, newest
+# first, capped so a page left open overnight cannot grow without bound.
 STATE = {"views": 0, "submitted": []}
 
 MAX_SUBMITTED = 25
 MAX_QUOTE_CHARS = 140
 
+# Set when the durable store failed on the last request, so the page can say
+# "not kept" instead of showing an in-memory number as if it were the real one.
+KEPT = {"ok": True}
+
+
+class _Table:
+    """The durable store, when QUOTES_TABLE names one. Two items, any key schema.
+
+    The table's own key names are read once (DescribeTable) rather than assumed:
+    whoever built the table chose them, and a page that insists on `pk`/`sk`
+    breaks the first time somebody else designs the table. A range key, if the
+    table has one, gets a fixed value so each item is still one item.
+    """
+
+    def __init__(self, ref: str):
+        import boto3  # only when a table is configured; the local run needs nothing
+        name, region = ref, None
+        if ref.startswith("arn:"):
+            parts = ref.split(":")
+            region, name = parts[3], parts[5].split("/", 1)[1]
+        region = (region or os.environ.get("AWS_REGION")
+                  or os.environ.get("AWS_DEFAULT_REGION") or "us-east-1")
+        self._ddb = boto3.client("dynamodb", region_name=region)
+        self._name = name
+        schema = self._ddb.describe_table(TableName=name)["Table"]
+        types = {a["AttributeName"]: a["AttributeType"]
+                 for a in schema.get("AttributeDefinitions") or []}
+        self._keys = [(k["AttributeName"], types.get(k["AttributeName"], "S"), k["KeyType"])
+                      for k in schema["KeySchema"]]
+
+    def _key(self, what: str) -> dict:
+        out = {}
+        for name, typ, kind in self._keys:
+            if typ == "N":
+                value = str(zlib.crc32(what.encode())) if kind == "HASH" else "0"
+            else:
+                value = what if kind == "HASH" else "0"
+            out[name] = {typ: value}
+        return out
+
+    def count_visit(self) -> int:
+        r = self._ddb.update_item(
+            TableName=self._name, Key=self._key("quotes#views"),
+            UpdateExpression="ADD #v :one",
+            ExpressionAttributeNames={"#v": "views"},
+            ExpressionAttributeValues={":one": {"N": "1"}},
+            ReturnValues="UPDATED_NEW")
+        return int(r["Attributes"]["views"]["N"])
+
+    def add(self, text: str) -> None:
+        r = self._ddb.update_item(
+            TableName=self._name, Key=self._key("quotes#submitted"),
+            UpdateExpression="SET #q = list_append(:new, if_not_exists(#q, :empty))",
+            ExpressionAttributeNames={"#q": "quotes"},
+            ExpressionAttributeValues={":new": {"L": [{"S": text}]}, ":empty": {"L": []}},
+            ReturnValues="UPDATED_NEW")
+        n = len(r["Attributes"]["quotes"]["L"])
+        if n > MAX_SUBMITTED:
+            # Trimmed after the append rather than inside it: DynamoDB cannot
+            # slice a list in an update, and a list a few items over the cap
+            # between two requests is harmless.
+            self._ddb.update_item(
+                TableName=self._name, Key=self._key("quotes#submitted"),
+                UpdateExpression="REMOVE " + ", ".join(
+                    f"#q[{i}]" for i in range(MAX_SUBMITTED, n)),
+                ExpressionAttributeNames={"#q": "quotes"})
+
+    def submitted(self) -> list:
+        r = self._ddb.get_item(TableName=self._name, Key=self._key("quotes#submitted"),
+                               ConsistentRead=True)
+        return [x["S"] for x in ((r.get("Item") or {}).get("quotes") or {}).get("L", [])]
+
+
+_STORE = {"table": None, "tried": False}
+
+
+def _table():
+    """The configured table, or None. Built once; a table that could not be
+    opened is retried on the next request rather than forgotten for good."""
+    ref = os.environ.get("QUOTES_TABLE", "").strip()
+    if not ref:
+        return None
+    if _STORE["table"] is None:
+        try:
+            _STORE["table"] = _Table(ref)
+        except Exception as e:  # noqa: BLE001 — the page still renders
+            print(f"[quotes] store unavailable: {type(e).__name__}: {e}", file=sys.stderr)
+            return None
+    return _STORE["table"]
+
+
+def _durably(fn, fallback):
+    t = _table()
+    if t is not None:
+        try:
+            out = fn(t)
+            KEPT["ok"] = True
+            return out
+        except Exception as e:  # noqa: BLE001
+            print(f"[quotes] store call failed: {type(e).__name__}: {e}", file=sys.stderr)
+    KEPT["ok"] = not os.environ.get("QUOTES_TABLE", "").strip()
+    return fallback()
+
 
 def record_visit() -> int:
-    """Count this visit and return the running total for this instance."""
-    with _LOCK:
-        STATE["views"] += 1
-        return STATE["views"]
+    """Count this visit and return the running total."""
+    def _here():
+        with _LOCK:
+            STATE["views"] += 1
+            return STATE["views"]
+    return _durably(lambda t: t.count_visit(), _here)
 
 
 def add_quote(text: str) -> bool:
@@ -46,16 +163,26 @@ def add_quote(text: str) -> bool:
     cleaned = " ".join(str(text or "").split())[:MAX_QUOTE_CHARS].strip()
     if not cleaned:
         return False
-    with _LOCK:
-        STATE["submitted"].insert(0, cleaned)
-        del STATE["submitted"][MAX_SUBMITTED:]
+
+    def _here():
+        with _LOCK:
+            STATE["submitted"].insert(0, cleaned)
+            del STATE["submitted"][MAX_SUBMITTED:]
+    _durably(lambda t: t.add(cleaned), _here)
     return True
+
+
+def submitted_quotes() -> list:
+    """What visitors have sent, newest first."""
+    def _here():
+        with _LOCK:
+            return list(STATE["submitted"])
+    return _durably(lambda t: t.submitted(), _here)
 
 
 def all_quotes():
     """What the page can show: the visitors' first, then the originals."""
-    with _LOCK:
-        return list(STATE["submitted"]) + QUOTES
+    return submitted_quotes() + QUOTES
 
 # Quotes drawn from AskArchie's own messaging (askarchie.io).
 QUOTES = [
@@ -83,6 +210,14 @@ def _page(quote: str, views: int = 0, submitted=None) -> str:
     # safe. Caught by feeding it an <img onerror> before this shipped.
     quote = html.escape(str(quote or ""))
     submitted = list(submitted or [])
+    # THE LABEL SAYS WHOSE NUMBER IT IS. Without a store it is one instance's,
+    # and saying "views" alone would let a restart look like lost traffic.
+    if not os.environ.get("QUOTES_TABLE", "").strip():
+        count_label = "views served by this instance"
+    elif KEPT["ok"]:
+        count_label = "views so far"
+    else:
+        count_label = "views on this instance &mdash; not being kept right now"
     recent = "".join(
         f'<li>{html.escape(q)}</li>' for q in submitted[:5])
     recent_block = (
@@ -290,7 +425,7 @@ def _page(quote: str, views: int = 0, submitted=None) -> str:
     </div>
     <div class="counter">
       <span class="count">{views:,}</span>
-      <span class="count-label">views served by this instance</span>
+      <span class="count-label">{count_label}</span>
     </div>
     <form class="add" method="POST" action="">
       <input name="quote" maxlength="{MAX_QUOTE_CHARS}" autocomplete="off"
@@ -343,9 +478,8 @@ def handler(event, context):
                 "headers": {"Location": "", "Cache-Control": "no-store"},
                 "body": ""}
     views = record_visit()
-    with _LOCK:
-        submitted = list(STATE["submitted"])
-    quote = random.choice(all_quotes())
+    submitted = submitted_quotes()
+    quote = random.choice(submitted + QUOTES)
     return {
         "statusCode": 200,
         "headers": {
