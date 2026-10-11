@@ -45,6 +45,15 @@ This is the check on capability wiring. Each value below has to come from anothe
 
 IAM the functions/tasks need: DynamoDB `GetItem, PutItem, UpdateItem, Scan` (+ `DescribeTable` to show encryption), `sqs:SendMessage` for the API Lambda when `+sqs`, and the standard SQS consumer permissions for the consumer. When the table uses a customer KMS key, add `kms:Decrypt`/`GenerateDataKey` on that key. A missing permission fails a hop, which is the point.
 
+## Reachability hops (`ARCHIE_REACH`)
+
+Any form of the app also proves that its wires are OPEN, from where it runs. Archie derives the hops from the path (every endpoint a runner consumes, and every network rule that lets a runner in to a data holder) and hands them over as JSON, `[{"name": "lambda → rds:5432", "host": "...", "port": 5432, "kind": "tcp"}]`:
+
+- env `ARCHIE_REACH` → each becomes a `reach: …` hop on the page and in `?format=json` (200 when all connect, 503 + `broken_at` otherwise). With no `ARCHIE_STACK` set, the reach hops alone are the proof.
+- Lambda: invoke `handler.api` directly with `{"archie_reach": [...]}` → `{"archie_reach": [{name, host, port, ok, ms, error?}]}`. An API event never carries a top-level `archie_reach`, so the probe is not reachable from the internet.
+
+A hop is DNS resolve + TCP connect (3 s timeout) and nothing else: no login, no write. It fails on what blocks the wire — a security group or firewall rule, a missing route or NAT, DNS — which is exactly what it exists to catch.
+
 ## Smoke test hook
 
 `GET <url>/?format=json` returns the proof as JSON: **HTTP 200 when every hop is wired, 503 when broken**, with `broken_at`. `prove.py` exits 0/1. A golden-path smoke test can assert serving *and* wiring with one call:

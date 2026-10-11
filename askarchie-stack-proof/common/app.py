@@ -15,6 +15,7 @@ import urllib.parse
 
 from archie_proof import Proof, render, seed_quotes
 import backends as b
+import reach
 
 LABEL = {"alb": "ALB", "ecs": "ECS Fargate", "apigw": "API Gateway", "lambda": "Lambda", "eks": "EKS",
          "rds": "RDS Postgres", "dynamodb": "DynamoDB", "configmap": "ConfigMap",
@@ -64,6 +65,14 @@ def _front_hops(proof, ps, headers, platform):
 def build(headers, platform, want_submissions=True):
     ps = parts()
     proof = Proof("+".join(ps) or "(none)")
+    # REACHABILITY (ARCHIE_REACH): every wired endpoint, connected to from here.
+    # Alone it is a whole proof — a path with no declared scenario is proved by
+    # its wires being open.
+    reach_hops = reach.hops_from_env()
+    if reach_hops:
+        reach.add_to_proof(proof, reach_hops)
+        if not ps:
+            return proof, None, FALLBACK, None, []
     if not ps:
         proof.fail("Declared stack", "ARCHIE_STACK is not set, so there is nothing to prove")
         return proof, None, FALLBACK, None, []

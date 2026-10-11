@@ -17,6 +17,7 @@ sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), ".."
 
 import app  # noqa: E402
 import backends as b  # noqa: E402
+import reach  # noqa: E402
 from archie_proof import seed_quotes  # noqa: E402
 
 
@@ -26,6 +27,10 @@ def _lambda_ctx(context):
 
 
 def api(event, context):
+    # ARCHIE'S REACH PROBE: invoked directly (never through the API, whose
+    # events carry no top-level `archie_reach`) with the hops to try from here.
+    if isinstance(event, dict) and isinstance(event.get("archie_reach"), list):
+        return {"archie_reach": reach.probe_all(event["archie_reach"])}
     rc = event.get("requestContext") or {}
     method = rc.get("http", {}).get("method") or event.get("httpMethod") or "GET"
     if event.get("rawQueryString") is not None:

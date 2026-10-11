@@ -3,7 +3,7 @@
 set -eu
 cd "$(dirname "$0")"
 rm -rf dist build && mkdir -p dist build
-cp handler.py ../common/app.py ../common/archie_proof.py ../common/backends.py ../common/quotes.json build/
+cp handler.py ../common/app.py ../common/archie_proof.py ../common/backends.py ../common/reach.py ../common/quotes.json build/
 (cd build && zip -qr ../dist/askarchie-stack-proof-lambda.zip .)
 rm -rf build
 echo "dist/askarchie-stack-proof-lambda.zip"
