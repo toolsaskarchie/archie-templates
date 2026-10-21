@@ -142,6 +142,9 @@ class ArchieRoleTemplate(InfrastructureTemplate):
                         "states:*",
                         "elasticfilesystem:*",
                         "elasticache:*",
+                        # ECS service / DynamoDB / Aurora scaling targets (Three-Tier 10-21:
+                        # RegisterScalableTarget denied on the ECS module's default autoscaling).
+                        "application-autoscaling:*",
                         "tag:*",
                         "resource-groups:*"
                     ],
