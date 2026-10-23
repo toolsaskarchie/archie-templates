@@ -1,0 +1,14 @@
+apiVersion: v1
+entries:
+  kcd-event-page:
+  - apiVersion: v2
+    appVersion: 1.0.0
+    created: '2026-10-23T14:09:20Z'
+    description: One HTML page for a KCD event, served by nginx behind an ALB Ingress.
+    digest: 3a0d229dedc9a7a3fb4ff537bebe3e5cc808ea2fd5f5a6599d65238f86ecf485
+    name: kcd-event-page
+    type: application
+    urls:
+    - https://raw.githubusercontent.com/toolsaskarchie/archie-templates/main/helm/kcd-event-page-0.1.0.tgz
+    version: 0.1.0
+generated: '2026-10-23T14:09:20Z'

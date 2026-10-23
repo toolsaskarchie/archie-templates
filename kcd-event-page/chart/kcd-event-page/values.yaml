@@ -1,0 +1,15 @@
+# The four fields an organizer fills in.
+eventName: "KCD Argentina"
+city: "Buenos Aires"
+message: "¡Gracias Argentina! 🇦🇷❤️"
+nextEvent: "Nos vemos pronto 🤘"
+
+# Where the page answers. Every page shares one ALB through the Ingress group.
+host: "argentina.kcd.askarchie.io"
+ingressGroup: "kcd-pages"
+ingressClassName: "alb"
+# ACM certificate for the host. Empty serves plain HTTP only (e.g. before validation).
+certificateArn: ""
+
+image: "nginxinc/nginx-unprivileged:1.27-alpine"
+replicas: 1
