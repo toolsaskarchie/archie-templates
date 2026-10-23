@@ -1,0 +1,33 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>${EVENT_NAME}</title>
+  <style>
+    :root { --bg: #f7f8fc; --fg: #14182b; --muted: #5a6075; --accent: #326ce5; --card: #ffffff; }
+    @media (prefers-color-scheme: dark) {
+      :root { --bg: #0f1220; --fg: #eef0f8; --muted: #a3a9c0; --accent: #6f9bff; --card: #181c30; }
+    }
+    * { box-sizing: border-box; }
+    body { margin: 0; min-height: 100vh; display: grid; place-items: center; padding: 16px;
+           background: var(--bg); color: var(--fg);
+           font: 16px/1.5 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
+    main { width: 100%; max-width: 640px; background: var(--card); border-radius: 16px;
+           padding: 40px 32px; box-shadow: 0 8px 32px rgba(0,0,0,.08); }
+    .city { color: var(--accent); font-weight: 600; letter-spacing: .04em; text-transform: uppercase; margin: 0; }
+    h1 { font-size: clamp(2rem, 6vw, 3rem); line-height: 1.1; margin: .25em 0 .5em; }
+    .message { font-size: 1.15rem; margin: 0 0 2em; }
+    .next { border-top: 1px solid rgba(127,127,127,.25); padding-top: 1.25em; color: var(--muted); margin: 0; }
+    .next strong { color: var(--fg); }
+  </style>
+</head>
+<body>
+  <main>
+    <p class="city">${CITY}</p>
+    <h1>${EVENT_NAME}</h1>
+    <p class="message">${MESSAGE}</p>
+    <p class="next">Próximo evento: <strong>${NEXT_EVENT}</strong></p>
+  </main>
+</body>
+</html>
