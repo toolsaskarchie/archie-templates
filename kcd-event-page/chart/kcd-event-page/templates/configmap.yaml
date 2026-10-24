@@ -33,35 +33,74 @@ data:
       <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
       <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@600;700&display=swap" rel="stylesheet">
       <style>
-        :root { --bg: #010409; --surface: #0d1117; --border: #1e293b; --text: #e2e8f0;
-                --muted: #94a3b8; --accent: #2563eb; --accent-soft: #60a5fa; }
+        :root { --bg: #070F26; --surface: #0d1530; --border: #1e2a4a; --text: #e8ebf5;
+                --muted: #9aa3bd; --violet: #7860FF; --violet-soft: #a796ff; }
         * { box-sizing: border-box; }
         body { margin: 0; min-height: 100vh; display: grid; place-items: center; padding: 16px;
                color: var(--text); background-color: var(--bg);
                background-image:
-                 radial-gradient(ellipse at top, rgba(37,99,235,.18), transparent 60%),
-                 linear-gradient(rgba(30,41,59,.35) 1px, transparent 1px),
-                 linear-gradient(90deg, rgba(30,41,59,.35) 1px, transparent 1px);
+                 radial-gradient(ellipse at top, rgba(120,96,255,.22), transparent 60%),
+                 linear-gradient(rgba(30,42,74,.45) 1px, transparent 1px),
+                 linear-gradient(90deg, rgba(30,42,74,.45) 1px, transparent 1px);
                background-size: auto, 48px 48px, 48px 48px;
-               font: 16px/1.5 -apple-system, system-ui, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; }
-        main { width: 100%; max-width: 680px; text-align: center; background: rgba(13,17,23,.85);
-               border: 1px solid var(--border); border-radius: 8px; padding: 48px 32px; }
-        .city { color: var(--accent-soft); font-weight: 600; font-size: .85rem; letter-spacing: .25em;
+               font: 16px/1.55 -apple-system, system-ui, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; }
+        main { width: 100%; max-width: 680px; text-align: center; background: rgba(13,21,48,.88);
+               border: 1px solid var(--border); border-radius: 12px; padding: 44px 32px 28px; }
+        .city { color: var(--violet-soft); font-weight: 600; font-size: .85rem; letter-spacing: .25em;
                 text-transform: uppercase; margin: 0; }
+        .hello { font-family: Poppins, system-ui, sans-serif; font-weight: 600; font-size: clamp(1.3rem, 4vw, 1.7rem);
+                 margin: .6em 0 0; }
         h1 { font-family: Poppins, system-ui, sans-serif; font-weight: 700; font-size: clamp(2.2rem, 7vw, 3.5rem);
-             line-height: 1.1; margin: .35em 0 .45em; }
-        .message { font-size: clamp(1.15rem, 3.5vw, 1.6rem); font-weight: 500; margin: 0 0 1.75em; }
-        .next { margin: 0; color: var(--muted); }
-        .pill { display: inline-block; margin-top: .5em; background: var(--accent); color: #fff; font-weight: 600;
+             line-height: 1.1; margin: .15em 0 .5em; }
+        .intro { font-size: clamp(1.05rem, 3vw, 1.25rem); margin: 0 0 .9em; }
+        ul.built { list-style: none; padding: 0; margin: 0 auto 1.4em; max-width: 440px; text-align: left; }
+        ul.built li { padding: .45em .8em; margin: .35em 0; border: 1px solid var(--border); border-radius: 8px;
+                      background: rgba(120,96,255,.07); }
+        ul.built li::before { content: "✓"; color: var(--violet-soft); font-weight: 700; margin-right: .6em; }
+        .tagline { font-family: Poppins, system-ui, sans-serif; font-weight: 600; color: var(--violet-soft);
+                   font-size: 1.1rem; margin: 0 0 1.4em; }
+        .message { font-size: 1.15rem; margin: 0 0 .8em; }
+        .next { margin: 0 0 1.4em; color: var(--muted); }
+        .pill { display: inline-block; margin-top: .5em; background: var(--violet); color: #fff; font-weight: 600;
                 padding: .45em 1.1em; border-radius: 999px; }
+        a.brand { display: inline-flex; align-items: center; gap: .55em; color: var(--muted); text-decoration: none;
+                  font-size: .9rem; border-top: 1px solid var(--border); padding-top: 1.1em; margin-top: .4em; }
+        a.brand b { color: var(--text); font-family: Poppins, system-ui, sans-serif; }
+        a.brand:hover b { color: var(--violet-soft); }
       </style>
     </head>
     <body>
       <main>
         <p class="city">{{ .Values.city | html }}</p>
+        {{- if .Values.greeting }}
+        <p class="hello">{{ .Values.greeting | html }}</p>
+        {{- end }}
         <h1>{{ .Values.eventName | html }}</h1>
+        {{- if .Values.intro }}
+        <p class="intro">{{ .Values.intro | html }}</p>
+        {{- end }}
+        {{- if .Values.built }}
+        <ul class="built">
+          {{- range splitList "," .Values.built }}
+          {{- if trim . }}
+          <li>{{ trim . | html }}</li>
+          {{- end }}
+          {{- end }}
+        </ul>
+        {{- end }}
+        {{- if .Values.tagline }}
+        <p class="tagline">{{ .Values.tagline | html }}</p>
+        {{- end }}
+        {{- if .Values.message }}
         <p class="message">{{ .Values.message | html }}</p>
+        {{- end }}
+        {{- if .Values.nextEvent }}
         <p class="next">Próximo evento<br><span class="pill">{{ .Values.nextEvent | html }}</span></p>
+        {{- end }}
+        <a class="brand" href="https://askarchie.io" target="_blank" rel="noopener">
+          <svg width="26" height="26" viewBox="0 0 194.41 194.41" aria-hidden="true"><rect width="194.41" height="194.41" rx="25.96" fill="#070F26"/><path d="M 85.383 38.556 A 14.8 14.8 0 0 1 109.023 38.556 L 143.547 84.37 A 6.5 6.5 0 0 1 138.356 94.782 L 126.016 94.782 A 5.5 5.5 0 0 1 121.662 92.642 L 101.953 67.106 A 6.0 6.0 0 0 0 92.453 67.106 L 72.744 92.642 A 5.5 5.5 0 0 1 68.39 94.782 L 56.05 94.782 A 6.5 6.5 0 0 1 50.859 84.37 Z" fill="#FFFFFF"/><path d="M 46.213 106.122 A 6.247 6.247 0 0 1 54.828 100.341 L 95.686 117.08 A 4.0 4.0 0 0 0 98.719 117.08 L 139.578 100.341 A 6.247 6.247 0 0 1 148.193 106.122 L 148.193 109.667 A 8.6 8.6 0 0 1 142.86 117.622 L 100.622 134.968 A 9.0 9.0 0 0 1 93.784 134.968 L 51.546 117.622 A 8.6 8.6 0 0 1 46.213 109.667 Z" fill="#7860FF"/><path d="M 46.213 132.222 A 6.247 6.247 0 0 1 54.828 126.441 L 95.686 143.18 A 4.0 4.0 0 0 0 98.719 143.18 L 139.578 126.441 A 6.247 6.247 0 0 1 148.193 132.222 L 148.193 135.767 A 8.6 8.6 0 0 1 142.86 143.722 L 100.622 161.068 A 9.0 9.0 0 0 1 93.784 161.068 L 51.546 143.722 A 8.6 8.6 0 0 1 46.213 135.767 Z" fill="#6B4FF0"/></svg>
+          <span>Hecho con <b>AskArchie</b> · askarchie.io</span>
+        </a>
       </main>
     </body>
     </html>

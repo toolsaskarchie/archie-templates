@@ -3,7 +3,18 @@ entries:
   kcd-event-page:
   - apiVersion: v2
     appVersion: 1.0.0
-    created: '2026-10-23T14:09:20Z'
+    created: "2026-10-24T17:54:54.973992-05:00"
+    description: One HTML page for a KCD event, served by nginx behind an ALB Ingress
+      — says what the golden path built, with the AskArchie mark.
+    digest: 50550acc6a9f382293326c8c52d8c5339ea66ed9aabc624151f3c84b1f16796f
+    name: kcd-event-page
+    type: application
+    urls:
+    - https://raw.githubusercontent.com/toolsaskarchie/archie-templates/main/helm/kcd-event-page-0.2.0.tgz
+    version: 0.2.0
+  - apiVersion: v2
+    appVersion: 1.0.0
+    created: "2026-10-24T17:54:54.973615-05:00"
     description: One HTML page for a KCD event, served by nginx behind an ALB Ingress.
     digest: 3a0d229dedc9a7a3fb4ff537bebe3e5cc808ea2fd5f5a6599d65238f86ecf485
     name: kcd-event-page
@@ -11,4 +22,4 @@ entries:
     urls:
     - https://raw.githubusercontent.com/toolsaskarchie/archie-templates/main/helm/kcd-event-page-0.1.0.tgz
     version: 0.1.0
-generated: '2026-10-23T14:09:20Z'
+generated: "2026-10-24T17:54:54.973127-05:00"

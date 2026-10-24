@@ -1,11 +1,16 @@
-# The four fields an organizer fills in.
-eventName: "KCD Argentina"
-city: "Buenos Aires"
-message: "¡Gracias Argentina! 🇦🇷❤️"
-nextEvent: "Nos vemos pronto 🤘"
+# What the page says. Empty fields are not shown.
+city: "Lima"
+greeting: "¡Hola!"
+eventName: "KCD Perú"
+intro: "Bienvenido a AskArchie: acabas de construir un golden path con:"
+# Comma-separated: one line per thing the path built.
+built: "Un clúster EKS, AWS Load Balancer Controller, Certificado TLS (ACM), Registro DNS en askarchie.io, Esta página (chart Helm)"
+tagline: "De un solo prompt a un agente."
+message: ""
+nextEvent: ""
 
 # Where the page answers. Every page shares one ALB through the Ingress group.
-host: "argentina.kcd.askarchie.io"
+host: "peru.kcd.askarchie.io"
 ingressGroup: "kcd-pages"
 ingressClassName: "alb"
 # ACM certificate for the host. Empty serves plain HTTP only (e.g. before validation).
